@@ -5,8 +5,35 @@
 #include "Resolver.hpp"
 #include "RuntimeError.hpp"
 #include "Scanner.hpp"
+#include "Traceable.hpp"
 
 namespace cloxx {
+
+size_t Lox::traceableSize() const
+{
+    size_t count = 0;
+    for (auto& traceable : _traceables) {
+        count += traceable ? 1 : 0;
+    }
+    return count;
+}
+
+void Lox::reclaimTraceables()
+{
+    for (auto& traceable : _traceables) {
+        traceable->unmark();
+    }
+
+    for (auto& traceable : _traceables) {
+        traceable->mark();
+    }
+
+    for (size_t i = 0; i < _traceables.size(); ++i) {
+        if (!_traceables[i]->isMarked()) {
+            _traceables[i].reset();
+        }
+    }
+}
 
 int Lox::run(std::string source)
 {

@@ -74,8 +74,8 @@ private:
     };
 
     Lox* const _lox;
-    std::shared_ptr<Environment> const _globals = std::make_shared<Environment>();
-    std::shared_ptr<Environment> _environment = _globals;
+    std::shared_ptr<Environment> _globals;
+    std::shared_ptr<Environment> _environment;
 
     std::map<Expr const*, /*depth*/ size_t> _locals;
 

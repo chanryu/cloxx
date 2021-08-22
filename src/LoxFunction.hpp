@@ -10,6 +10,8 @@
 
 namespace cloxx {
 
+class Lox;
+
 class Stmt;
 class Environment;
 class LoxInstance;
@@ -18,7 +20,7 @@ class LoxFunction : public LoxCallable {
 public:
     using Body = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<Environment> const&)>;
 
-    LoxFunction(bool isInitializer, std::shared_ptr<Environment> const& closure, Token const& name,
+    LoxFunction(Lox* lox, std::shared_ptr<Environment> const& closure, bool isInitializer, Token const& name,
                 std::vector<Token> const& params, Body body);
 
     std::shared_ptr<LoxFunction> bind(std::shared_ptr<LoxInstance> const& instance) const;
@@ -28,10 +30,14 @@ public:
     size_t arity() const override;
     std::shared_ptr<LoxObject> call(std::vector<std::shared_ptr<LoxObject>> const& args) override;
 
-private:
-    bool const _isInitializer;
-    std::shared_ptr<Environment> const _closure;
+    // GC support
+    void mark() override;
 
+private:
+    Lox* const _lox; // HACK
+
+    std::shared_ptr<Environment> const _closure;
+    bool const _isInitializer;
     Token const _name;
     std::vector<Token> const _params;
     Body const _body;

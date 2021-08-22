@@ -45,6 +45,9 @@ struct OperandErrorMessage<LoxString, N> {
 
 Interpreter::Interpreter(Lox* lox) : _lox{lox}
 {
+    _globals = _lox->create<Environment>();
+    _environment = _globals;
+
     _globals->define("clock", std::make_shared<LoxNativeFunction>("clock", 0, [](auto& /*args*/) {
                          auto duration = std::chrono::steady_clock::now().time_since_epoch();
                          auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
@@ -74,7 +77,8 @@ void Interpreter::resolve(Expr const& expr, size_t depth)
 
 void Interpreter::visit(BlockStmt const& stmt)
 {
-    executeBlock(stmt.stmts, std::make_shared<Environment>(_environment));
+    auto blockEnv = _lox->create<Environment>(_environment);
+    executeBlock(stmt.stmts, blockEnv);
 }
 
 void Interpreter::visit(ExprStmt const& stmt)
@@ -152,7 +156,7 @@ void Interpreter::visit(ClassStmt const& stmt)
 
     auto enclosingEnvironment = _environment;
     if (superclass) {
-        _environment = std::make_shared<Environment>(_environment);
+        _environment = _lox->create<Environment>(_environment);
         _environment->define("super", superclass);
     }
 
@@ -487,7 +491,7 @@ std::shared_ptr<LoxFunction> Interpreter::makeFunction(bool isInitializer, Token
         return makeLoxNil();
     };
 
-    return std::make_shared<LoxFunction>(isInitializer, _environment, name, params, std::move(body));
+    return _lox->create<LoxFunction>(_lox, _environment, isInitializer, name, params, std::move(body));
 }
 
 } // namespace cloxx

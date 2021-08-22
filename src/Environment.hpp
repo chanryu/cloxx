@@ -4,12 +4,14 @@
 #include <memory>
 #include <string>
 
+#include "Traceable.hpp"
+
 namespace cloxx {
 
 class LoxObject;
 struct Token;
 
-class Environment {
+class Environment : public Traceable {
 public:
     Environment() = default;
     explicit Environment(std::shared_ptr<Environment> const& enclosing);
@@ -21,6 +23,9 @@ public:
 
     std::shared_ptr<LoxObject> getAt(size_t distance, std::string const& name) const;
     void assignAt(size_t distance, std::string const& name, std::shared_ptr<LoxObject> const& value);
+
+    // GC support
+    void mark() override;
 
 private:
     Environment const* ancestor(size_t distance) const;

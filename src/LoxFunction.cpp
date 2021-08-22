@@ -1,5 +1,7 @@
 #include "LoxFunction.hpp"
 
+#include "Lox.hpp"
+
 #include "Assert.hpp"
 #include "Environment.hpp"
 #include "LoxInstance.hpp"
@@ -8,18 +10,20 @@
 
 namespace cloxx {
 
-LoxFunction::LoxFunction(bool isInitializer, std::shared_ptr<Environment> const& closure, Token const& name,
+LoxFunction::LoxFunction(Lox* lox, std::shared_ptr<Environment> const& closure, bool isInitializer, Token const& name,
                          std::vector<Token> const& params, Body body)
-    : _isInitializer{isInitializer}, _closure{closure}, _name{name}, _params{params}, _body{std::move(body)}
-{}
+    : _lox{lox}, _closure{closure}, _isInitializer{isInitializer}, _name{name}, _params{params}, _body{std::move(body)}
+{
+    LOX_ASSERT(_closure);
+}
 
 std::shared_ptr<LoxFunction> LoxFunction::bind(std::shared_ptr<LoxInstance> const& instance) const
 {
     LOX_ASSERT(instance);
 
-    auto closure = std::make_shared<Environment>(_closure);
+    auto closure = _lox->create<Environment>(_closure);
     closure->define("this", instance);
-    return std::make_shared<LoxFunction>(_isInitializer, closure, _name, _params, _body);
+    return _lox->create<LoxFunction>(_lox, closure, _isInitializer, _name, _params, _body);
 }
 
 std::string LoxFunction::toString() const
@@ -36,7 +40,7 @@ std::shared_ptr<LoxObject> LoxFunction::call(std::vector<std::shared_ptr<LoxObje
 {
     LOX_ASSERT(args.size() == _params.size());
 
-    auto env = std::make_shared<Environment>(_closure);
+    auto env = _lox->create<Environment>(_closure);
     for (size_t i = 0; i < _params.size(); i++) {
         env->define(_params[i].lexeme, args[i]);
     }
@@ -48,6 +52,19 @@ std::shared_ptr<LoxObject> LoxFunction::call(std::vector<std::shared_ptr<LoxObje
     else {
         return _body(env);
     }
+}
+
+void LoxFunction::mark()
+{
+    if (isMarked()) {
+        return;
+    }
+
+    LoxCallable::mark();
+
+    _closure->mark();
+
+    // FIXME: mark body
 }
 
 ////////////

@@ -3,6 +3,9 @@
 #include <streambuf>
 
 #include "Lox.hpp"
+#include "Traceable.hpp"
+
+using namespace cloxx;
 
 int main(int argc, char const* argv[])
 {
@@ -19,5 +22,19 @@ int main(int argc, char const* argv[])
 
     std::string source{std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()};
 
-    return cloxx::Lox{}.run(source);
+    int result;
+    {
+        Lox lox;
+        result = lox.run(source);
+
+        lox.reclaimTraceables();
+
+        std::cout << "\n";
+        std::cout << "Traceable objects: " << lox.traceableSize() << "\n";
+        std::cout << "Leakable objects: " << Traceable::objectCount() << "\n";
+    }
+
+    std::cout << "Leaked objects: " << Traceable::objectCount() << "\n";
+
+    return result;
 }

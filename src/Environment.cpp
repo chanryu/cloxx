@@ -79,4 +79,21 @@ Environment* Environment::ancestor(size_t distance)
     return environment;
 }
 
+void Environment::mark()
+{
+    if (isMarked()) {
+        return;
+    }
+
+    Traceable::mark();
+
+    if (_enclosing) {
+        _enclosing->mark();
+    }
+
+    for (auto& [_, value] : _values) {
+        value->mark();
+    }
+}
+
 } // namespace cloxx
