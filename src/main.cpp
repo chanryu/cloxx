@@ -27,10 +27,7 @@ int main(int argc, char const* argv[])
         Lox lox;
         result = lox.run(source);
 
-        lox.reclaimAllTraceables();
-
         std::cout << "\n";
-        std::cout << "Traceable objects: " << lox.traceableSize() << "\n";
         std::cout << "Leakable objects: " << Traceable::instanceCount() << "\n";
     }
 

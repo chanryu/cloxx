@@ -12,47 +12,8 @@
 
 namespace cloxx {
 
-Lox::Lox() : _globals{std::make_shared<Environment>()}
+Lox::Lox() : _globals{std::make_shared<Environment>()}, _gc{_globals}
 {}
-
-size_t Lox::traceableSize() const
-{
-    size_t count = 0;
-    for (auto& traceable : _traceables) {
-        if (auto t = traceable.lock()) {
-            count += 1;
-        }
-    }
-    return count;
-}
-
-void Lox::collectGarbage()
-{
-    // mark all traceables
-    for (auto& traceable : _traceables) {
-        if (auto t = traceable.lock()) {
-            t->unmark();
-        }
-    }
-
-    // mark all reachable traceables
-    _globals->mark();
-
-    for (auto& traceable : _traceables) {
-        if (auto t = traceable.lock()) {
-            if (!t->isMarked()) {
-                t->reclaim();
-                traceable.reset();
-            }
-        }
-    }
-}
-
-void Lox::reclaimAllTraceables()
-{
-    _globals->reclaim();
-    collectGarbage();
-}
 
 int Lox::run(std::string source)
 {

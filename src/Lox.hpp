@@ -4,8 +4,7 @@
 #include <string>
 #include <string_view>
 
-#include <memory> // GC support
-#include <vector> // GC support
+#include "GC.hpp"
 
 namespace cloxx {
 
@@ -19,18 +18,13 @@ class Lox {
 public:
     Lox();
 
-    // GC support
     template <typename T, typename... Args>
     std::shared_ptr<T> create(Args&&... args)
     {
         auto traceable = std::make_shared<T>(std::forward<Args>(args)...);
-        _traceables.push_back(traceable);
+        _gc.addTraceable(traceable);
         return traceable;
     }
-
-    size_t traceableSize() const;
-    void collectGarbage();
-    void reclaimAllTraceables();
 
 public:
     int run(std::string source);
@@ -48,7 +42,7 @@ private:
     std::shared_ptr<Environment> const _globals;
 
     // GC support
-    std::vector<std::weak_ptr<Traceable>> _traceables;
+    GarbageCollector _gc;
 };
 
 } // namespace cloxx
