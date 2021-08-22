@@ -2,11 +2,9 @@
 
 #include <string>
 
-#include "Traceable.hpp"
-
 namespace cloxx {
 
-class LoxObject : public Traceable {
+class LoxObject {
 public:
     virtual ~LoxObject() = default;
 

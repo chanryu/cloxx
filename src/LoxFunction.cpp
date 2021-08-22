@@ -55,25 +55,14 @@ std::shared_ptr<LoxObject> LoxFunction::call(std::vector<std::shared_ptr<LoxObje
     return _executor(env, _body);
 }
 
-void LoxFunction::mark()
+void LoxFunction::enumTraceables(Traceable::Enumerator const& enumerator)
 {
-    if (isMarked()) {
-        return;
-    }
-
-    LoxCallable::mark();
-
-    _closure->mark();
-
-    // FIXME: mark body
+    LOX_ASSERT(_closure);
+    enumerator.enumerate(*_closure);
 }
 
 void LoxFunction::reclaim()
 {
-    LOX_ASSERT(!isMarked());
-
-    LoxCallable::reclaim();
-
     _closure.reset();
 }
 

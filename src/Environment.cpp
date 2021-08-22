@@ -79,29 +79,21 @@ Environment* Environment::ancestor(size_t distance)
     return environment;
 }
 
-void Environment::mark()
+void Environment::enumTraceables(Traceable::Enumerator const& enumerator)
 {
-    if (isMarked()) {
-        return;
-    }
-
-    Traceable::mark();
-
     if (_enclosing) {
-        _enclosing->mark();
+        enumerator.enumerate(*_enclosing);
     }
 
     for (auto& [_, value] : _values) {
-        value->mark();
+        if (auto traceable = dynamic_cast<Traceable*>(value.get())) {
+            enumerator.enumerate(*traceable);
+        }
     }
 }
 
 void Environment::reclaim()
 {
-    LOX_ASSERT(!isMarked());
-
-    Traceable::reclaim();
-
     _enclosing.reset();
     _values.clear();
 }

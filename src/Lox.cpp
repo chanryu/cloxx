@@ -37,7 +37,14 @@ int Lox::run(std::string source)
         return 65;
     }
 
+#if 0
     interpreter.interpret(stmts);
+#else
+    for (auto const& stmt : stmts) {
+        interpreter.interpret({stmt});
+        _gc.collectGarbage();
+    }
+#endif
 
     // Indicate a run-time error in the exit code.
     if (_hadRuntimeError) {

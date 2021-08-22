@@ -7,6 +7,7 @@
 
 #include "LoxObject.hpp"
 #include "Token.hpp"
+#include "Traceable.hpp"
 
 namespace cloxx {
 
@@ -16,7 +17,7 @@ class Stmt;
 class Environment;
 class LoxInstance;
 
-class LoxFunction : public LoxCallable {
+class LoxFunction : public LoxCallable, public Traceable {
 public:
     using Executor = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<Environment> const&,
                                                               std::vector<std::shared_ptr<Stmt>> const&)>;
@@ -33,7 +34,7 @@ public:
     std::shared_ptr<LoxObject> call(std::vector<std::shared_ptr<LoxObject>> const& args) override;
 
     // GC support
-    void mark() override;
+    void enumTraceables(Traceable::Enumerator const& enumerator) override;
     void reclaim() override;
 
 private:

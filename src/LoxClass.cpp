@@ -48,4 +48,26 @@ std::shared_ptr<LoxObject> LoxClass::call(std::vector<std::shared_ptr<LoxObject>
     return instance;
 }
 
+void LoxClass::enumTraceables(Traceable::Enumerator const& enumerator)
+{
+    if (_superclass) {
+        enumerator.enumerate(*_superclass);
+    }
+
+    for (auto& [_, method] : _methods) {
+        enumerator.enumerate(*method);
+    }
+}
+
+void LoxClass::reclaim()
+{
+    _superclass->reclaim();
+    _superclass.reset();
+
+    for (auto& [_, method] : _methods) {
+        method->reclaim();
+    }
+    _methods.clear();
+}
+
 } // namespace cloxx
