@@ -36,9 +36,7 @@ public:
 
     void addTraceable(std::shared_ptr<Traceable> const& traceable);
 
-    size_t countTraceables() const;
-
-    void collectGarbage();
+    size_t collect();
 
 private:
     std::shared_ptr<Traceable> _root;

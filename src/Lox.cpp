@@ -37,12 +37,12 @@ int Lox::run(std::string source)
         return 65;
     }
 
-#if 1
+#if 0
     interpreter.interpret(stmts);
 #else
     for (auto const& stmt : stmts) {
         interpreter.interpret({stmt});
-        _gc.collectGarbage();
+        _gc.collect();
     }
 #endif
 

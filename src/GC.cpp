@@ -33,7 +33,7 @@ GarbageCollector::GarbageCollector(std::shared_ptr<Traceable> const& root) : _ro
 GarbageCollector::~GarbageCollector()
 {
     _root->reclaimTraceables();
-    collectGarbage();
+    collect();
 }
 
 void GarbageCollector::addTraceable(std::shared_ptr<Traceable> const& traceable)
@@ -41,20 +41,11 @@ void GarbageCollector::addTraceable(std::shared_ptr<Traceable> const& traceable)
     _weakTraceables.push_back(traceable);
 }
 
-size_t GarbageCollector::countTraceables() const
+size_t GarbageCollector::collect()
 {
-    size_t count = 0;
-    for (auto& traceable : _weakTraceables) {
-        if (auto t = traceable.lock()) {
-            count += 1;
-        }
-    }
-    return count;
-}
+    size_t collectedCount = 0;
 
-void GarbageCollector::collectGarbage()
-{
-    // prologue: collect all traceables
+    // Prologue: Collect all traceables
     std::vector<std::shared_ptr<Traceable>> traceables;
     for (auto& weakTraceable : _weakTraceables) {
         if (auto traceable = weakTraceable.lock()) {
@@ -62,12 +53,12 @@ void GarbageCollector::collectGarbage()
         }
     }
 
-    // Mark & Sweep - Step 1: unmark all reachable traceables
+    // Mark & Sweep - Step 1: Unmark all reachable traceables
     for (auto& traceable : traceables) {
         traceable->_isReachable = false;
     }
 
-    // Mark & Sweep - Step 2: mark all reachable traceables
+    // Mark & Sweep - Step 2: Mark all reachable traceables
     struct Marker : Traceable::Enumerator {
         void enumerate(Traceable& traceable) const override
         {
@@ -79,21 +70,24 @@ void GarbageCollector::collectGarbage()
     };
     _root->enumTraceables(Marker{});
 
-    // Mark & Sweep - Step 3: reclaimTraceables unreachable traceables
+    // Mark & Sweep - Step 3: Reclaim unreachable traceables
+    _weakTraceables.clear();
     for (auto& traceable : traceables) {
         if (!traceable->_isReachable) {
             traceable->reclaimTraceables();
             traceable.reset();
+            collectedCount += 1;
         }
     }
 
-    // epilogue: rearrange _weakTraceables
-    _weakTraceables.clear();
+    // Epilogue: Rearrange _weakTraceables
     for (auto& traceable : traceables) {
         if (traceable) {
             _weakTraceables.push_back(traceable);
         }
     }
+
+    return collectedCount;
 }
 
 } // namespace cloxx
