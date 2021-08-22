@@ -4,6 +4,7 @@
 
 #include "GC.hpp"
 #include "Lox.hpp"
+#include "LoxObject.hpp"
 
 using namespace cloxx;
 
@@ -26,12 +27,18 @@ int main(int argc, char const* argv[])
     {
         Lox lox;
         result = lox.run(source);
-
+#ifndef NDEBUG
         std::cout << "\n";
-        std::cout << "Leakable objects: " << Traceable::instanceCount() << "\n";
+        std::cout << "LoxObjects: " << LoxObject::instanceCount() << "\n";
+        std::cout << "Traceables: " << Traceable::instanceCount() << "\n";
+#endif
     }
 
-    std::cout << "Leaked objects: " << Traceable::instanceCount() << "\n";
+#ifndef NDEBUG
+    std::cout << "\n";
+    std::cout << "LoxObjects: " << LoxObject::instanceCount() << "\n";
+    std::cout << "Traceables: " << Traceable::instanceCount() << "\n";
+#endif
 
     return result;
 }

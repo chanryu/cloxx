@@ -4,22 +4,26 @@
 
 namespace cloxx {
 
-int Traceable::_instanceCount = 0;
+#ifndef NDEBUG
+namespace {
+size_t traceableInstanceCount = 0;
+}
 
 Traceable::Traceable()
 {
-    _instanceCount++;
+    traceableInstanceCount++;
 }
 
 Traceable::~Traceable()
 {
-    _instanceCount--;
+    traceableInstanceCount--;
 }
 
-int Traceable::instanceCount()
+size_t Traceable::instanceCount()
 {
-    return _instanceCount;
+    return traceableInstanceCount;
 }
+#endif
 
 GarbageCollector::GarbageCollector(std::shared_ptr<Traceable> const& root) : _root{root}
 {

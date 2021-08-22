@@ -9,10 +9,13 @@ class GarbageCollector;
 
 class Traceable {
 public:
+#ifndef NDEBUG
     Traceable();
     virtual ~Traceable();
-
-    static int instanceCount();
+    static size_t instanceCount();
+#else
+    virtual ~Traceable() = default;
+#endif
 
     struct Enumerator {
         virtual void enumerate(Traceable& traceable) const = 0;
@@ -24,8 +27,6 @@ public:
 private:
     friend class GarbageCollector;
     bool _isReachable;
-
-    static int _instanceCount;
 };
 
 class GarbageCollector {

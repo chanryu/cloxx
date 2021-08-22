@@ -6,7 +6,14 @@ namespace cloxx {
 
 class LoxObject {
 public:
+#ifndef NDEBUG
+    LoxObject();
+    virtual ~LoxObject();
+
+    static size_t instanceCount();
+#else
     virtual ~LoxObject() = default;
+#endif
 
     virtual std::string toString() const = 0;
     virtual bool isTruthy() const;
