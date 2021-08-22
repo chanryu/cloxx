@@ -5,4 +5,4 @@ GENPATH="$PROJECT/generated_src/ast"
 
 rm -rf "$GENPATH"
 mkdir -p "$GENPATH"
-"$PROJECT/scripts/gen-ast.py" "$GENPATH"
+"$PROJECT/tool/gen-ast.py" "$GENPATH"
