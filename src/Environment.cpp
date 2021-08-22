@@ -92,7 +92,7 @@ void Environment::enumTraceables(Traceable::Enumerator const& enumerator)
     }
 }
 
-void Environment::reclaim()
+void Environment::reclaimTraceables()
 {
     _enclosing.reset();
     _values.clear();

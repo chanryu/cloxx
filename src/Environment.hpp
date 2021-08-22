@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "Traceable.hpp"
+#include "GC.hpp"
 
 namespace cloxx {
 
@@ -26,7 +26,7 @@ public:
 
     // GC support
     void enumTraceables(Traceable::Enumerator const& enumerator) override;
-    void reclaim() override;
+    void reclaimTraceables() override;
 
 private:
     Environment const* ancestor(size_t distance) const;

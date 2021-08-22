@@ -5,9 +5,9 @@
 #include <string>
 #include <vector>
 
+#include "GC.hpp"
 #include "LoxObject.hpp"
 #include "Token.hpp"
-#include "Traceable.hpp"
 
 namespace cloxx {
 
@@ -35,7 +35,7 @@ public:
 
     // GC support
     void enumTraceables(Traceable::Enumerator const& enumerator) override;
-    void reclaim() override;
+    void reclaimTraceables() override;
 
 private:
     Lox* const _lox; // HACK

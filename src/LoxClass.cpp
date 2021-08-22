@@ -59,13 +59,13 @@ void LoxClass::enumTraceables(Traceable::Enumerator const& enumerator)
     }
 }
 
-void LoxClass::reclaim()
+void LoxClass::reclaimTraceables()
 {
-    _superclass->reclaim();
+    _superclass->reclaimTraceables();
     _superclass.reset();
 
     for (auto& [_, method] : _methods) {
-        method->reclaim();
+        method->reclaimTraceables();
     }
     _methods.clear();
 }

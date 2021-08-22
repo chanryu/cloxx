@@ -1,12 +1,12 @@
 #include "Lox.hpp"
 
+#include "GC.hpp"
 #include "Interpreter.hpp"
 #include "LoxFunction.hpp"
 #include "Parser.hpp"
 #include "Resolver.hpp"
 #include "RuntimeError.hpp"
 #include "Scanner.hpp"
-#include "Traceable.hpp"
 
 #include <iostream>
 
@@ -37,7 +37,7 @@ int Lox::run(std::string source)
         return 65;
     }
 
-#if 0
+#if 1
     interpreter.interpret(stmts);
 #else
     for (auto const& stmt : stmts) {

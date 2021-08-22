@@ -2,8 +2,8 @@
 
 #include <map>
 
+#include "GC.hpp"
 #include "LoxObject.hpp"
-#include "Traceable.hpp"
 
 namespace cloxx {
 
@@ -23,7 +23,7 @@ public:
 
     // GC support
     void enumTraceables(Traceable::Enumerator const& enumerator) override;
-    void reclaim() override;
+    void reclaimTraceables() override;
 
     std::string const name;
 

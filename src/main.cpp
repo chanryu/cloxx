@@ -2,8 +2,8 @@
 #include <iostream>
 #include <streambuf>
 
+#include "GC.hpp"
 #include "Lox.hpp"
-#include "Traceable.hpp"
 
 using namespace cloxx;
 
