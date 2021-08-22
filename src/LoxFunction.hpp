@@ -18,10 +18,12 @@ class LoxInstance;
 
 class LoxFunction : public LoxCallable {
 public:
-    using Body = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<Environment> const&)>;
+    using Executor = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<Environment> const&,
+                                                              std::vector<std::shared_ptr<Stmt>> const&)>;
 
     LoxFunction(Lox* lox, std::shared_ptr<Environment> const& closure, bool isInitializer, Token const& name,
-                std::vector<Token> const& params, Body body);
+                std::vector<Token> const& params, std::vector<std::shared_ptr<Stmt>> const& body,
+                Executor const& executor);
 
     std::shared_ptr<LoxFunction> bind(std::shared_ptr<LoxInstance> const& instance) const;
 
@@ -32,15 +34,18 @@ public:
 
     // GC support
     void mark() override;
+    void reclaim() override;
 
 private:
     Lox* const _lox; // HACK
 
-    std::shared_ptr<Environment> const _closure;
+    std::shared_ptr<Environment> _closure;
+
     bool const _isInitializer;
     Token const _name;
     std::vector<Token> const _params;
-    Body const _body;
+    std::vector<std::shared_ptr<Stmt>> const _body;
+    Executor const _executor;
 };
 
 class LoxNativeFunction : public LoxCallable {

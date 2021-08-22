@@ -26,12 +26,13 @@ public:
 
     // GC support
     void mark() override;
+    void reclaim() override;
 
 private:
     Environment const* ancestor(size_t distance) const;
     Environment* ancestor(size_t distance);
 
-    std::shared_ptr<Environment> const _enclosing;
+    std::shared_ptr<Environment> _enclosing;
     std::map<std::string, std::shared_ptr<LoxObject>> _values;
 };
 

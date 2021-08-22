@@ -43,11 +43,9 @@ struct OperandErrorMessage<LoxString, N> {
 
 } // namespace
 
-Interpreter::Interpreter(Lox* lox) : _lox{lox}
+Interpreter::Interpreter(Lox* lox, std::shared_ptr<Environment> const& globals)
+    : _lox{lox}, _globals{globals}, _environment{globals}
 {
-    _globals = _lox->create<Environment>();
-    _environment = _globals;
-
     _globals->define("clock", std::make_shared<LoxNativeFunction>("clock", 0, [](auto& /*args*/) {
                          auto duration = std::chrono::steady_clock::now().time_since_epoch();
                          auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
@@ -479,11 +477,12 @@ void Interpreter::ensureOperands(Token const& op, std::shared_ptr<LoxObject> con
 
 std::shared_ptr<LoxFunction> Interpreter::makeFunction(bool isInitializer, Token const& name,
                                                        std::vector<Token> const params,
-                                                       std::vector<std::shared_ptr<Stmt>> const& block)
+                                                       std::vector<std::shared_ptr<Stmt>> const& body)
 {
-    LoxFunction::Body body = [this, block](std::shared_ptr<Environment> const& env) -> std::shared_ptr<LoxObject> {
+    auto executor = [this](std::shared_ptr<Environment> const& env,
+                           std::vector<std::shared_ptr<Stmt>> const& stmts) -> std::shared_ptr<LoxObject> {
         try {
-            executeBlock(block, env);
+            executeBlock(stmts, env);
         }
         catch (ReturnValue& retVal) {
             return retVal.object;
@@ -491,7 +490,7 @@ std::shared_ptr<LoxFunction> Interpreter::makeFunction(bool isInitializer, Token
         return makeLoxNil();
     };
 
-    return _lox->create<LoxFunction>(_lox, _environment, isInitializer, name, params, std::move(body));
+    return _lox->create<LoxFunction>(_lox, _environment, isInitializer, name, params, body, executor);
 }
 
 } // namespace cloxx

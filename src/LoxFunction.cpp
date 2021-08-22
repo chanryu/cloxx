@@ -11,8 +11,10 @@
 namespace cloxx {
 
 LoxFunction::LoxFunction(Lox* lox, std::shared_ptr<Environment> const& closure, bool isInitializer, Token const& name,
-                         std::vector<Token> const& params, Body body)
-    : _lox{lox}, _closure{closure}, _isInitializer{isInitializer}, _name{name}, _params{params}, _body{std::move(body)}
+                         std::vector<Token> const& params, std::vector<std::shared_ptr<Stmt>> const& body,
+                         Executor const& executor)
+    : _lox{lox}, _closure{closure},
+      _isInitializer{isInitializer}, _name{name}, _params{params}, _body{body}, _executor{executor}
 {
     LOX_ASSERT(_closure);
 }
@@ -23,7 +25,7 @@ std::shared_ptr<LoxFunction> LoxFunction::bind(std::shared_ptr<LoxInstance> cons
 
     auto closure = _lox->create<Environment>(_closure);
     closure->define("this", instance);
-    return _lox->create<LoxFunction>(_lox, closure, _isInitializer, _name, _params, _body);
+    return _lox->create<LoxFunction>(_lox, closure, _isInitializer, _name, _params, _body, _executor);
 }
 
 std::string LoxFunction::toString() const
@@ -46,12 +48,11 @@ std::shared_ptr<LoxObject> LoxFunction::call(std::vector<std::shared_ptr<LoxObje
     }
 
     if (_isInitializer) {
-        _body(env);
+        _executor(env, _body);
         return makeLoxNil();
     }
-    else {
-        return _body(env);
-    }
+
+    return _executor(env, _body);
 }
 
 void LoxFunction::mark()
@@ -65,6 +66,15 @@ void LoxFunction::mark()
     _closure->mark();
 
     // FIXME: mark body
+}
+
+void LoxFunction::reclaim()
+{
+    LOX_ASSERT(!isMarked());
+
+    LoxCallable::reclaim();
+
+    _closure.reset();
 }
 
 ////////////

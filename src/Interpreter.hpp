@@ -16,7 +16,7 @@ class LoxFunction;
 
 class Interpreter : StmtVisitor, ExprVisitor {
 public:
-    explicit Interpreter(Lox* lox);
+    explicit Interpreter(Lox* lox, std::shared_ptr<Environment> const& globals);
 
     void interpret(std::vector<std::shared_ptr<Stmt>> const& stmts);
     void resolve(Expr const& expr, size_t depth);
@@ -67,7 +67,7 @@ private:
                         std::shared_ptr<LoxObject> const& right, Callback&& callback);
 
     std::shared_ptr<LoxFunction> makeFunction(bool isInitializer, Token const& name, std::vector<Token> const params,
-                                              std::vector<std::shared_ptr<Stmt>> const& block);
+                                              std::vector<std::shared_ptr<Stmt>> const& body);
 
     struct ReturnValue {
         std::shared_ptr<LoxObject> object;

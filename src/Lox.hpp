@@ -11,11 +11,14 @@ namespace cloxx {
 
 struct Token;
 
+class Environment;
 class Traceable;
 class RuntimeError;
 
 class Lox {
 public:
+    Lox();
+
     // GC support
     template <typename T, typename... Args>
     std::shared_ptr<T> create(Args&&... args)
@@ -26,7 +29,8 @@ public:
     }
 
     size_t traceableSize() const;
-    void reclaimTraceables();
+    void collectGarbage();
+    void reclaimAllTraceables();
 
 public:
     int run(std::string source);
@@ -41,8 +45,10 @@ private:
     bool _hadError = false;
     bool _hadRuntimeError = false;
 
+    std::shared_ptr<Environment> const _globals;
+
     // GC support
-    std::vector<std::shared_ptr<Traceable>> _traceables;
+    std::vector<std::weak_ptr<Traceable>> _traceables;
 };
 
 } // namespace cloxx

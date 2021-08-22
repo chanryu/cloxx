@@ -1,38 +1,57 @@
 #include "Lox.hpp"
 
 #include "Interpreter.hpp"
+#include "LoxFunction.hpp"
 #include "Parser.hpp"
 #include "Resolver.hpp"
 #include "RuntimeError.hpp"
 #include "Scanner.hpp"
 #include "Traceable.hpp"
 
+#include <iostream>
+
 namespace cloxx {
+
+Lox::Lox() : _globals{std::make_shared<Environment>()}
+{}
 
 size_t Lox::traceableSize() const
 {
     size_t count = 0;
     for (auto& traceable : _traceables) {
-        count += traceable ? 1 : 0;
+        if (auto t = traceable.lock()) {
+            count += 1;
+        }
     }
     return count;
 }
 
-void Lox::reclaimTraceables()
+void Lox::collectGarbage()
 {
+    // mark all traceables
     for (auto& traceable : _traceables) {
-        traceable->unmark();
-    }
-
-    for (auto& traceable : _traceables) {
-        traceable->mark();
-    }
-
-    for (size_t i = 0; i < _traceables.size(); ++i) {
-        if (!_traceables[i]->isMarked()) {
-            _traceables[i].reset();
+        if (auto t = traceable.lock()) {
+            t->unmark();
         }
     }
+
+    // mark all reachable traceables
+    _globals->mark();
+
+    for (auto& traceable : _traceables) {
+        if (auto t = traceable.lock()) {
+            if (!t->isMarked()) {
+                t->reclaim();
+                traceable.reset();
+            }
+        }
+    }
+}
+
+void Lox::reclaimAllTraceables()
+{
+    _globals->reclaim();
+    collectGarbage();
 }
 
 int Lox::run(std::string source)
@@ -47,7 +66,7 @@ int Lox::run(std::string source)
         return 65;
     }
 
-    Interpreter interpreter{this};
+    Interpreter interpreter{this, _globals};
 
     Resolver resolver{this, &interpreter};
     resolver.resolve(stmts);

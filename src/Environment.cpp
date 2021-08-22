@@ -96,4 +96,14 @@ void Environment::mark()
     }
 }
 
+void Environment::reclaim()
+{
+    LOX_ASSERT(!isMarked());
+
+    Traceable::reclaim();
+
+    _enclosing.reset();
+    _values.clear();
+}
+
 } // namespace cloxx
