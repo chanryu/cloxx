@@ -31,7 +31,7 @@ void LoxInstance::set(Token const& name, std::shared_ptr<LoxObject> const& value
 
 std::string LoxInstance::toString() const
 {
-    return "<object " + _class->name + ">";
+    return _class->name + " instance";
 }
 
 } // namespace cloxx

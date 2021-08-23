@@ -25,7 +25,7 @@ std::shared_ptr<LoxFunction> LoxClass::findMethod(std::string const& name) const
 
 std::string LoxClass::toString() const
 {
-    return "<class " + name + ">";
+    return name;
 }
 
 size_t LoxClass::arity() const

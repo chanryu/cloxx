@@ -53,7 +53,7 @@ class LoxNativeFunction : public LoxCallable {
 public:
     using Body = std::function<std::shared_ptr<LoxObject>(std::vector<std::shared_ptr<LoxObject>> const&)>;
 
-    LoxNativeFunction(std::string name, size_t arity, Body body);
+    LoxNativeFunction(size_t arity, Body body);
 
     std::string toString() const override;
 
@@ -61,7 +61,6 @@ public:
     std::shared_ptr<LoxObject> call(std::vector<std::shared_ptr<LoxObject>> const& args) override;
 
 private:
-    std::string const _name;
     size_t const _arity;
     Body const _body;
 };

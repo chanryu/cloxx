@@ -30,7 +30,7 @@ std::shared_ptr<LoxFunction> LoxFunction::bind(std::shared_ptr<LoxInstance> cons
 
 std::string LoxFunction::toString() const
 {
-    return "<function " + _name.lexeme + ">";
+    return "<fn " + _name.lexeme + ">";
 }
 
 size_t LoxFunction::arity() const
@@ -68,13 +68,12 @@ void LoxFunction::reclaimTraceables()
 
 ////////////
 
-LoxNativeFunction::LoxNativeFunction(std::string name, size_t arity, Body body)
-    : _name{std::move(name)}, _arity{arity}, _body{std::move(body)}
+LoxNativeFunction::LoxNativeFunction(size_t arity, Body body) : _arity{arity}, _body{std::move(body)}
 {}
 
 std::string LoxNativeFunction::toString() const
 {
-    return "<fn native:" + _name + ">";
+    return "<native fn>";
 }
 
 size_t LoxNativeFunction::arity() const

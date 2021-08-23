@@ -46,7 +46,7 @@ struct OperandErrorMessage<LoxString, N> {
 Interpreter::Interpreter(Lox* lox, std::shared_ptr<Environment> const& globals)
     : _lox{lox}, _globals{globals}, _environment{globals}
 {
-    _globals->define("clock", std::make_shared<LoxNativeFunction>("clock", 0, [](auto& /*args*/) {
+    _globals->define("clock", std::make_shared<LoxNativeFunction>(0, [](auto& /*args*/) {
                          auto duration = std::chrono::steady_clock::now().time_since_epoch();
                          auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
                          return toLoxNumber(millis / 1000.0);
