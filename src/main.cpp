@@ -2,6 +2,7 @@
 #include <iostream>
 #include <streambuf>
 
+#include "Assert.hpp"
 #include "GC.hpp"
 #include "Lox.hpp"
 #include "LoxObject.hpp"
@@ -27,17 +28,11 @@ int main(int argc, char const* argv[])
     {
         Lox lox;
         result = lox.run(source);
-#ifndef NDEBUG
-        std::cout << "\n";
-        std::cout << "LoxObjects: " << LoxObject::instanceCount() << "\n";
-        std::cout << "Traceables: " << Traceable::instanceCount() << "\n";
-#endif
     }
 
 #ifndef NDEBUG
-    std::cout << "\n";
-    std::cout << "LoxObjects: " << LoxObject::instanceCount() << "\n";
-    std::cout << "Traceables: " << Traceable::instanceCount() << "\n";
+    LOX_ASSERT(LoxObject::instanceCount() == 0);
+    LOX_ASSERT(Traceable::instanceCount() == 0);
 #endif
 
     return result;

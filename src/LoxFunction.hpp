@@ -35,7 +35,7 @@ public:
 
     // GC support
     void enumTraceables(Traceable::Enumerator const& enumerator) override;
-    void reclaimTraceables() override;
+    void reclaim() override;
 
 private:
     Lox* const _lox; // HACK

@@ -1,13 +1,14 @@
 #include "LoxClass.hpp"
 
+#include "Lox.hpp"
 #include "LoxFunction.hpp"
 #include "LoxInstance.hpp"
 
 namespace cloxx {
 
-LoxClass::LoxClass(std::string name, std::shared_ptr<LoxClass> const& superclass,
+LoxClass::LoxClass(Lox* lox, std::string name, std::shared_ptr<LoxClass> const& superclass,
                    std::map<std::string, std::shared_ptr<LoxFunction>> methods)
-    : name{std::move(name)}, _superclass{superclass}, _methods{std::move(methods)}
+    : _lox{lox}, _name{std::move(name)}, _superclass{superclass}, _methods{std::move(methods)}
 {}
 
 std::shared_ptr<LoxFunction> LoxClass::findMethod(std::string const& name) const
@@ -25,7 +26,7 @@ std::shared_ptr<LoxFunction> LoxClass::findMethod(std::string const& name) const
 
 std::string LoxClass::toString() const
 {
-    return name;
+    return _name;
 }
 
 size_t LoxClass::arity() const
@@ -39,7 +40,7 @@ size_t LoxClass::arity() const
 
 std::shared_ptr<LoxObject> LoxClass::call(std::vector<std::shared_ptr<LoxObject>> const& args)
 {
-    auto instance = std::make_shared<LoxInstance>(shared_from_this());
+    auto instance = _lox->create<LoxInstance>(shared_from_this());
 
     if (auto initializer = findMethod("init")) {
         initializer->bind(instance)->call(args);
@@ -59,16 +60,9 @@ void LoxClass::enumTraceables(Traceable::Enumerator const& enumerator)
     }
 }
 
-void LoxClass::reclaimTraceables()
+void LoxClass::reclaim()
 {
-    if (_superclass) {
-        _superclass->reclaimTraceables();
-        _superclass.reset();
-    }
-
-    for (auto& [_, method] : _methods) {
-        method->reclaimTraceables();
-    }
+    _superclass.reset();
     _methods.clear();
 }
 

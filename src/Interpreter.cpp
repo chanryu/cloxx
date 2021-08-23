@@ -165,7 +165,7 @@ void Interpreter::visit(ClassStmt const& stmt)
         methods.emplace(method->name.lexeme, function);
     }
 
-    auto klass = _lox->create<LoxClass>(stmt.name.lexeme, superclass, methods);
+    auto klass = _lox->create<LoxClass>(_lox, stmt.name.lexeme, superclass, methods);
 
     if (superclass) {
         _environment = enclosingEnvironment;

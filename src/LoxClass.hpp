@@ -7,11 +7,12 @@
 
 namespace cloxx {
 
+class Lox;
 class LoxFunction;
 
 class LoxClass : public LoxCallable, public Traceable, public std::enable_shared_from_this<LoxClass> {
 public:
-    LoxClass(std::string name, std::shared_ptr<LoxClass> const& superclass,
+    LoxClass(Lox* lox, std::string name, std::shared_ptr<LoxClass> const& superclass,
              std::map<std::string, std::shared_ptr<LoxFunction>> methods);
 
     std::shared_ptr<LoxFunction> findMethod(std::string const& name) const;
@@ -23,11 +24,11 @@ public:
 
     // GC support
     void enumTraceables(Traceable::Enumerator const& enumerator) override;
-    void reclaimTraceables() override;
-
-    std::string const name;
+    void reclaim() override;
 
 private:
+    Lox* const _lox;
+    std::string _name;
     std::shared_ptr<LoxClass> _superclass;
     std::map<std::string, std::shared_ptr<LoxFunction>> _methods;
 };

@@ -92,18 +92,9 @@ void Environment::enumTraceables(Traceable::Enumerator const& enumerator)
     }
 }
 
-void Environment::reclaimTraceables()
+void Environment::reclaim()
 {
-    if (_enclosing) {
-        _enclosing->reclaimTraceables();
-        _enclosing.reset();
-    }
-
-    for (auto& [_, value] : _values) {
-        if (auto traceable = dynamic_cast<Traceable*>(value.get())) {
-            traceable->reclaimTraceables();
-        }
-    }
+    _enclosing.reset();
     _values.clear();
 }
 

@@ -61,7 +61,7 @@ void LoxFunction::enumTraceables(Traceable::Enumerator const& enumerator)
     enumerator.enumerate(*_closure);
 }
 
-void LoxFunction::reclaimTraceables()
+void LoxFunction::reclaim()
 {
     _closure.reset();
 }

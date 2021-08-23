@@ -22,7 +22,7 @@ public:
     };
 
     virtual void enumTraceables(Enumerator const& enumerator) = 0;
-    virtual void reclaimTraceables() = 0;
+    virtual void reclaim() = 0;
 
 private:
     friend class GarbageCollector;

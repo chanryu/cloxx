@@ -26,7 +26,7 @@ public:
 
     // GC support
     void enumTraceables(Traceable::Enumerator const& enumerator) override;
-    void reclaimTraceables() override;
+    void reclaim() override;
 
 private:
     Environment const* ancestor(size_t distance) const;

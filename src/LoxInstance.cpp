@@ -9,7 +9,9 @@
 namespace cloxx {
 
 LoxInstance::LoxInstance(std::shared_ptr<LoxClass> const& klass) : _class{klass}
-{}
+{
+    LOX_ASSERT(_class);
+}
 
 std::shared_ptr<LoxObject> LoxInstance::get(Token const& name)
 {
@@ -31,7 +33,24 @@ void LoxInstance::set(Token const& name, std::shared_ptr<LoxObject> const& value
 
 std::string LoxInstance::toString() const
 {
-    return _class->name + " instance";
+    return _class->toString() + " instance";
+}
+
+void LoxInstance::enumTraceables(Enumerator const& enumerator)
+{
+    enumerator.enumerate(*_class);
+
+    for (auto& [_, field] : _fields) {
+        if (auto traceable = dynamic_cast<Traceable*>(field.get())) {
+            enumerator.enumerate(*traceable);
+        }
+    }
+}
+
+void LoxInstance::reclaim()
+{
+    _class.reset();
+    _fields.clear();
 }
 
 } // namespace cloxx

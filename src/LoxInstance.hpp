@@ -2,6 +2,7 @@
 
 #include <map>
 
+#include "GC.hpp"
 #include "LoxObject.hpp"
 
 namespace cloxx {
@@ -9,7 +10,7 @@ namespace cloxx {
 class LoxClass;
 struct Token;
 
-class LoxInstance : public LoxObject, public std::enable_shared_from_this<LoxInstance> {
+class LoxInstance : public LoxObject, public Traceable, public std::enable_shared_from_this<LoxInstance> {
 public:
     explicit LoxInstance(std::shared_ptr<LoxClass> const& klass);
 
@@ -18,8 +19,12 @@ public:
 
     std::string toString() const override;
 
+    // GC support
+    void enumTraceables(Enumerator const& enumerator) override;
+    void reclaim() override;
+
 private:
-    std::shared_ptr<LoxClass> const _class;
+    std::shared_ptr<LoxClass> _class;
     std::map<std::string, std::shared_ptr<LoxObject>> _fields;
 };
 

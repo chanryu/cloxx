@@ -32,7 +32,7 @@ GarbageCollector::GarbageCollector(std::shared_ptr<Traceable> const& root) : _ro
 
 GarbageCollector::~GarbageCollector()
 {
-    _root->reclaimTraceables();
+    _root->reclaim();
     collect();
 }
 
@@ -71,16 +71,16 @@ size_t GarbageCollector::collect()
     _root->enumTraceables(Marker{});
 
     // Mark & Sweep - Step 3: Reclaim unreachable traceables
-    _weakTraceables.clear();
     for (auto& traceable : traceables) {
         if (!traceable->_isReachable) {
-            traceable->reclaimTraceables();
+            traceable->reclaim();
             traceable.reset();
             collectedCount += 1;
         }
     }
 
     // Epilogue: Rearrange _weakTraceables
+    _weakTraceables.clear();
     for (auto& traceable : traceables) {
         if (traceable) {
             _weakTraceables.push_back(traceable);
