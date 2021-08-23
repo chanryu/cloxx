@@ -88,8 +88,7 @@ def _runTest(path):
     #grayPath = term.gray("($path)")
     #term.writeLine("Passed: ${term.green(_passed)} Failed: ${term.red(_failed)} Skipped: ${term.yellow(_skipped)} $grayPath")
     #print("Passed: {} Failed: {} Skipped: {} {}".format(_passed, _failed, _skipped, path))
-    print("Testing {}".format(path))
-
+    
     # Read the test and parse out the expectations.
     test = Test(path)
 
@@ -188,6 +187,12 @@ class Test:
 
             match = _errorLinePattern.search(line)
             if match is not None:
+                language = match[2];
+                if language is not None or language == "c":
+                    # cloxx works more like jlox then clox.
+                    # if the error is intended for clox then let's skip it
+                    continue
+                
                 this._expectedErrors.add("[line {}] {}".format(match[3], match[4]))
 
                 # If we expect a compile error, it should exit with EX_DATAERR.
