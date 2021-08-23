@@ -3,6 +3,7 @@
 import os
 import re
 import subprocess
+import sys
 
 # Runs the tests.
 
@@ -13,7 +14,6 @@ _expectedErrorPattern = re.compile(r"// (Error.*)")
 _errorLinePattern = re.compile(r"// \[((java|c) )?line (\d+)\] (Error.*)")
 _expectedRuntimeErrorPattern = re.compile(r"// expect runtime error: (.+)")
 _syntaxErrorPattern = re.compile(r"\[.*line (\d+)\] (Error.+)")
-_stackTracePattern = re.compile(r"\[line (\d+)\]")
 _nonTestPattern = re.compile(r"// nontest")
 
 _passed = 0
@@ -25,19 +25,34 @@ _suite = None # Suite
 
 _allSuites = {} # str -> Suite
 
+# Rudimentary ANSI terminal suppoer
+class term:
+    @staticmethod
+    def red(text):
+        return "\033[31m{}\033[0m".format(text)
+    @staticmethod
+    def green(text):
+        return "\033[92m{}\033[0m".format(text)
+    @staticmethod
+    def gray(text):
+        return "\033[30;1m{}\033[0m".format(text)
+    @staticmethod
+    def pink(text):
+        return "\033[31;1m{}\033[0m".format(text)
+    @staticmethod
+    def yellow(text):
+        return "\033[33;1m{}\033[0m".format(text)
+    @staticmethod
+    def clearLine():
+        print("\033[1000D\033[0K", end='')
+    @staticmethod
+    def writeLine(text):
+        print("\033[1000D\033[0K" + text, end='', flush=True)
+
 class Suite:
   def __init__(this, name, tests):
       this.name = name
       this.tests = tests
-
-# def _usageError(parser, message):
-#     print(message)
-#     print("")
-#     print("Usage: test.dart <suites> [filter] [custom interpreter...]")
-#     print("")
-#     print("Optional custom interpreter options:")
-#     print(parser.usage)
-#     exit(1)
 
 def _runSuites(names):
   anyFailed = False
@@ -62,15 +77,11 @@ def _runSuite(name):
             filepath = os.path.join(dirpath, filename)
             _runTest(filepath)
 
-    #term.clearLine()
-    print("")
-
+    term.clearLine()
     if _failed == 0:
-        #print("All ${term.green(_passed)} tests passed ($_expectations expectations).")
-        print("All {} tests passed ({} expectations).".format(_passed, _expectations))
+        print("All {} tests passed ({} expectations).".format(term.green(_passed), _expectations))
     else:
-        #print("${term.green(_passed)} tests passed. ${term.red(_failed)} tests failed.")
-        print("{} tests passed. {} tests failed.".format(_passed, _failed))
+        print("{} tests passed. {} tests failed.".format(term.green(_passed), term.red(_failed)))
 
     return _failed == 0
 
@@ -80,14 +91,8 @@ def _runTest(path):
 
     global _passed, _failed
 
-    # Make a nice short path relative to the working directory. Normalize it to
-    # use "/" since the interpreters expect the argument to use that.
-    #path = os.path.normalize(path)
-
     # Update the status line.
-    #grayPath = term.gray("($path)")
-    #term.writeLine("Passed: ${term.green(_passed)} Failed: ${term.red(_failed)} Skipped: ${term.yellow(_skipped)} $grayPath")
-    #print("Passed: {} Failed: {} Skipped: {} {}".format(_passed, _failed, _skipped, path))
+    term.writeLine("Passed: {} Failed: {} Skipped: {} {}".format(term.green(_passed), term.red(_failed), term.yellow(_skipped), term.gray(path)))
     
     # Read the test and parse out the expectations.
     test = Test(path)
@@ -103,12 +108,10 @@ def _runTest(path):
         _passed += 1
     else:
         _failed += 1
-        #term.writeLine("${term.red("FAIL")} $path")
-        print("FAIL {}".format(path))
+        print("{} {}".format(term.red("FAIL"), path))
         print("")
         for failure in failures:
-            #print("     ${term.pink(failure)}")
-            print("     {}".format(failure))
+            print("     {}".format(term.pink(failure)))
         print("")
 
 class ExpectedOutput:
@@ -126,9 +129,6 @@ class Test:
 
         # The expected runtime error message or `null` if there should not be one.
         this._expectedRuntimeError = None
-
-        # If there is an expected runtime error, the line it should occur on.
-        this._runtimeErrorLine = 0
 
         this._expectedExitCode = 0
 
@@ -202,8 +202,6 @@ class Test:
 
             match = _expectedRuntimeErrorPattern.search(line)
             if match is not None:
-                #this._runtimeErrorLine = lineNum
-                #this._expectedRuntimeError = match[1]
                 this._expectedRuntimeError = "[line {}] {}".format(lineNum, match[1])
                 # If we expect a runtime error, it should exit with EX_SOFTWARE.
                 this._expectedExitCode = 70
@@ -246,21 +244,6 @@ class Test:
         if errorLines[0] != this._expectedRuntimeError:
             this._fail("Expected runtime error '{}' and got:".format(this._expectedRuntimeError))
             this._fail(errorLines[0])
-
-        # # Make sure the stack trace has the right line.
-        # match = None
-        # stackLines = errorLines[1:]
-        # for line in stackLines:
-        #     match = _stackTracePattern.search(line)
-        #     if match is not None:
-        #         break
-
-        # if match is None:
-        #     this._fail("Expected stack trace and got:", stackLines)
-        # else:
-        #     stackLine = int.parse(match[1])
-        #     if stackLine != this._runtimeErrorLine:
-        #         this._fail("Expected runtime error on line {} but was on line {}.".format(this._runtimeErrorLine, stackLine))
 
     def _validateCompileErrors(this, errorLines):
         # Validate that every compile error was expected.
@@ -330,48 +313,50 @@ def _merge_dicts(*dicts):
     return result
 
 def _defineTestSuites():
-  # JVM doesn't correctly implement IEEE equality on boxed doubles.
-  javaNaNEquality = {
-    "test/number/nan_equality.lox": "skip",
-  }
+    # JVM doesn't correctly implement IEEE equality on boxed doubles.
+    javaNaNEquality = {
+        "test/number/nan_equality.lox": "skip",
+    }
 
-  # No hardcoded limits in jlox.
-  noJavaLimits = {
-    "test/limit/loop_too_large.lox": "skip",
-    "test/limit/no_reuse_constants.lox": "skip",
-    "test/limit/too_many_constants.lox": "skip",
-    "test/limit/too_many_locals.lox": "skip",
-    "test/limit/too_many_upvalues.lox": "skip",
+    # No hardcoded limits in jlox.
+    noJavaLimits = {
+        "test/limit/loop_too_large.lox": "skip",
+        "test/limit/no_reuse_constants.lox": "skip",
+        "test/limit/too_many_constants.lox": "skip",
+        "test/limit/too_many_locals.lox": "skip",
+        "test/limit/too_many_upvalues.lox": "skip",
 
-    # Rely on JVM for stack overflow checking.
-    "test/limit/stack_overflow.lox": "skip",
-  }
+        # Rely on JVM for stack overflow checking.
+        "test/limit/stack_overflow.lox": "skip",
+    }
 
-  cloxxDiff = {
-    "test/constructor/call_init_explicitly.lox": "skip"
-  }
+    jloxTests = _merge_dicts(
+        { "test": "pass" },
+        javaNaNEquality,
+        noJavaLimits
+    )
 
-  _allSuites["jlox"] = Suite("jlox", _merge_dicts({ "test": "pass" }, javaNaNEquality, noJavaLimits))
-  _allSuites["cloxx"] = Suite("cloxx", _merge_dicts({ "test": "pass" }, javaNaNEquality, noJavaLimits, cloxxDiff))
+    cloxxTests = _merge_dicts(
+        # cloxx behaves pretty much the same as jlox
+        jloxTests,
+
+        # except, cloxx's init always returns nil
+        { "test/constructor/call_init_explicitly.lox": "skip"}
+    )
+
+    _allSuites["cloxx"] = Suite("cloxx", cloxxTests)
+    # more suites can go here...
 
 
 def main():
+    if len(sys.argv) > 2:
+        sys.exit('Usage: {} [suite]'.format(sys.argv[0]))
+    
     _defineTestSuites()
-#   var parser = ArgParser()
-#   var options = parser.parse(arguments)
-#   if options.rest.isEmpty: {
-#     _usageError(parser, "Missing suite name.")
-#   } else if options.rest.length > 1: {
-#     _usageError(
-#         parser, "Unexpected arguments '${options.rest.skip(2).join(' ')}'.")
-#   }
-#   if suite == "all": {
-#    _runSuites(_allSuites.keys.toList())
-#   } else if !_runSuite(suite): {
-#     exit(1)
-#   }
-    #_runSuite("test-test")
-    _runSuite("cloxx")
+    if len(sys.argv) == 2:
+        _runSuite(sys.argv[1])
+    else:
+        _runSuite('cloxx')
 
 if __name__ == '__main__':
     main()
