@@ -187,12 +187,12 @@ class Test:
 
             match = _errorLinePattern.search(line)
             if match is not None:
-                language = match[2];
-                if language is not None or language == "c":
+                language = match[2]
+                if language is not None and language == "c":
                     # cloxx works more like jlox then clox.
                     # if the error is intended for clox then let's skip it
                     continue
-                
+
                 this._expectedErrors.add("[line {}] {}".format(match[3], match[4]))
 
                 # If we expect a compile error, it should exit with EX_DATAERR.
@@ -353,7 +353,6 @@ def _defineTestSuites():
 
   _allSuites["jlox"] = Suite("jlox", _merge_dicts({ "test": "pass" }, javaNaNEquality, noJavaLimits))
   _allSuites["cloxx"] = Suite("cloxx", _merge_dicts({ "test": "pass" }, javaNaNEquality, noJavaLimits, cloxxDiff))
-  _allSuites["test-test"] = Suite("assign-local", { "test" : "skip", "test/constructor/extra_arguments.lox": "pass" })
 
 
 def main():
