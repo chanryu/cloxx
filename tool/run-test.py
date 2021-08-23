@@ -46,22 +46,13 @@ class term:
     def clearLine():
         print("\033[1000D\033[0K", end='')
     @staticmethod
-    def writeLine(text):
+    def updateLine(text):
         print("\033[1000D\033[0K" + text, end='', flush=True)
 
 class Suite:
   def __init__(this, name, tests):
       this.name = name
       this.tests = tests
-
-def _runSuites(names):
-  anyFailed = False
-  for name in names:
-    print("=== {} ===".format(name))
-    if not _runSuite(name):
-        anyFailed = True
-  if anyFailed:
-      exit(1)
 
 def _runSuite(name):
     global _suite, _passed, _failed, _skipped, _expectations
@@ -71,6 +62,8 @@ def _runSuite(name):
     _failed = 0
     _skipped = 0
     _expectations = 0
+
+    print("=== Suite: {} ===".format(name))
 
     for (dirpath, _, filenames) in os.walk("test"):
         for filename in filenames:
@@ -92,7 +85,7 @@ def _runTest(path):
     global _passed, _failed
 
     # Update the status line.
-    term.writeLine("Passed: {} Failed: {} Skipped: {} {}".format(term.green(_passed), term.red(_failed), term.yellow(_skipped), term.gray(path)))
+    term.updateLine("Passed: {} Failed: {} Skipped: {} {}".format(term.green(_passed), term.red(_failed), term.yellow(_skipped), term.gray(path)))
     
     # Read the test and parse out the expectations.
     test = Test(path)
@@ -108,8 +101,8 @@ def _runTest(path):
         _passed += 1
     else:
         _failed += 1
+        term.clearLine()
         print("{} {}".format(term.red("FAIL"), path))
-        print("")
         for failure in failures:
             print("     {}".format(term.pink(failure)))
         print("")
