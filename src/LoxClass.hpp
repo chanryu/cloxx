@@ -3,7 +3,7 @@
 #include <map>
 
 #include "GC.hpp"
-#include "LoxObject.hpp"
+#include "LoxCallable.hpp"
 
 namespace cloxx {
 
