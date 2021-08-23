@@ -9,6 +9,12 @@ $ script/configure.sh
 $ script/build.sh
 ```
 
+## How to run test suite
+
+```
+$ tool/run-test.py
+```
+
 ## How to contribute
 
-No, you don't want that.
+No, you don't.
