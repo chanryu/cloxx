@@ -88,6 +88,7 @@ def _runTest(path):
     #grayPath = term.gray("($path)")
     #term.writeLine("Passed: ${term.green(_passed)} Failed: ${term.red(_failed)} Skipped: ${term.yellow(_skipped)} $grayPath")
     #print("Passed: {} Failed: {} Skipped: {} {}".format(_passed, _failed, _skipped, path))
+    print("Testing {}".format(path))
 
     # Read the test and parse out the expectations.
     test = Test(path)
@@ -178,7 +179,7 @@ class Test:
 
             match = _expectedErrorPattern.search(line)
             if match is not None:
-                this._expectedErrors.add("[{}] {}".format(lineNum, match[1]))
+                this._expectedErrors.add("[line {}] {}".format(lineNum, match[1]))
 
                 # If we expect a compile error, it should exit with EX_DATAERR.
                 this._expectedExitCode = 65
@@ -187,7 +188,7 @@ class Test:
 
             match = _errorLinePattern.search(line)
             if match is not None:
-                this._expectedErrors.add("[{}] {}".format(match[3], match[4]))
+                this._expectedErrors.add("[line {}] {}".format(match[3], match[4]))
 
                 # If we expect a compile error, it should exit with EX_DATAERR.
                 this._expectedExitCode = 65
@@ -196,8 +197,9 @@ class Test:
 
             match = _expectedRuntimeErrorPattern.search(line)
             if match is not None:
-                this._runtimeErrorLine = lineNum
-                this._expectedRuntimeError = match[1]
+                #this._runtimeErrorLine = lineNum
+                #this._expectedRuntimeError = match[1]
+                this._expectedRuntimeError = "[line {}] {}".format(lineNum, match[1])
                 # If we expect a runtime error, it should exit with EX_SOFTWARE.
                 this._expectedExitCode = 70
                 _expectations += 1
@@ -215,11 +217,11 @@ class Test:
     def run(this):
         global _executable
 
-        result = subprocess.run([_executable, this._path], stdout=subprocess.PIPE)
+        result = subprocess.run([_executable, this._path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Normalize Windows line endings.
-        outputLines = [] if result.stdout is None else result.stdout.decode('utf-8').split('\n')
-        errorLines = [] if result.stderr is None else result.stderr.decode('utf-8').split('\n')
+        outputLines = result.stdout.decode('utf-8').split('\n')
+        errorLines = result.stderr.decode('utf-8').split('\n')
 
         # Validate that an expected runtime error occurred.
         if this._expectedRuntimeError is not None:
@@ -240,20 +242,20 @@ class Test:
             this._fail("Expected runtime error '{}' and got:".format(this._expectedRuntimeError))
             this._fail(errorLines[0])
 
-        # Make sure the stack trace has the right line.
-        match = None
-        stackLines = errorLines.sublist(1)
-        for line in stackLines:
-            match = _stackTracePattern.search(line)
-            if match is not None:
-                break
+        # # Make sure the stack trace has the right line.
+        # match = None
+        # stackLines = errorLines[1:]
+        # for line in stackLines:
+        #     match = _stackTracePattern.search(line)
+        #     if match is not None:
+        #         break
 
-        if match is None:
-            this._fail("Expected stack trace and got:", stackLines)
-        else:
-            stackLine = int.parse(match[1])
-            if stackLine != this._runtimeErrorLine:
-                this._fail("Expected runtime error on line {} but was on line {}.".format(this._runtimeErrorLine, stackLine))
+        # if match is None:
+        #     this._fail("Expected stack trace and got:", stackLines)
+        # else:
+        #     stackLine = int.parse(match[1])
+        #     if stackLine != this._runtimeErrorLine:
+        #         this._fail("Expected runtime error on line {} but was on line {}.".format(this._runtimeErrorLine, stackLine))
 
     def _validateCompileErrors(this, errorLines):
         # Validate that every compile error was expected.
@@ -262,9 +264,9 @@ class Test:
         for line in errorLines:
             match = _syntaxErrorPattern.search(line)
             if match is not None:
-                error = "[{}] {}".format(match[1], match[2])
+                error = "[line {}] {}".format(match[1], match[2])
                 if error in this._expectedErrors:
-                    foundErrors.append(error)
+                    foundErrors.add(error)
                 else:
                     if unexpectedCount < 10:
                         this._fail("Unexpected error:")
@@ -288,8 +290,8 @@ class Test:
         if len(errorLines) > 10:
             errorLines = errorLines[0, 10]
             errorLines.append("(truncated...)")
-        this._fail("Expected return code {} and got {}. Stderr:".format(this._expectedExitCode, exitCode),
-                  errorLines)
+            this._fail("Expected return code {} and got {}. Stderr:".format(this._expectedExitCode, exitCode),
+                    errorLines)
 
     def _validateOutput(this, outputLines):
         # Remove the trailing last empty line.
@@ -340,8 +342,13 @@ def _defineTestSuites():
     "test/limit/stack_overflow.lox": "skip",
   }
 
+  cloxxDiff = {
+    "test/constructor/call_init_explicitly.lox": "skip"
+  }
+
   _allSuites["jlox"] = Suite("jlox", _merge_dicts({ "test": "pass" }, javaNaNEquality, noJavaLimits))
-  _allSuites["test-test"] = Suite("assign-local", { "test" : "skip", "test/assignment/local.lox": "pass" })
+  _allSuites["cloxx"] = Suite("cloxx", _merge_dicts({ "test": "pass" }, javaNaNEquality, noJavaLimits, cloxxDiff))
+  _allSuites["test-test"] = Suite("assign-local", { "test" : "skip", "test/constructor/extra_arguments.lox": "pass" })
 
 
 def main():
@@ -359,7 +366,8 @@ def main():
 #   } else if !_runSuite(suite): {
 #     exit(1)
 #   }
-    _runSuite("jlox")
+    #_runSuite("test-test")
+    _runSuite("cloxx")
 
 if __name__ == '__main__':
     main()
