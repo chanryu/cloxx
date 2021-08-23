@@ -61,7 +61,9 @@ struct Token {
 
     Token(Type type, std::string lexeme, std::shared_ptr<LoxObject> const& literal, size_t line);
 
+#ifndef NDEBUG
     std::string toString() const;
+#endif
 
     Type const type;
     std::string const lexeme;
