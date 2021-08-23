@@ -36,6 +36,8 @@ public:
 private:
     void report(size_t line, std::string_view where, std::string_view message);
 
+    void defineBuiltins();
+
     bool _hadError = false;
     bool _hadRuntimeError = false;
 

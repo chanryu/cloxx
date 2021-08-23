@@ -55,7 +55,7 @@ std::shared_ptr<LoxObject> LoxFunction::call(std::vector<std::shared_ptr<LoxObje
     return _executor(env, _body);
 }
 
-void LoxFunction::enumTraceables(Traceable::Enumerator const& enumerator)
+void LoxFunction::enumerateTraceables(Traceable::Enumerator const& enumerator)
 {
     LOX_ASSERT(_closure);
     enumerator.enumerate(*_closure);

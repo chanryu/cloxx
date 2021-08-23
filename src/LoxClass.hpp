@@ -23,7 +23,7 @@ public:
     std::shared_ptr<LoxObject> call(std::vector<std::shared_ptr<LoxObject>> const& args) override;
 
     // GC support
-    void enumTraceables(Traceable::Enumerator const& enumerator) override;
+    void enumerateTraceables(Traceable::Enumerator const& enumerator) override;
     void reclaim() override;
 
 private:

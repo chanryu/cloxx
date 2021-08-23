@@ -25,7 +25,7 @@ public:
     void assignAt(size_t distance, std::string const& name, std::shared_ptr<LoxObject> const& value);
 
     // GC support
-    void enumTraceables(Traceable::Enumerator const& enumerator) override;
+    void enumerateTraceables(Traceable::Enumerator const& enumerator) override;
     void reclaim() override;
 
 private:

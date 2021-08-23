@@ -36,7 +36,7 @@ std::string LoxInstance::toString() const
     return _class->toString() + " instance";
 }
 
-void LoxInstance::enumTraceables(Enumerator const& enumerator)
+void LoxInstance::enumerateTraceables(Enumerator const& enumerator)
 {
     enumerator.enumerate(*_class);
 

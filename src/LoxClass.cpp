@@ -49,7 +49,7 @@ std::shared_ptr<LoxObject> LoxClass::call(std::vector<std::shared_ptr<LoxObject>
     return instance;
 }
 
-void LoxClass::enumTraceables(Traceable::Enumerator const& enumerator)
+void LoxClass::enumerateTraceables(Traceable::Enumerator const& enumerator)
 {
     if (_superclass) {
         enumerator.enumerate(*_superclass);

@@ -1,8 +1,10 @@
 #include "Lox.hpp"
 
+#include "Assert.hpp"
 #include "GC.hpp"
 #include "Interpreter.hpp"
 #include "LoxFunction.hpp"
+#include "LoxNativeFunction.hpp"
 #include "Parser.hpp"
 #include "Resolver.hpp"
 #include "RuntimeError.hpp"
@@ -26,6 +28,9 @@ int Lox::run(std::string source)
     if (_hadError) {
         return 65;
     }
+
+    // Define built-in global object such as "clock"
+    defineBuiltins();
 
     Interpreter interpreter{this, _globals};
 
@@ -89,6 +94,17 @@ void Lox::report(size_t line, std::string_view where, std::string_view message)
     std::cerr << message << '\n';
 
     _hadError = true;
+}
+
+void Lox::defineBuiltins()
+{
+    LOX_ASSERT(_globals);
+
+    _globals->define("clock", std::make_shared<LoxNativeFunction>(0, [](auto& /*args*/) {
+                         auto duration = std::chrono::steady_clock::now().time_since_epoch();
+                         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+                         return toLoxNumber(millis / 1000.0);
+                     }));
 }
 
 } // namespace cloxx

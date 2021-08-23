@@ -64,11 +64,11 @@ size_t GarbageCollector::collect()
         {
             if (!traceable._isReachable) {
                 traceable._isReachable = true;
-                traceable.enumTraceables(*this);
+                traceable.enumerateTraceables(*this);
             }
         }
     };
-    _root->enumTraceables(Marker{});
+    _root->enumerateTraceables(Marker{});
 
     // Mark & Sweep - Step 3: Reclaim unreachable traceables
     for (auto& traceable : traceables) {

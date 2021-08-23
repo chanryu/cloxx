@@ -8,7 +8,6 @@
 #include "LoxClass.hpp"
 #include "LoxFunction.hpp"
 #include "LoxInstance.hpp"
-#include "LoxNativeFunction.hpp"
 #include "RuntimeError.hpp"
 
 namespace cloxx {
@@ -46,13 +45,7 @@ struct OperandErrorMessage<LoxString, N> {
 
 Interpreter::Interpreter(Lox* lox, std::shared_ptr<Environment> const& globals)
     : _lox{lox}, _globals{globals}, _environment{globals}
-{
-    _globals->define("clock", std::make_shared<LoxNativeFunction>(0, [](auto& /*args*/) {
-                         auto duration = std::chrono::steady_clock::now().time_since_epoch();
-                         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-                         return toLoxNumber(millis / 1000.0);
-                     }));
-}
+{}
 
 void Interpreter::interpret(std::vector<std::shared_ptr<Stmt>> const& stmts)
 {

@@ -20,7 +20,7 @@ public:
     std::string toString() const override;
 
     // GC support
-    void enumTraceables(Enumerator const& enumerator) override;
+    void enumerateTraceables(Enumerator const& enumerator) override;
     void reclaim() override;
 
 private:

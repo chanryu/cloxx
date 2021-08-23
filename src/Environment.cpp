@@ -79,7 +79,7 @@ Environment* Environment::ancestor(size_t distance)
     return environment;
 }
 
-void Environment::enumTraceables(Traceable::Enumerator const& enumerator)
+void Environment::enumerateTraceables(Traceable::Enumerator const& enumerator)
 {
     if (_enclosing) {
         enumerator.enumerate(*_enclosing);

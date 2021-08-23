@@ -21,7 +21,7 @@ public:
         virtual void enumerate(Traceable& traceable) const = 0;
     };
 
-    virtual void enumTraceables(Enumerator const& enumerator) = 0;
+    virtual void enumerateTraceables(Enumerator const& enumerator) = 0;
     virtual void reclaim() = 0;
 
 private:
