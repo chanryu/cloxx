@@ -10,6 +10,7 @@ __cloxx__ implements the following features:
 ## How to build cloxx
 
 ```
+$ script/bootstrap.sh
 $ script/configure.sh
 $ script/build.sh
 ```

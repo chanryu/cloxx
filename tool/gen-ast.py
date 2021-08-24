@@ -123,7 +123,6 @@ if __name__ == '__main__':
         sys.exit('Usage: ' + __file__ + ' dirpath')
 
     outputDir = sys.argv[1]
-    print(outputDir)
 
     _generateAst(outputDir, ['Token.hpp'], 'Expr', [
         "Assign   : Token name, Expr value",
