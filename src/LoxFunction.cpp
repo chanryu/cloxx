@@ -49,7 +49,7 @@ std::shared_ptr<LoxObject> LoxFunction::call(std::vector<std::shared_ptr<LoxObje
 
     if (_isInitializer) {
         _executor(env, _body);
-        return makeLoxNil();
+        return _closure->getAt(0, "this");
     }
 
     return _executor(env, _body);
