@@ -10,6 +10,7 @@
 #include "RuntimeError.hpp"
 #include "Scanner.hpp"
 
+#include <chrono> // for clock() native function
 #include <iostream>
 
 namespace cloxx {
