@@ -13,8 +13,8 @@ struct Token;
 
 class Environment : public Traceable {
 public:
-    Environment() = default;
-    explicit Environment(std::shared_ptr<Environment> const& enclosing);
+    Environment(Traceable::CreationTag);
+    Environment(Traceable::CreationTag, std::shared_ptr<Environment> const& enclosing);
 
     void define(std::string const& name, std::shared_ptr<LoxObject> const& value);
 

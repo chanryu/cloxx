@@ -1,6 +1,7 @@
 #include "GC.hpp"
 
 #include "Assert.hpp"
+#include "Environment.hpp"
 
 namespace cloxx {
 
@@ -8,12 +9,16 @@ namespace cloxx {
 namespace {
 size_t traceableInstanceCount = 0;
 }
+#endif
 
-Traceable::Traceable()
+Traceable::Traceable(CreationTag)
 {
+#ifndef NDEBUG
     traceableInstanceCount++;
+#endif
 }
 
+#ifndef NDEBUG
 Traceable::~Traceable()
 {
     traceableInstanceCount--;
@@ -25,20 +30,20 @@ size_t Traceable::instanceCount()
 }
 #endif
 
-GarbageCollector::GarbageCollector(std::shared_ptr<Traceable> const& root) : _root{root}
+GarbageCollector::GarbageCollector()
 {
-    LOX_ASSERT(_root);
+    _root = create<Environment>();
 }
 
 GarbageCollector::~GarbageCollector()
 {
-    _root->reclaim();
+    _root.reset();
     collect();
 }
 
-void GarbageCollector::addTraceable(std::shared_ptr<Traceable> const& traceable)
+std::shared_ptr<Environment> const& GarbageCollector::root()
 {
-    _weakTraceables.push_back(traceable);
+    return _root;
 }
 
 size_t GarbageCollector::collect()
@@ -59,16 +64,18 @@ size_t GarbageCollector::collect()
     }
 
     // Mark & Sweep - Step 2: Mark all reachable traceables
-    struct Marker : Traceable::Enumerator {
-        void enumerate(Traceable& traceable) const override
-        {
-            if (!traceable._isReachable) {
-                traceable._isReachable = true;
-                traceable.enumerateTraceables(*this);
+    if (_root) {
+        struct Marker : Traceable::Enumerator {
+            void enumerate(Traceable& traceable) const override
+            {
+                if (!traceable._isReachable) {
+                    traceable._isReachable = true;
+                    traceable.enumerateTraceables(*this);
+                }
             }
-        }
-    };
-    _root->enumerateTraceables(Marker{});
+        };
+        Marker{}.enumerate(*_root);
+    }
 
     // Mark & Sweep - Step 3: Reclaim unreachable traceables
     for (auto& traceable : traceables) {

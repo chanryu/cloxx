@@ -4,6 +4,7 @@
 #include <iostream> // for print statement
 
 #include "Assert.hpp"
+#include "GC.hpp"
 #include "Lox.hpp"
 #include "LoxClass.hpp"
 #include "LoxFunction.hpp"
@@ -43,8 +44,8 @@ struct OperandErrorMessage<LoxString, N> {
 
 } // namespace
 
-Interpreter::Interpreter(Lox* lox, std::shared_ptr<Environment> const& globals)
-    : _lox{lox}, _globals{globals}, _environment{globals}
+Interpreter::Interpreter(Lox* lox, GarbageCollector* gc)
+    : _lox{lox}, _gc{gc}, _globals{gc->root()}, _environment{_globals}
 {}
 
 void Interpreter::interpret(std::vector<std::shared_ptr<Stmt>> const& stmts)
@@ -69,7 +70,7 @@ void Interpreter::resolve(Expr const& expr, size_t depth)
 
 void Interpreter::visit(BlockStmt const& stmt)
 {
-    auto blockEnv = _lox->create<Environment>(_environment);
+    auto blockEnv = _gc->create<Environment>(_environment);
     executeBlock(stmt.stmts, blockEnv);
 }
 
@@ -148,7 +149,7 @@ void Interpreter::visit(ClassStmt const& stmt)
 
     auto enclosingEnvironment = _environment;
     if (superclass) {
-        _environment = _lox->create<Environment>(_environment);
+        _environment = _gc->create<Environment>(_environment);
         _environment->define("super", superclass);
     }
 
@@ -159,7 +160,7 @@ void Interpreter::visit(ClassStmt const& stmt)
         methods.emplace(method->name.lexeme, function);
     }
 
-    auto klass = _lox->create<LoxClass>(_lox, stmt.name.lexeme, superclass, methods);
+    auto klass = _gc->create<LoxClass>(_gc, stmt.name.lexeme, superclass, methods);
 
     if (superclass) {
         _environment = enclosingEnvironment;
@@ -484,7 +485,7 @@ std::shared_ptr<LoxFunction> Interpreter::makeFunction(bool isInitializer, Token
         return makeLoxNil();
     };
 
-    return _lox->create<LoxFunction>(_lox, _environment, isInitializer, name, params, body, executor);
+    return _gc->create<LoxFunction>(_gc, _environment, isInitializer, name, params, body, executor);
 }
 
 } // namespace cloxx

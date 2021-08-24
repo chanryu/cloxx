@@ -14,9 +14,11 @@ class Lox;
 class LoxObject;
 class LoxFunction;
 
+class GarbageCollector;
+
 class Interpreter : StmtVisitor, ExprVisitor {
 public:
-    explicit Interpreter(Lox* lox, std::shared_ptr<Environment> const& globals);
+    Interpreter(Lox* lox, GarbageCollector* gc);
 
     void interpret(std::vector<std::shared_ptr<Stmt>> const& stmts);
     void resolve(Expr const& expr, size_t depth);
@@ -74,6 +76,7 @@ private:
     };
 
     Lox* const _lox;
+    GarbageCollector* const _gc;
     std::shared_ptr<Environment> _globals;
     std::shared_ptr<Environment> _environment;
 

@@ -11,8 +11,6 @@
 
 namespace cloxx {
 
-class Lox;
-
 class Stmt;
 class Environment;
 class LoxInstance;
@@ -22,9 +20,9 @@ public:
     using Executor = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<Environment> const&,
                                                               std::vector<std::shared_ptr<Stmt>> const&)>;
 
-    LoxFunction(Lox* lox, std::shared_ptr<Environment> const& closure, bool isInitializer, Token const& name,
-                std::vector<Token> const& params, std::vector<std::shared_ptr<Stmt>> const& body,
-                Executor const& executor);
+    LoxFunction(Traceable::CreationTag tag, GarbageCollector* gc, std::shared_ptr<Environment> const& closure,
+                bool isInitializer, Token const& name, std::vector<Token> const& params,
+                std::vector<std::shared_ptr<Stmt>> const& body, Executor const& executor);
 
     std::shared_ptr<LoxFunction> bind(std::shared_ptr<LoxInstance> const& instance) const;
 
@@ -38,7 +36,7 @@ public:
     void reclaim() override;
 
 private:
-    Lox* const _lox;
+    GarbageCollector* const _gc;
 
     std::shared_ptr<Environment> _closure;
 

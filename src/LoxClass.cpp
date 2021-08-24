@@ -6,9 +6,10 @@
 
 namespace cloxx {
 
-LoxClass::LoxClass(Lox* lox, std::string name, std::shared_ptr<LoxClass> const& superclass,
+LoxClass::LoxClass(Traceable::CreationTag tag, GarbageCollector* gc, std::string name,
+                   std::shared_ptr<LoxClass> const& superclass,
                    std::map<std::string, std::shared_ptr<LoxFunction>> methods)
-    : _lox{lox}, _name{std::move(name)}, _superclass{superclass}, _methods{std::move(methods)}
+    : Traceable{tag}, _gc{gc}, _name{std::move(name)}, _superclass{superclass}, _methods{std::move(methods)}
 {}
 
 std::shared_ptr<LoxFunction> LoxClass::findMethod(std::string const& name) const
@@ -40,7 +41,7 @@ size_t LoxClass::arity() const
 
 std::shared_ptr<LoxObject> LoxClass::call(std::vector<std::shared_ptr<LoxObject>> const& args)
 {
-    auto instance = _lox->create<LoxInstance>(shared_from_this());
+    auto instance = _gc->create<LoxInstance>(shared_from_this());
 
     if (auto initializer = findMethod("init")) {
         initializer->bind(instance)->call(args);

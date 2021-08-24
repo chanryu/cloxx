@@ -7,7 +7,11 @@
 
 namespace cloxx {
 
-Environment::Environment(std::shared_ptr<Environment> const& enclosing) : _enclosing{enclosing}
+Environment::Environment(Traceable::CreationTag tag) : Traceable{tag}
+{}
+
+Environment::Environment(Traceable::CreationTag tag, std::shared_ptr<Environment> const& enclosing)
+    : Traceable{tag}, _enclosing{enclosing}
 {}
 
 void Environment::define(std::string const& name, std::shared_ptr<LoxObject> const& value)

@@ -8,7 +8,8 @@
 
 namespace cloxx {
 
-LoxInstance::LoxInstance(std::shared_ptr<LoxClass> const& klass) : _class{klass}
+LoxInstance::LoxInstance(Traceable::CreationTag tag, std::shared_ptr<LoxClass> const& klass)
+    : Traceable{tag}, _class{klass}
 {
     LOX_ASSERT(_class);
 }

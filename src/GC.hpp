@@ -5,12 +5,19 @@
 
 namespace cloxx {
 
+class Environment;
 class GarbageCollector;
 
 class Traceable {
 public:
+    class CreationTag {
+        friend class Lox; // only Lox can create
+        CreationTag() = default;
+    };
+
+    Traceable(CreationTag);
+
 #ifndef NDEBUG
-    Traceable();
     virtual ~Traceable();
     static size_t instanceCount();
 #else
@@ -31,15 +38,23 @@ private:
 
 class GarbageCollector {
 public:
-    explicit GarbageCollector(std::shared_ptr<Traceable> const& root);
+    GarbageCollector();
     ~GarbageCollector();
 
-    void addTraceable(std::shared_ptr<Traceable> const& traceable);
+    template <typename T, typename... Args>
+    std::shared_ptr<T> create(Args&&... args)
+    {
+        auto traceable = std::make_shared<T>(Traceable::CreationTag{}, std::forward<Args>(args)...);
+        _weakTraceables.push_back(traceable);
+        return traceable;
+    }
+
+    std::shared_ptr<Environment> const& root();
 
     size_t collect();
 
 private:
-    std::shared_ptr<Traceable> _root;
+    std::shared_ptr<Environment> _root;
     std::vector<std::weak_ptr<Traceable>> _weakTraceables;
 };
 
