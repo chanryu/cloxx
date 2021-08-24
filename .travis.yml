@@ -3,6 +3,7 @@ dist: bionic
 compiler: gcc
 
 script:
+  - cd "$TRAVIS_BUILD_DIR"
   - ./script/configure.sh
   - ./script/gen-ast.sh
   - ./script/build.sh
