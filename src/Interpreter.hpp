@@ -14,9 +14,11 @@ class Lox;
 class LoxObject;
 class LoxFunction;
 
+class GarbageCollector;
+
 class Interpreter : StmtVisitor, ExprVisitor {
 public:
-    explicit Interpreter(Lox* lox);
+    Interpreter(Lox* lox, GarbageCollector* gc);
 
     void interpret(std::vector<std::shared_ptr<Stmt>> const& stmts);
     void resolve(Expr const& expr, size_t depth);
@@ -67,15 +69,16 @@ private:
                         std::shared_ptr<LoxObject> const& right, Callback&& callback);
 
     std::shared_ptr<LoxFunction> makeFunction(bool isInitializer, Token const& name, std::vector<Token> const params,
-                                              std::vector<std::shared_ptr<Stmt>> const& block);
+                                              std::vector<std::shared_ptr<Stmt>> const& body);
 
     struct ReturnValue {
         std::shared_ptr<LoxObject> object;
     };
 
     Lox* const _lox;
-    std::shared_ptr<Environment> const _globals = std::make_shared<Environment>();
-    std::shared_ptr<Environment> _environment = _globals;
+    GarbageCollector* const _gc;
+    std::shared_ptr<Environment> _globals;
+    std::shared_ptr<Environment> _environment;
 
     std::map<Expr const*, /*depth*/ size_t> _locals;
 

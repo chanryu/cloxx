@@ -4,8 +4,8 @@
 
 namespace cloxx {
 
+#ifndef NDEBUG
 namespace {
-
 #define LOX_TOKEN_NAME_CASE(name)                                                                                      \
     case Token::Type::name:                                                                                            \
         return #name
@@ -65,11 +65,13 @@ char const* getTokenName(Token::Type tokenType)
     return "";
 }
 } // namespace
+#endif
 
 Token::Token(Type type, std::string lexeme, std::shared_ptr<LoxObject> const& literal, size_t line)
     : type{type}, lexeme{std::move(lexeme)}, literal{literal}, line{line}
 {}
 
+#ifndef NDEBUG
 std::string Token::toString() const
 {
     std::ostringstream oss;
@@ -82,5 +84,6 @@ std::string Token::toString() const
 
     return oss.str();
 }
+#endif
 
 } // namespace cloxx

@@ -4,6 +4,27 @@ namespace cloxx {
 
 // LoxObject
 
+#ifdef CLOXX_GC_DEBUG
+namespace {
+size_t objectInstanceCount = 0;
+}
+
+LoxObject::LoxObject()
+{
+    objectInstanceCount += 1;
+}
+
+LoxObject::~LoxObject()
+{
+    objectInstanceCount -= 1;
+}
+
+size_t LoxObject::instanceCount()
+{
+    return objectInstanceCount;
+}
+#endif
+
 bool LoxObject::isTruthy() const
 {
     return true;

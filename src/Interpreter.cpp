@@ -4,6 +4,7 @@
 #include <iostream> // for print statement
 
 #include "Assert.hpp"
+#include "GC.hpp"
 #include "Lox.hpp"
 #include "LoxClass.hpp"
 #include "LoxFunction.hpp"
@@ -43,14 +44,9 @@ struct OperandErrorMessage<LoxString, N> {
 
 } // namespace
 
-Interpreter::Interpreter(Lox* lox) : _lox{lox}
-{
-    _globals->define("clock", std::make_shared<LoxNativeFunction>(0, [](auto& /*args*/) {
-                         auto duration = std::chrono::steady_clock::now().time_since_epoch();
-                         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-                         return toLoxNumber(millis / 1000.0);
-                     }));
-}
+Interpreter::Interpreter(Lox* lox, GarbageCollector* gc)
+    : _lox{lox}, _gc{gc}, _globals{gc->root()}, _environment{_globals}
+{}
 
 void Interpreter::interpret(std::vector<std::shared_ptr<Stmt>> const& stmts)
 {
@@ -74,7 +70,8 @@ void Interpreter::resolve(Expr const& expr, size_t depth)
 
 void Interpreter::visit(BlockStmt const& stmt)
 {
-    executeBlock(stmt.stmts, std::make_shared<Environment>(_environment));
+    auto blockEnv = _gc->create<Environment>(_environment);
+    executeBlock(stmt.stmts, blockEnv);
 }
 
 void Interpreter::visit(ExprStmt const& stmt)
@@ -152,7 +149,7 @@ void Interpreter::visit(ClassStmt const& stmt)
 
     auto enclosingEnvironment = _environment;
     if (superclass) {
-        _environment = std::make_shared<Environment>(_environment);
+        _environment = _gc->create<Environment>(_environment);
         _environment->define("super", superclass);
     }
 
@@ -163,7 +160,7 @@ void Interpreter::visit(ClassStmt const& stmt)
         methods.emplace(method->name.lexeme, function);
     }
 
-    auto klass = std::make_shared<LoxClass>(stmt.name.lexeme, superclass, methods);
+    auto klass = _gc->create<LoxClass>(_gc, stmt.name.lexeme, superclass, methods);
 
     if (superclass) {
         _environment = enclosingEnvironment;
@@ -475,11 +472,12 @@ void Interpreter::ensureOperands(Token const& op, std::shared_ptr<LoxObject> con
 
 std::shared_ptr<LoxFunction> Interpreter::makeFunction(bool isInitializer, Token const& name,
                                                        std::vector<Token> const params,
-                                                       std::vector<std::shared_ptr<Stmt>> const& block)
+                                                       std::vector<std::shared_ptr<Stmt>> const& body)
 {
-    LoxFunction::Body body = [this, block](std::shared_ptr<Environment> const& env) -> std::shared_ptr<LoxObject> {
+    auto executor = [this](std::shared_ptr<Environment> const& env,
+                           std::vector<std::shared_ptr<Stmt>> const& stmts) -> std::shared_ptr<LoxObject> {
         try {
-            executeBlock(block, env);
+            executeBlock(stmts, env);
         }
         catch (ReturnValue& retVal) {
             return retVal.object;
@@ -487,7 +485,7 @@ std::shared_ptr<LoxFunction> Interpreter::makeFunction(bool isInitializer, Token
         return makeLoxNil();
     };
 
-    return std::make_shared<LoxFunction>(isInitializer, _environment, name, params, std::move(body));
+    return _gc->create<LoxFunction>(_gc, _environment, isInitializer, name, params, body, executor);
 }
 
 } // namespace cloxx

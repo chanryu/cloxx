@@ -2,7 +2,12 @@
 #include <iostream>
 #include <streambuf>
 
+#include "Assert.hpp"
+#include "GC.hpp"
 #include "Lox.hpp"
+#include "LoxObject.hpp"
+
+using namespace cloxx;
 
 int main(int argc, char const* argv[])
 {
@@ -19,5 +24,16 @@ int main(int argc, char const* argv[])
 
     std::string source{std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()};
 
-    return cloxx::Lox{}.run(source);
+    int result;
+    {
+        Lox lox;
+        result = lox.run(source);
+    }
+
+#ifdef CLOXX_GC_DEBUG
+    LOX_ASSERT(LoxObject::instanceCount() == 0);
+    LOX_ASSERT(Traceable::instanceCount() == 0);
+#endif
+
+    return result;
 }

@@ -7,7 +7,11 @@
 
 namespace cloxx {
 
-Environment::Environment(std::shared_ptr<Environment> const& enclosing) : _enclosing{enclosing}
+Environment::Environment(PrivateCreationTag tag) : Traceable{tag}
+{}
+
+Environment::Environment(PrivateCreationTag tag, std::shared_ptr<Environment> const& enclosing)
+    : Traceable{tag}, _enclosing{enclosing}
 {}
 
 void Environment::define(std::string const& name, std::shared_ptr<LoxObject> const& value)
@@ -77,6 +81,25 @@ Environment* Environment::ancestor(size_t distance)
         LOX_ASSERT(environment);
     }
     return environment;
+}
+
+void Environment::enumerateTraceables(Traceable::Enumerator const& enumerator)
+{
+    if (_enclosing) {
+        enumerator.enumerate(*_enclosing);
+    }
+
+    for (auto& [_, value] : _values) {
+        if (auto traceable = dynamic_cast<Traceable*>(value.get())) {
+            enumerator.enumerate(*traceable);
+        }
+    }
+}
+
+void Environment::reclaim()
+{
+    _enclosing.reset();
+    _values.clear();
 }
 
 } // namespace cloxx

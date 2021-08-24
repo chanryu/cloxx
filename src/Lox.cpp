@@ -1,12 +1,33 @@
 #include "Lox.hpp"
 
+#include "Assert.hpp"
+#include "GC.hpp"
 #include "Interpreter.hpp"
+#include "LoxFunction.hpp"
+#include "LoxNativeFunction.hpp"
 #include "Parser.hpp"
 #include "Resolver.hpp"
 #include "RuntimeError.hpp"
 #include "Scanner.hpp"
 
+#include <iostream>
+
 namespace cloxx {
+
+namespace {
+void defineBuiltins(std::shared_ptr<Environment> const& env)
+{
+    LOX_ASSERT(env);
+    env->define("clock", std::make_shared<LoxNativeFunction>(0, [](auto& /*args*/) {
+                    auto duration = std::chrono::steady_clock::now().time_since_epoch();
+                    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+                    return toLoxNumber(millis / 1000.0);
+                }));
+}
+} // namespace
+
+Lox::Lox()
+{}
 
 int Lox::run(std::string source)
 {
@@ -20,7 +41,12 @@ int Lox::run(std::string source)
         return 65;
     }
 
-    Interpreter interpreter{this};
+    GarbageCollector gc;
+
+    // Define built-in global object such as "clock"
+    defineBuiltins(gc.root());
+
+    Interpreter interpreter{this, &gc};
 
     Resolver resolver{this, &interpreter};
     resolver.resolve(stmts);
@@ -30,7 +56,14 @@ int Lox::run(std::string source)
         return 65;
     }
 
+#if 0
     interpreter.interpret(stmts);
+#else
+    for (auto const& stmt : stmts) {
+        interpreter.interpret({stmt});
+        gc.collect();
+    }
+#endif
 
     // Indicate a run-time error in the exit code.
     if (_hadRuntimeError) {

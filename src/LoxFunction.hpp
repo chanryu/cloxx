@@ -5,7 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "LoxObject.hpp"
+#include "GC.hpp"
+#include "LoxCallable.hpp"
 #include "Token.hpp"
 
 namespace cloxx {
@@ -14,12 +15,14 @@ class Stmt;
 class Environment;
 class LoxInstance;
 
-class LoxFunction : public LoxCallable {
+class LoxFunction : public LoxCallable, public Traceable {
 public:
-    using Body = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<Environment> const&)>;
+    using Executor = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<Environment> const&,
+                                                              std::vector<std::shared_ptr<Stmt>> const&)>;
 
-    LoxFunction(bool isInitializer, std::shared_ptr<Environment> const& closure, Token const& name,
-                std::vector<Token> const& params, Body body);
+    LoxFunction(PrivateCreationTag tag, GarbageCollector* gc, std::shared_ptr<Environment> const& closure,
+                bool isInitializer, Token const& name, std::vector<Token> const& params,
+                std::vector<std::shared_ptr<Stmt>> const& body, Executor const& executor);
 
     std::shared_ptr<LoxFunction> bind(std::shared_ptr<LoxInstance> const& instance) const;
 
@@ -28,29 +31,20 @@ public:
     size_t arity() const override;
     std::shared_ptr<LoxObject> call(std::vector<std::shared_ptr<LoxObject>> const& args) override;
 
-private:
-    bool const _isInitializer;
-    std::shared_ptr<Environment> const _closure;
+    // GC support
+    void enumerateTraceables(Traceable::Enumerator const& enumerator) override;
+    void reclaim() override;
 
+private:
+    GarbageCollector* const _gc;
+
+    std::shared_ptr<Environment> _closure;
+
+    bool const _isInitializer;
     Token const _name;
     std::vector<Token> const _params;
-    Body const _body;
-};
-
-class LoxNativeFunction : public LoxCallable {
-public:
-    using Body = std::function<std::shared_ptr<LoxObject>(std::vector<std::shared_ptr<LoxObject>> const&)>;
-
-    LoxNativeFunction(size_t arity, Body body);
-
-    std::string toString() const override;
-
-    size_t arity() const override;
-    std::shared_ptr<LoxObject> call(std::vector<std::shared_ptr<LoxObject>> const& args) override;
-
-private:
-    size_t const _arity;
-    Body const _body;
+    std::vector<std::shared_ptr<Stmt>> const _body;
+    Executor const _executor;
 };
 
 } // namespace cloxx

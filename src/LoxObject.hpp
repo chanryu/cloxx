@@ -6,7 +6,14 @@ namespace cloxx {
 
 class LoxObject {
 public:
+#ifdef CLOXX_GC_DEBUG
+    LoxObject();
+    virtual ~LoxObject();
+
+    static size_t instanceCount();
+#else
     virtual ~LoxObject() = default;
+#endif
 
     virtual std::string toString() const = 0;
     virtual bool isTruthy() const;
@@ -49,12 +56,6 @@ public:
     bool equals(LoxObject const& object) const override;
 
     bool const value;
-};
-
-class LoxCallable : public LoxObject {
-public:
-    virtual size_t arity() const = 0;
-    virtual std::shared_ptr<LoxObject> call(std::vector<std::shared_ptr<LoxObject>> const& args) = 0;
 };
 
 // Helper functions.

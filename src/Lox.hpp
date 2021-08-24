@@ -7,9 +7,15 @@
 namespace cloxx {
 
 struct Token;
+
+class Environment;
+class Traceable;
 class RuntimeError;
 
 class Lox {
+public:
+    Lox();
+
 public:
     int run(std::string source);
 
