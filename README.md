@@ -28,6 +28,8 @@ $ script/build.sh
 
 ## How to run test suite
 
+The test suite and test runner __cloxx__ uses was [imported](https://github.com/chanryu/cloxx/pull/2) from Crafting Interpreters, as __cloxx__ is 100% compatible with Carfting Interpreters' [jlox](https://github.com/munificent/craftinginterpreters/tree/master/java/com/craftinginterpreters/lox).
+
 ```
 $ tool/run-test.py
 ```
