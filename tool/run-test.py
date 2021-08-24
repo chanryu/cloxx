@@ -329,15 +329,9 @@ def _defineTestSuites():
         noJavaLimits
     )
 
-    cloxxTests = _merge_dicts(
-        # cloxx behaves pretty much the same as jlox
-        jloxTests,
+    # cloxx behaves like jlox
+    _allSuites["cloxx"] = Suite("cloxx", jloxTests)
 
-        # except, cloxx's init always returns nil
-        { "test/constructor/call_init_explicitly.lox": "skip"}
-    )
-
-    _allSuites["cloxx"] = Suite("cloxx", cloxxTests)
     # more suites can go here...
 
 
