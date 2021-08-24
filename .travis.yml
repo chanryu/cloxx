@@ -1,6 +1,6 @@
 language: cpp
 dist: bionic
-compiler: gcc
+compiler: clang
 
 script:
   - ./scripts/configure.sh
