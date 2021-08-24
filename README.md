@@ -9,7 +9,7 @@ __cloxx__ implements the following features:
 
 ## How to setup repo
 
-Then configure build files. By default, it will generate Posix-compatible makefiles via CMake.
+Run configure script to generate Posix-compatible makefiles via CMake.
 ```bash
 $ script/configure.sh # pass "--debug" if that's what you want
 ```
