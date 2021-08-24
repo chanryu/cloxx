@@ -7,20 +7,21 @@ __cloxx__ implements the following features:
 - Tree-walk interpreter
 - Mark-and-sweep garbage collector
 
-## How to build cloxx
+## How to setup repo
 
-Once you've cloned the repo, run bootstrapping script to setup the repo, e.g., generate AST files, etc.:
-```bash
-$ script/bootstrap.sh
-```
-
-Then configure build files. By default, it will generate Posix-compatible makefiles.
+Then configure build files. By default, it will generate Posix-compatible makefiles via CMake.
 ```bash
 $ script/configure.sh # pass "--debug" if that's what you want
-$ script/build.sh
 ```
 
-Finally, build the cloxx interpreter. This will create cloxx executable under `build` directory.
+## Building cloxx
+
+Generate AST files. This needs to be done only once after cloning the repo, unless you're hacking __cloxx__.
+```bash
+$ script/gen-ast.sh
+```
+
+Run the build script located in the `scripts` directory. If everything goes well, this will create a executable `cloxx` under the `build` directory.
 ```bash
 $ script/build.sh
 ```
@@ -28,7 +29,7 @@ $ script/build.sh
 ## How to run test suite
 
 ```
-$ tool/run-test.py [cloxx]
+$ tool/run-test.py
 ```
 
 ## How to contribute
