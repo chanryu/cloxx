@@ -1,0 +1,9 @@
+language: cpp
+dist: bionic
+compiler: gcc
+
+script:
+  - ./script/configure.sh
+  - ./script/gen-ast.sh
+  - ./script/build.sh
+  - ./tool/run-test.py
