@@ -1,4 +1,4 @@
-# cloxx
+# cloxx ![Build Status](https://travis-ci.com/chanryu/mlisp.svg?branch=master)
 
 __cloxx__ is an interpreter for [Crafting Interpreters'](http://www.craftinginterpreters.com/) [Lox](http://www.craftinginterpreters.com/the-lox-language.html) language written in C++.
 
