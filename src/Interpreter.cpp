@@ -1,6 +1,5 @@
 #include "Interpreter.hpp"
 
-#include <chrono>   // for clock() native function
 #include <iostream> // for print statement
 
 #include "Assert.hpp"
