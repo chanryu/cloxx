@@ -36,7 +36,7 @@ If everthing goes well, you should have an executable `cloxx` under the `build` 
 
 ### Test
 
-While I didn't put much effort on creating tests, I made __cloxx__ fully compatible with __jlox__ from [Crafting Interpreters](https://github.com/munificent/craftinginterpreters). This means I can reuse __jlox__'s comprehensive test suites. The following Python script was [ported (and simplified for __cloxx__)](https://github.com/chanryu/cloxx/pull/2) from [the Crafting Interpreters' test runner written Dart](https://github.com/munificent/craftinginterpreters/blob/master/tool/bin/test.dart).
+While I didn't put much effort on creating tests, __cloxx__ is fully compatible with __jlox__ from [Crafting Interpreters](https://github.com/munificent/craftinginterpreters). This means I can just reuse __jlox__'s comprehensive test suites. The following Python script runs the full jlox test suites imported from the Crafting Interpreters repository.
 
 ```bash
 $ tool/run-test.py
