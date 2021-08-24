@@ -9,9 +9,19 @@ __cloxx__ implements the following features:
 
 ## How to build cloxx
 
-```
+Once you've cloned the repo, run bootstrapping script to setup the repo, e.g., generate AST files, etc.:
+```bash
 $ script/bootstrap.sh
-$ script/configure.sh
+```
+
+Then configure build files. By default, it will generate Posix-compatible makefiles.
+```bash
+$ script/configure.sh # pass "--debug" if that's what you want
+$ script/build.sh
+```
+
+Finally, build the cloxx interpreter. This will create cloxx executable under `build` directory.
+```bash
 $ script/build.sh
 ```
 
