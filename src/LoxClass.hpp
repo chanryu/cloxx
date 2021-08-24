@@ -11,7 +11,7 @@ class LoxFunction;
 
 class LoxClass : public LoxCallable, public Traceable, public std::enable_shared_from_this<LoxClass> {
 public:
-    LoxClass(Traceable::CreationTag tag, GarbageCollector* gc, std::string name,
+    LoxClass(PrivateCreationTag tag, GarbageCollector* gc, std::string name,
              std::shared_ptr<LoxClass> const& superclass, std::map<std::string, std::shared_ptr<LoxFunction>> methods);
 
     std::shared_ptr<LoxFunction> findMethod(std::string const& name) const;

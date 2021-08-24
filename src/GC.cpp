@@ -11,7 +11,7 @@ size_t traceableInstanceCount = 0;
 }
 #endif
 
-Traceable::Traceable(CreationTag)
+Traceable::Traceable(PrivateCreationTag)
 {
 #ifndef NDEBUG
     traceableInstanceCount++;

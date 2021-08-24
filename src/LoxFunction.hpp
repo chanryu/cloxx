@@ -20,7 +20,7 @@ public:
     using Executor = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<Environment> const&,
                                                               std::vector<std::shared_ptr<Stmt>> const&)>;
 
-    LoxFunction(Traceable::CreationTag tag, GarbageCollector* gc, std::shared_ptr<Environment> const& closure,
+    LoxFunction(PrivateCreationTag tag, GarbageCollector* gc, std::shared_ptr<Environment> const& closure,
                 bool isInitializer, Token const& name, std::vector<Token> const& params,
                 std::vector<std::shared_ptr<Stmt>> const& body, Executor const& executor);
 

@@ -10,12 +10,13 @@ class GarbageCollector;
 
 class Traceable {
 public:
-    class CreationTag {
-        friend class Lox; // only Lox can create
-        CreationTag() = default;
+    class PrivateCreationTag {
+        // only GarbageCollector can create it
+        friend class GarbageCollector;
+        PrivateCreationTag(){};
     };
 
-    Traceable(CreationTag);
+    Traceable(PrivateCreationTag);
 
 #ifndef NDEBUG
     virtual ~Traceable();
@@ -44,7 +45,7 @@ public:
     template <typename T, typename... Args>
     std::shared_ptr<T> create(Args&&... args)
     {
-        auto traceable = std::make_shared<T>(Traceable::CreationTag{}, std::forward<Args>(args)...);
+        auto traceable = std::make_shared<T>(Traceable::PrivateCreationTag{}, std::forward<Args>(args)...);
         _weakTraceables.push_back(traceable);
         return traceable;
     }

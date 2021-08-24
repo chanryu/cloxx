@@ -12,7 +12,7 @@ struct Token;
 
 class LoxInstance : public LoxObject, public Traceable, public std::enable_shared_from_this<LoxInstance> {
 public:
-    LoxInstance(Traceable::CreationTag tag, std::shared_ptr<LoxClass> const& klass);
+    LoxInstance(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass);
 
     std::shared_ptr<LoxObject> get(Token const& name);
     void set(Token const& name, std::shared_ptr<LoxObject> const& value);
