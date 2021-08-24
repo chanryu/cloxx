@@ -4,7 +4,7 @@ namespace cloxx {
 
 // LoxObject
 
-#ifndef NDEBUG
+#ifdef CLOXX_GC_DEBUG
 namespace {
 size_t objectInstanceCount = 0;
 }

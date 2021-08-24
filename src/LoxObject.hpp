@@ -6,7 +6,7 @@ namespace cloxx {
 
 class LoxObject {
 public:
-#ifndef NDEBUG
+#ifdef CLOXX_GC_DEBUG
     LoxObject();
     virtual ~LoxObject();
 

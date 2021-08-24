@@ -5,20 +5,17 @@
 
 namespace cloxx {
 
-#ifndef NDEBUG
+#ifdef CLOXX_GC_DEBUG
+
 namespace {
 size_t traceableInstanceCount = 0;
 }
-#endif
 
 Traceable::Traceable(PrivateCreationTag)
 {
-#ifndef NDEBUG
     traceableInstanceCount++;
-#endif
 }
 
-#ifndef NDEBUG
 Traceable::~Traceable()
 {
     traceableInstanceCount--;
@@ -28,6 +25,12 @@ size_t Traceable::instanceCount()
 {
     return traceableInstanceCount;
 }
+
+#else
+
+Traceable::Traceable(PrivateCreationTag)
+{}
+
 #endif
 
 GarbageCollector::GarbageCollector()

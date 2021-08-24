@@ -18,7 +18,7 @@ public:
 
     Traceable(PrivateCreationTag);
 
-#ifndef NDEBUG
+#ifdef CLOXX_GC_DEBUG
     virtual ~Traceable();
     static size_t instanceCount();
 #else

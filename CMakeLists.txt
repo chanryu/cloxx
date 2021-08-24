@@ -10,3 +10,4 @@ set_target_properties(cloxx PROPERTIES
     CXX_STANDARD_REQUIRED YES
     CXX_EXTENSIONS OFF)
 target_compile_options(cloxx PRIVATE -Werror -Wall -Wextra)
+target_compile_definitions(cloxx PRIVATE $<$<CONFIG:Debug>:CLOXX_GC_DEBUG=1>)
