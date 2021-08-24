@@ -3,8 +3,7 @@ dist: bionic
 compiler: gcc
 
 script:
-  - cd "$TRAVIS_BUILD_DIR"
-  - ./script/configure.sh
-  - ./script/gen-ast.sh
-  - ./script/build.sh
-  - ./tool/run-test.py
+  - $TRAVIS_BUILD_DIR/script/configure.sh
+  - $TRAVIS_BUILD_DIR/script/gen-ast.sh
+  - $TRAVIS_BUILD_DIR/script/build.sh
+  - pushd $TRAVIS_BUILD_DIR && ./tool/run-test.py && popd
