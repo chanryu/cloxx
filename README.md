@@ -8,6 +8,8 @@ Aside form the techniques explain the book such as Recursive Descent Parsing and
 
 ## Running cloxx
 
+While I'm not willing to spend time on building the project in many different environments, the following instruction work in my MacBook and I believe it would also work in most Posix-compatible environments where CMake, bash and a decent C++17 compiler are available.
+
 ### Setup project
 
 Once you've cloned the repository, you should run the configuration script to setup project. It will generate Posix-compatible makefiles via CMake.
