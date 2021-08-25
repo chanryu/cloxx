@@ -2,7 +2,7 @@
 
 __cloxx__ is an interpreter for [Crafting Interpreters'](http://www.craftinginterpreters.com/) [Lox](http://www.craftinginterpreters.com/the-lox-language.html) language written in C++.
 
-As a fully hand-written interpreter, __cloxx__ implements the following features:
+Curretnly, __cloxx__ implements the following features:
 
 - Recursive descent parser
 - Tree-walk interpreter
