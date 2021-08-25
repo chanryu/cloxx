@@ -8,7 +8,7 @@ Aside form the techniques explain the book such as Recursive Descent Parsing and
 
 ## Running cloxx
 
-While I'm not willing to spend time on building the project in many different environments, the following instructions work for my MacBook and I believe it would also work in most Posix-compatible environments where CMake, bash and a decent C++17 compiler are available.
+While I'm not willing to spend time on building the project in many different environments, the following instructions work for my MacBook and I believe it would also work in most Posix-compatible environments where [CMake](https://cmake.org), bash and a decent C++17 compiler are available.
 
 ### Setup project
 
