@@ -1,14 +1,14 @@
 # cloxx ![Build Status](https://app.travis-ci.com/chanryu/cloxx.svg?branch=master)
 
-__cloxx__ is an interpreter for [Crafting Interpreters'](http://www.craftinginterpreters.com/) [Lox](http://www.craftinginterpreters.com/the-lox-language.html) language written in C++.
+__cloxx__ is an C++ implementation of [Lox](http://www.craftinginterpreters.com/the-lox-language.html), the language featured in [Crafting Interpreters](http://www.craftinginterpreters.com/).
 
-As a fully hand-written interpreter, __cloxx__ implements the following features:
+__cloxx__ is a purely educational project for myself and thus it won't be vrery useful for building real-world applications. However, if you're another reader of the book and implementing Lox in C++, __cloxx__ might be an interesting reference to you. While it's fully _C++ish_, I also tried to make it as close as possible to the book's __jlox__ implementation in terms of identifiers such as class, variable and function names. It should be easy to follow along with the book.
 
-- Recursive descent parser
-- Tree-walk interpreter
-- Mark-and-sweep garbage collector
+Aside form the techniques explain the book such as Recursive Descent Parsing and Tree-walk Interpretation, __cloxx__ implements Mark-and-Sweep Garbage Collection.
 
 ## Running cloxx
+
+While I'm not willing to spend time on building the project in many different environments, the following instructions work for my MacBook and I believe it would also work in most Posix-compatible environments where [CMake](https://cmake.org), bash and a decent C++17 compiler are available.
 
 ### Setup project
 
@@ -36,7 +36,7 @@ If everthing goes well, you should have an executable `cloxx` under the `build` 
 
 ### Test
 
-While I didn't put much effort on creating tests, I made __cloxx__ fully compatible with __jlox__ from [Crafting Interpreters](https://github.com/munificent/craftinginterpreters). This means I can reuse __jlox__'s comprehensive test suites. The following Python script was [ported (and simplified for __cloxx__)](https://github.com/chanryu/cloxx/pull/2) from [the Crafting Interpreters' test runner written Dart](https://github.com/munificent/craftinginterpreters/blob/master/tool/bin/test.dart).
+While I didn't put much effort on creating tests, __cloxx__ is fully compatible with __jlox__. This means I can just reuse __jlox__'s comprehensive test suites. The following Python script runs the full jlox test suites imported from the Crafting Interpreters repository.
 
 ```bash
 $ tool/run-test.py
