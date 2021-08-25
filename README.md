@@ -1,12 +1,10 @@
 # cloxx ![Build Status](https://app.travis-ci.com/chanryu/cloxx.svg?branch=master)
 
-__cloxx__ is an interpreter for [Crafting Interpreters'](http://www.craftinginterpreters.com/) [Lox](http://www.craftinginterpreters.com/the-lox-language.html) language written in C++.
+__cloxx__ is an C++ implementation of [Lox](http://www.craftinginterpreters.com/the-lox-language.html), the language featured in [Crafting Interpreters](http://www.craftinginterpreters.com/).
 
-Curretnly, __cloxx__ implements the following features:
+__cloxx__ is a purely educational project for myself and thus it won't be vrery useful for building real-world applications. However, if you're another reader of the book and implementing Lox in C++, __cloxx__ might be an interesting reference to you. While it's fully _C++ish_, I also tried to make it as close as possible to the book's __jlox__ implementation in terms of identifiers such as class, variable and function names. It should be easy to follow along with the book.
 
-- Recursive descent parser
-- Tree-walk interpreter
-- Mark-and-sweep garbage collector
+Aside form the techniques explain the book such as Recursive Descent Parsing and Tree-walk Interpretation, __cloxx__ implements Mark-and-Sweep Garbage Collection.
 
 ## Running cloxx
 
@@ -36,7 +34,7 @@ If everthing goes well, you should have an executable `cloxx` under the `build` 
 
 ### Test
 
-While I didn't put much effort on creating tests, __cloxx__ is fully compatible with __jlox__ from [Crafting Interpreters](https://github.com/munificent/craftinginterpreters). This means I can just reuse __jlox__'s comprehensive test suites. The following Python script runs the full jlox test suites imported from the Crafting Interpreters repository.
+While I didn't put much effort on creating tests, __cloxx__ is fully compatible with __jlox__. This means I can just reuse __jlox__'s comprehensive test suites. The following Python script runs the full jlox test suites imported from the Crafting Interpreters repository.
 
 ```bash
 $ tool/run-test.py
