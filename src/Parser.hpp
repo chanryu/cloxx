@@ -62,8 +62,6 @@ private:
     Token const& previous() const;
     Token const& consume(Token::Type type, std::string_view message);
 
-    void readTokens();
-
     struct ParseError : std::runtime_error {
         ParseError() : std::runtime_error{"ParseError"} {};
     };
@@ -72,8 +70,9 @@ private:
 
     Lox* const _lox;
     Scanner _scanner;
-    std::vector<Token> _tokens;
-    size_t _current = 0;
+
+    Token _previous = {Token::END_OF_FILE, "", nullptr, 0};
+    Token _current = {Token::END_OF_FILE, "", nullptr, 0};
 };
 
 } // namespace cloxx

@@ -3,16 +3,13 @@
 #include "Assert.hpp"
 #include "Lox.hpp"
 
-#include <iostream>
-
 #define LOX_ASSERT_PREVIOUS(__t) LOX_ASSERT(previous().type == Token::__t)
 
 namespace cloxx {
 
 Parser::Parser(Lox* lox) : _lox{lox}, _scanner{lox}
 {
-    readTokens();
-    LOX_ASSERT(!_tokens.empty()); // we should at least have Token::END_OF_FILE
+    _current = _scanner.scanToken();
 }
 
 std::vector<std::shared_ptr<Stmt>> Parser::parse()
@@ -509,31 +506,26 @@ bool Parser::check(Token::Type type)
 
 bool Parser::isAtEnd()
 {
-    if (peek().type == Token::END_OF_FILE) {
-        return true;
-    }
-    if (_current == _tokens.size() - 1) {
-        readTokens();
-    }
-    return false;
+    return peek().type == Token::END_OF_FILE;
 }
 
 Token const& Parser::advance()
 {
     if (!isAtEnd()) {
-        _current++;
+        _previous = _current;
+        _current = _scanner.scanToken();
     }
     return previous();
 }
 
 Token const& Parser::peek()
 {
-    return _tokens[_current];
+    return _current;
 }
 
 Token const& Parser::previous() const
 {
-    return _tokens[_current - 1];
+    return _previous;
 }
 
 Token const& Parser::consume(Token::Type type, std::string_view message)
@@ -543,17 +535,6 @@ Token const& Parser::consume(Token::Type type, std::string_view message)
     }
 
     throw error(peek(), message);
-}
-
-void Parser::readTokens()
-{
-    // TODO: _token.erase(0, _current - 1); _current = 1;
-
-    auto tokens = _scanner.scanTokens();
-    LOX_ASSERT(!tokens.empty());
-    for (auto const& token : tokens) {
-        _tokens.push_back(token);
-    }
 }
 
 Parser::ParseError Parser::error(Token const& token, std::string_view message)

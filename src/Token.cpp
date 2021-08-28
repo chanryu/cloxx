@@ -75,12 +75,15 @@ Token::Token(Type type, std::string lexeme, std::shared_ptr<LoxObject> const& li
 std::string Token::toString() const
 {
     std::ostringstream oss;
-
+#if 0
     oss << getTokenName(type) << " ";
     if (literal) {
         oss << literal->toString() << " ";
     }
     oss << line;
+#else
+    oss << line << " " << getTokenName(type) << "[" << lexeme << "]";
+#endif
 
     return oss.str();
 }

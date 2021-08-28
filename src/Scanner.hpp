@@ -13,20 +13,20 @@ class Scanner {
 public:
     explicit Scanner(Lox* lox);
 
-    std::vector<Token> scanTokens();
+    Token scanToken();
 
 private:
     bool isAtEnd();
-    void scanToken();
     char advance();
-    void addToken(Token::Type type);
-    void addToken(Token::Type type, std::shared_ptr<LoxObject> const& literal);
     bool match(char expected);
     char peek();
     char peekNext();
-    void string();
-    void number();
-    void identifier();
+
+    Token string();
+    Token number();
+    Token identifier();
+    Token makeToken(Token::Type type);
+    Token makeToken(Token::Type type, std::shared_ptr<LoxObject> const& literal);
 
     void readSource();
 
