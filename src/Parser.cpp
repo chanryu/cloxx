@@ -459,8 +459,19 @@ std::shared_ptr<Expr> Parser::primary()
         return std::make_shared<LiteralExpr>(makeLoxNil());
     }
 
-    if (match(Token::NUMBER, Token::STRING)) {
-        return std::make_shared<LiteralExpr>(previous().literal);
+    if (match(Token::NUMBER)) {
+        auto value = std::stod(previous().lexeme);
+        auto literal = std::make_shared<LoxNumber>(value);
+        return std::make_shared<LiteralExpr>(literal);
+    }
+
+    if (match(Token::STRING)) {
+        // Trim the surrounding quotes.
+        auto const& lexmem = previous().lexeme;
+        LOX_ASSERT(lexmem.length() >= 2);
+        auto value = lexmem.substr(1, lexmem.size() - 2);
+        auto literal = std::make_shared<LoxString>(std::move(value));
+        return std::make_shared<LiteralExpr>(literal);
     }
 
     if (match(Token::LEFT_PAREN)) {

@@ -118,7 +118,7 @@ Token Scanner::scanToken()
         }
     }
 
-    return {Token::END_OF_FILE, "", nullptr, _line};
+    return {Token::END_OF_FILE, "", _line};
 }
 
 char Scanner::advance()
@@ -128,13 +128,8 @@ char Scanner::advance()
 
 Token Scanner::makeToken(Token::Type type)
 {
-    return makeToken(type, nullptr);
-}
-
-Token Scanner::makeToken(Token::Type type, std::shared_ptr<LoxObject> const& literal)
-{
     auto lexeme = _source.substr(_start, _current - _start);
-    return {type, std::move(lexeme), literal, _line};
+    return {type, std::move(lexeme), _line};
 }
 
 bool Scanner::match(char expected)
@@ -182,15 +177,13 @@ Token Scanner::string()
 
     if (isAtEnd()) {
         _lox->error(_line, "Unterminated string.");
-        return {Token::END_OF_FILE, "", nullptr, _line};
+        return {Token::END_OF_FILE, "", _line};
     }
 
     // The closing ".
     advance();
 
-    // Trim the surrounding quotes.
-    auto value = _source.substr(_start + 1, _current - _start - 2);
-    return makeToken(Token::STRING, std::make_shared<LoxString>(std::move(value)));
+    return makeToken(Token::STRING);
 }
 
 Token Scanner::number()
@@ -209,8 +202,7 @@ Token Scanner::number()
         }
     }
 
-    auto value = std::stod(_source.substr(_start, _current - _start));
-    return makeToken(Token::NUMBER, std::make_shared<LoxNumber>(value));
+    return makeToken(Token::NUMBER);
 }
 
 Token Scanner::identifier()

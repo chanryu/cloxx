@@ -26,7 +26,6 @@ private:
     Token number();
     Token identifier();
     Token makeToken(Token::Type type);
-    Token makeToken(Token::Type type, std::shared_ptr<LoxObject> const& literal);
 
     void readSource();
 

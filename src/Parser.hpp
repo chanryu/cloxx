@@ -70,9 +70,8 @@ private:
 
     Lox* const _lox;
     Scanner _scanner;
-
-    Token _previous = {Token::END_OF_FILE, "", nullptr, 0};
-    Token _current = {Token::END_OF_FILE, "", nullptr, 0};
+    Token _previous;
+    Token _current;
 };
 
 } // namespace cloxx
