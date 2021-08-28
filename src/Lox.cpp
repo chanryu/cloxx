@@ -8,10 +8,10 @@
 #include "Parser.hpp"
 #include "Resolver.hpp"
 #include "RuntimeError.hpp"
-#include "Scanner.hpp"
 
 #include <chrono> // for clock() native function
 #include <iostream>
+#include <sstream>
 
 namespace cloxx {
 
@@ -30,10 +30,27 @@ void defineBuiltins(std::shared_ptr<Environment> const& env)
 Lox::Lox()
 {}
 
+bool Lox::readLine(std::string& line)
+{
+    LOX_ASSERT(_input);
+
+    if (!_input->eof()) {
+        std::getline(*_input, line);
+        if (!_input->eof()) {
+            line.push_back('\n');
+        }
+    }
+
+    return !_input->eof();
+}
+
 int Lox::run(std::string source)
 {
-    Scanner scanner{this, std::move(source)};
-    Parser parser{this, scanner.scanTokens()};
+    std::stringstream istream(source);
+
+    _input = &istream;
+
+    Parser parser{this};
 
     auto stmts = parser.parse();
 

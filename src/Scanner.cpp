@@ -26,8 +26,10 @@ std::map<std::string, Token::Type> const Scanner::_keywords = {
     {"this", Token::THIS}, {"true", Token::TRUE},   {"var", Token::VAR},       {"while", Token::WHILE},
 };
 
-Scanner::Scanner(Lox* const lox, std::string source) : _lox{lox}, _source{std::move(source)}
-{}
+Scanner::Scanner(Lox* const lox) : _lox{lox}
+{
+    readSource();
+}
 
 std::vector<Token> Scanner::scanTokens()
 {
@@ -35,14 +37,32 @@ std::vector<Token> Scanner::scanTokens()
         // We are at the beginning of the next lexeme.
         _start = _current;
         scanToken();
+
+        if (_tokens.size() == 10) {
+            break;
+        }
     }
 
-    _tokens.emplace_back(Token::END_OF_FILE, "", nullptr, _line);
-    return _tokens;
+    if (isAtEnd()) {
+        _tokens.emplace_back(Token::END_OF_FILE, "", nullptr, _line);
+    }
+
+    std::vector<Token> tokens;
+    tokens.swap(_tokens);
+    return tokens;
 }
 
-bool Scanner::isAtEnd() const
+bool Scanner::isAtEnd()
 {
+    if (_current < _source.length()) {
+        return false;
+    }
+
+    if (_sourceEnded) {
+        return true;
+    }
+
+    readSource();
     return _current >= _source.length();
 }
 
@@ -161,7 +181,7 @@ bool Scanner::match(char expected)
     return true;
 }
 
-char Scanner::peek() const
+char Scanner::peek()
 {
     if (isAtEnd())
         return '\0';
@@ -169,11 +189,19 @@ char Scanner::peek() const
     return _source[_current];
 }
 
-char Scanner::peekNext() const
+char Scanner::peekNext()
 {
-    if (_current + 1 >= _source.length())
-        return '\0';
-    return _source[_current + 1];
+    while (true) {
+        if (_current + 1 < _source.length()) {
+            return _source[_current + 1];
+        }
+
+        if (_sourceEnded) {
+            return '\0';
+        }
+
+        readSource();
+    }
 }
 
 void Scanner::string()
@@ -228,6 +256,18 @@ void Scanner::identifier()
     }
     else {
         addToken(Token::IDENTIFIER);
+    }
+}
+
+void Scanner::readSource()
+{
+    if (!_sourceEnded) {
+
+        // TODO: _source.erase(0, _start)
+
+        std::string line;
+        _sourceEnded = !_lox->readLine(line);
+        _source.append(line.begin(), line.end());
     }
 }
 

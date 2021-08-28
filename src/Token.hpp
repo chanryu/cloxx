@@ -65,10 +65,10 @@ struct Token {
     std::string toString() const;
 #endif
 
-    Type const type;
-    std::string const lexeme;
-    std::shared_ptr<LoxObject> const literal;
-    size_t const line;
+    Type type;
+    std::string lexeme;
+    std::shared_ptr<LoxObject> literal;
+    size_t line;
 };
 
 } // namespace cloxx

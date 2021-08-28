@@ -3,12 +3,17 @@
 #include "Assert.hpp"
 #include "Lox.hpp"
 
+#include <iostream>
+
 #define LOX_ASSERT_PREVIOUS(__t) LOX_ASSERT(previous().type == Token::__t)
 
 namespace cloxx {
 
-Parser::Parser(Lox* lox, std::vector<Token> tokens) : _lox{lox}, _tokens{std::move(tokens)}
-{}
+Parser::Parser(Lox* lox) : _lox{lox}, _scanner{lox}
+{
+    readTokens();
+    LOX_ASSERT(!_tokens.empty()); // we should at least have Token::END_OF_FILE
+}
 
 std::vector<std::shared_ptr<Stmt>> Parser::parse()
 {
@@ -48,7 +53,7 @@ std::shared_ptr<Stmt> Parser::varDeclaration()
 {
     // varDecl → "var" IDENTIFIER ( "=" expression )? ";" ;
 
-    auto const& name = consume(Token::IDENTIFIER, "Expect variable name.");
+    auto name = consume(Token::IDENTIFIER, "Expect variable name.");
 
     std::shared_ptr<Expr> initializer;
     if (match(Token::EQUAL)) {
@@ -64,7 +69,7 @@ std::shared_ptr<FunStmt> Parser::function(std::string const& kind)
     // function   → IDENTIFIER "(" parameters? ")" block ;
     // parameters → IDENTIFIER ( "," IDENTIFIER )* ;
 
-    auto const& name = consume(Token::IDENTIFIER, "Expect " + kind + " name.");
+    auto name = consume(Token::IDENTIFIER, "Expect " + kind + " name.");
     consume(Token::LEFT_PAREN, "Expect '(' after " + kind + " name.");
 
     std::vector<Token> params;
@@ -91,7 +96,7 @@ std::shared_ptr<Stmt> Parser::classDeclaration()
     // classDecl → "class" IDENTIFIER ( "<" IDENTIFIER )?
     //             "{" function* "}" ;
 
-    auto const& name = consume(Token::IDENTIFIER, "Expect class name.");
+    auto name = consume(Token::IDENTIFIER, "Expect class name.");
 
     std::shared_ptr<VariableExpr> superclass;
     if (match(Token::LESS)) {
@@ -231,7 +236,7 @@ std::shared_ptr<Stmt> Parser::returnStatement()
 {
     LOX_ASSERT_PREVIOUS(RETURN);
 
-    auto const& keyword = previous();
+    auto keyword = previous();
 
     std::shared_ptr<Expr> expr;
     if (!match(Token::SEMICOLON)) {
@@ -283,8 +288,8 @@ std::shared_ptr<Expr> Parser::assignment()
     auto const expr = logicalOr();
 
     if (match(Token::EQUAL)) {
-        auto const& equals = previous();
-        auto const& value = assignment();
+        auto equals = previous();
+        auto value = assignment();
 
         if (auto const var = dynamic_cast<VariableExpr*>(expr.get())) {
             return std::make_shared<AssignExpr>(var->name, value);
@@ -307,8 +312,8 @@ std::shared_ptr<Expr> Parser::logicalOr()
     auto expr = logicalAnd();
 
     while (match(Token::OR)) {
-        auto const& op = previous();
-        auto const& right = logicalAnd();
+        auto op = previous();
+        auto right = logicalAnd();
         expr = std::make_shared<LogicalExpr>(op, expr, right);
     }
 
@@ -322,8 +327,8 @@ std::shared_ptr<Expr> Parser::logicalAnd()
     auto expr = equality();
 
     while (match(Token::AND)) {
-        auto const& op = previous();
-        auto const& right = equality();
+        auto op = previous();
+        auto right = equality();
         expr = std::make_shared<LogicalExpr>(op, expr, right);
     }
 
@@ -337,8 +342,8 @@ std::shared_ptr<Expr> Parser::equality()
     auto expr = comparison();
 
     while (match(Token::BANG_EQUAL, Token::EQUAL_EQUAL)) {
-        auto const& op = previous();
-        auto const& right = comparison();
+        auto op = previous();
+        auto right = comparison();
         expr = std::make_shared<BinaryExpr>(op, expr, right);
     }
 
@@ -352,8 +357,8 @@ std::shared_ptr<Expr> Parser::comparison()
     auto expr = term();
 
     while (match(Token::GREATER, Token::GREATER_EQUAL, Token::LESS, Token::LESS_EQUAL)) {
-        auto const& op = previous();
-        auto const& right = term();
+        auto op = previous();
+        auto right = term();
         expr = std::make_shared<BinaryExpr>(op, expr, right);
     }
 
@@ -367,8 +372,8 @@ std::shared_ptr<Expr> Parser::term()
     auto expr = factor();
 
     while (match(Token::MINUS, Token::PLUS)) {
-        auto const& op = previous();
-        auto const& right = factor();
+        auto op = previous();
+        auto right = factor();
         expr = std::make_shared<BinaryExpr>(op, expr, right);
     }
 
@@ -379,8 +384,8 @@ std::shared_ptr<Expr> Parser::factor()
 {
     auto expr = unary();
     while (match(Token::SLASH, Token::STAR)) {
-        auto const& op = previous();
-        auto const& right = unary();
+        auto op = previous();
+        auto right = unary();
         expr = std::make_shared<BinaryExpr>(op, expr, right);
     }
     return expr;
@@ -391,8 +396,8 @@ std::shared_ptr<Expr> Parser::unary()
     // unary → ( "!" | "-" ) unary | call ;
 
     if (match(Token::BANG, Token::MINUS)) {
-        auto const& op = previous();
-        auto const& right = unary();
+        auto op = previous();
+        auto right = unary();
         return std::make_shared<UnaryExpr>(op, right);
     }
     return call();
@@ -410,7 +415,7 @@ std::shared_ptr<Expr> Parser::call()
             expr = finishCall(expr);
         }
         else if (match(Token::DOT)) {
-            auto const& name = consume(Token::IDENTIFIER, "Expect property name after '.'.");
+            auto name = consume(Token::IDENTIFIER, "Expect property name after '.'.");
             expr = std::make_shared<GetExpr>(expr, name);
         }
         else {
@@ -433,7 +438,7 @@ std::shared_ptr<Expr> Parser::finishCall(std::shared_ptr<Expr> const& callee)
         } while (match(Token::COMMA));
     }
 
-    auto const& paren = consume(Token::RIGHT_PAREN, "Expect ')' after arguments.");
+    auto paren = consume(Token::RIGHT_PAREN, "Expect ')' after arguments.");
     return std::make_shared<CallExpr>(callee, paren, args);
 }
 
@@ -462,7 +467,7 @@ std::shared_ptr<Expr> Parser::primary()
     }
 
     if (match(Token::LEFT_PAREN)) {
-        auto const& expr = expression();
+        auto expr = expression();
         consume(Token::RIGHT_PAREN, "Expect ')' after expression.");
         return std::make_shared<GroupingExpr>(expr);
     }
@@ -476,9 +481,9 @@ std::shared_ptr<Expr> Parser::primary()
     }
 
     if (match(Token::SUPER)) {
-        auto const& keyword = previous();
+        auto keyword = previous();
         consume(Token::DOT, "Expect '.' after 'super'.");
-        auto const& method = consume(Token::IDENTIFIER, "Expect superclass method name.");
+        auto method = consume(Token::IDENTIFIER, "Expect superclass method name.");
         return std::make_shared<SuperExpr>(keyword, method);
     }
 
@@ -494,7 +499,7 @@ bool Parser::match(Token::Type type)
     return false;
 }
 
-bool Parser::check(Token::Type type) const
+bool Parser::check(Token::Type type)
 {
     if (isAtEnd()) {
         return false;
@@ -502,9 +507,15 @@ bool Parser::check(Token::Type type) const
     return peek().type == type;
 }
 
-bool Parser::isAtEnd() const
+bool Parser::isAtEnd()
 {
-    return peek().type == Token::END_OF_FILE;
+    if (peek().type == Token::END_OF_FILE) {
+        return true;
+    }
+    if (_current == _tokens.size() - 1) {
+        readTokens();
+    }
+    return false;
 }
 
 Token const& Parser::advance()
@@ -515,7 +526,7 @@ Token const& Parser::advance()
     return previous();
 }
 
-Token const& Parser::peek() const
+Token const& Parser::peek()
 {
     return _tokens[_current];
 }
@@ -532,6 +543,17 @@ Token const& Parser::consume(Token::Type type, std::string_view message)
     }
 
     throw error(peek(), message);
+}
+
+void Parser::readTokens()
+{
+    // TODO: _token.erase(0, _current - 1); _current = 1;
+
+    auto tokens = _scanner.scanTokens();
+    LOX_ASSERT(!tokens.empty());
+    for (auto const& token : tokens) {
+        _tokens.push_back(token);
+    }
 }
 
 Parser::ParseError Parser::error(Token const& token, std::string_view message)

@@ -7,13 +7,15 @@
 #include "ast/Expr.hpp"
 #include "ast/Stmt.hpp"
 
+#include "Scanner.hpp"
+
 namespace cloxx {
 
 class Lox;
 
 class Parser {
 public:
-    explicit Parser(Lox* lox, std::vector<Token> tokens);
+    explicit Parser(Lox* lox);
 
     std::vector<std::shared_ptr<Stmt>> parse();
 
@@ -53,12 +55,14 @@ private:
         return match(types...);
     }
 
-    bool check(Token::Type type) const;
-    bool isAtEnd() const;
+    bool check(Token::Type type);
+    bool isAtEnd();
     Token const& advance();
-    Token const& peek() const;
+    Token const& peek();
     Token const& previous() const;
     Token const& consume(Token::Type type, std::string_view message);
+
+    void readTokens();
 
     struct ParseError : std::runtime_error {
         ParseError() : std::runtime_error{"ParseError"} {};
@@ -67,7 +71,8 @@ private:
     void synchronize();
 
     Lox* const _lox;
-    std::vector<Token> const _tokens;
+    Scanner _scanner;
+    std::vector<Token> _tokens;
     size_t _current = 0;
 };
 

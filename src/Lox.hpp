@@ -1,6 +1,6 @@
 #pragma once
 
-#include <iostream>
+#include <istream>
 #include <string>
 #include <string_view>
 
@@ -19,6 +19,8 @@ public:
 public:
     int run(std::string source);
 
+    bool readLine(std::string& line);
+
     void error(size_t line, std::string_view message);
     void error(Token const& token, std::string_view message);
     void runtimeError(RuntimeError const& error);
@@ -28,6 +30,8 @@ private:
 
     bool _hadError = false;
     bool _hadRuntimeError = false;
+
+    std::istream* _input;
 };
 
 } // namespace cloxx
