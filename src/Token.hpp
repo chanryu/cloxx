@@ -59,7 +59,7 @@ struct Token {
         END_OF_FILE
     };
 
-    Token(Type type, std::string lexeme, std::shared_ptr<LoxObject> const& literal, size_t line);
+    Token(Type type, std::string lexeme, size_t line);
 
 #ifndef NDEBUG
     std::string toString() const;
@@ -67,7 +67,6 @@ struct Token {
 
     Type type;
     std::string lexeme;
-    std::shared_ptr<LoxObject> literal;
     size_t line;
 };
 
