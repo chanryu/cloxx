@@ -1,5 +1,7 @@
 #include "Scanner.hpp"
 
+#include <map>
+
 #include "Lox.hpp"
 
 namespace cloxx {
@@ -17,14 +19,24 @@ bool isAlphaNumeric(char c)
 {
     return isAlpha(c) || isDigit(c);
 }
-} // namespace
 
-std::map<std::string, Token::Type> const Scanner::_keywords = {
-    {"and", Token::AND},   {"class", Token::CLASS}, {"else", Token::ELSE},     {"false", Token::FALSE},
-    {"for", Token::FOR},   {"fun", Token::FUN},     {"if", Token::IF},         {"nil", Token::NIL},
-    {"or", Token::OR},     {"print", Token::PRINT}, {"return", Token::RETURN}, {"super", Token::SUPER},
-    {"this", Token::THIS}, {"true", Token::TRUE},   {"var", Token::VAR},       {"while", Token::WHILE},
-};
+bool lookupKeyword(std::string const& identifier, Token::Type& type)
+{
+    const std::map<std::string, Token::Type> keywords = {
+        {"and", Token::AND},   {"class", Token::CLASS}, {"else", Token::ELSE},     {"false", Token::FALSE},
+        {"for", Token::FOR},   {"fun", Token::FUN},     {"if", Token::IF},         {"nil", Token::NIL},
+        {"or", Token::OR},     {"print", Token::PRINT}, {"return", Token::RETURN}, {"super", Token::SUPER},
+        {"this", Token::THIS}, {"true", Token::TRUE},   {"var", Token::VAR},       {"while", Token::WHILE},
+    };
+
+    if (auto const i = keywords.find(identifier); i != keywords.end()) {
+        type = i->second;
+        return true;
+    }
+
+    return false;
+}
+} // namespace
 
 Scanner::Scanner(Lox* const lox) : _lox{lox}
 {
@@ -212,8 +224,8 @@ Token Scanner::identifier()
     }
 
     auto text = _source.substr(_start, _current - _start);
-    if (auto it = _keywords.find(text); it != _keywords.end()) {
-        return makeToken(it->second);
+    if (Token::Type type; lookupKeyword(text, type)) {
+        return makeToken(type);
     }
 
     return makeToken(Token::IDENTIFIER);
