@@ -130,7 +130,7 @@ Token Scanner::scanToken()
         }
     }
 
-    return {Token::END_OF_FILE, "", _line};
+    return makeToken(T::END_OF_FILE);
 }
 
 char Scanner::advance()
@@ -140,7 +140,10 @@ char Scanner::advance()
 
 Token Scanner::makeToken(Token::Type type)
 {
-    auto lexeme = _source.substr(_start, _current - _start);
+    std::string lexeme;
+    if (type != Token::END_OF_FILE) {
+        lexeme = _source.substr(_start, _current - _start);
+    }
     return {type, std::move(lexeme), _line};
 }
 
@@ -189,7 +192,7 @@ Token Scanner::string()
 
     if (isAtEnd()) {
         _lox->error(_line, "Unterminated string.");
-        return {Token::END_OF_FILE, "", _line};
+        return makeToken(Token::END_OF_FILE);
     }
 
     // The closing ".
