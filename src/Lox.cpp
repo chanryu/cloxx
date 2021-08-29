@@ -55,34 +55,14 @@ Lox::Lox()
 
 int Lox::run(std::string source)
 {
-    _errorCount = 0;
-    auto prevErrorCount = _errorCount;
+    _syntaxErrorCount = 0;
+    _resolveErrorCount = 0;
+    _hadRuntimeError = false;
 
     std::stringstream istream(source);
     IStreamSourceReader sourceReader{istream};
 
     Parser parser{this, &sourceReader};
-
-    std::vector<std::shared_ptr<Stmt>> stmts;
-    while (true) {
-        auto stmt = parser.parse();
-        if (stmt) {
-            stmts.push_back(stmt);
-        }
-        else {
-            if (_errorCount > prevErrorCount) {
-                prevErrorCount = _errorCount;
-                // Continue on to report more parse errors
-                continue;
-            }
-            break;
-        }
-    }
-
-    // Indicate a syntax error in the exit code.
-    if (_errorCount != 0) {
-        return 65;
-    }
 
     GarbageCollector gc;
 
@@ -90,18 +70,45 @@ int Lox::run(std::string source)
     defineBuiltins(gc.root());
 
     Interpreter interpreter{this, &gc};
-
     Resolver resolver{this, &interpreter};
-    resolver.resolve(stmts);
 
-    // Stop if there was a resolution error.
-    if (_errorCount != 0) {
-        return 65;
+    auto prevSyntaxErrorCount = _syntaxErrorCount;
+    auto prevResolveErrorCount = _resolveErrorCount;
+    while (true) {
+        auto stmt = parser.parse();
+        if (!stmt) {
+            if (prevSyntaxErrorCount < _syntaxErrorCount) {
+                prevSyntaxErrorCount = _syntaxErrorCount;
+                // Scanning or parsing error - continue on to report more errors
+                continue;
+            }
+
+            // We're done!
+            break;
+        }
+
+        if (_syntaxErrorCount != 0) {
+            continue;
+        }
+
+        resolver.resolve({stmt});
+        if (prevResolveErrorCount < _resolveErrorCount) {
+            prevResolveErrorCount = _resolveErrorCount;
+            // Resolution or analytical error - continue on to report more errors
+            continue;
+        }
+
+        if (_resolveErrorCount != 0 || _hadRuntimeError) {
+            continue;
+        }
+
+        interpreter.interpret(*stmt);
+        gc.collect();
     }
 
-    for (auto const& stmt : stmts) {
-        interpreter.interpret({stmt});
-        gc.collect();
+    // Indicate a syntax / resolve error in the exit code.
+    if (_syntaxErrorCount != 0 || _resolveErrorCount != 0) {
+        return 65;
     }
 
     // Indicate a run-time error in the exit code.
@@ -112,41 +119,42 @@ int Lox::run(std::string source)
     return 0;
 }
 
-void Lox::error(size_t line, std::string_view message)
+void Lox::syntaxError(size_t line, std::string_view message)
 {
-    report(line, "", message);
+    _syntaxErrorCount += 1;
+
+    std::cerr << "[line " << line << "] Error: " << message << '\n';
 }
 
-void Lox::error(Token const& token, std::string_view message)
+void Lox::syntaxError(Token const& token, std::string_view message)
 {
+    _syntaxErrorCount += 1;
+
+    std::cerr << "[line " << token.line << "] ";
     if (token.type == Token::END_OF_FILE) {
-        report(token.line, "at end", message);
+        std::cerr << "Error at end: ";
     }
     else {
-        report(token.line, "at '" + token.lexeme + "'", message);
+        std::cerr << "Error at '" << token.lexeme << "': ";
     }
+    std::cerr << message << '\n';
+}
+
+void Lox::resolveError(Token const& token, std::string_view message)
+{
+    _resolveErrorCount += 1;
+
+    std::cerr << "[line " << token.line << "] ";
+    std::cerr << "Error at '" << token.lexeme << "': ";
+    std::cerr << message << '\n';
 }
 
 void Lox::runtimeError(RuntimeError const& error)
 {
+    _hadRuntimeError = true;
+
     std::cerr << "[line " << error.token.line << "] ";
     std::cerr << error.what() << '\n';
-
-    _hadRuntimeError = true;
-}
-
-void Lox::report(size_t line, std::string_view where, std::string_view message)
-{
-    std::cerr << "[line " << line << "] ";
-    if (where.empty()) {
-        std::cerr << "Error: ";
-    }
-    else {
-        std::cerr << "Error " << where << ": ";
-    }
-    std::cerr << message << '\n';
-
-    _errorCount += 1;
 }
 
 } // namespace cloxx

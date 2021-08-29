@@ -18,14 +18,15 @@ public:
 public:
     int run(std::string source);
 
-    void error(size_t line, std::string_view message);
-    void error(Token const& token, std::string_view message);
+    void syntaxError(size_t line, std::string_view message);
+    void syntaxError(Token const& token, std::string_view message);
+    void resolveError(Token const& token, std::string_view message);
     void runtimeError(RuntimeError const& error);
 
 private:
-    void report(size_t line, std::string_view where, std::string_view message);
+    unsigned int _syntaxErrorCount = 0;
+    unsigned int _resolveErrorCount = 0;
 
-    unsigned int _errorCount = 0;
     bool _hadRuntimeError = false;
 };
 

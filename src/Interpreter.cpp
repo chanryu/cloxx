@@ -47,13 +47,10 @@ Interpreter::Interpreter(Lox* lox, GarbageCollector* gc)
     : _lox{lox}, _gc{gc}, _globals{gc->root()}, _environment{_globals}
 {}
 
-void Interpreter::interpret(std::vector<std::shared_ptr<Stmt>> const& stmts)
+void Interpreter::interpret(Stmt const& stmt)
 {
     try {
-        for (auto const& stmt : stmts) {
-            LOX_ASSERT(stmt);
-            execute(*stmt);
-        }
+        execute(stmt);
     }
     catch (RuntimeError& error) {
         _lox->runtimeError(error);

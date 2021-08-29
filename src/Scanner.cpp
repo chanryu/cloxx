@@ -124,7 +124,7 @@ Token Scanner::scanToken()
             if (isAlpha(c)) {
                 return identifier();
             }
-            _lox->error(_line, "Unexpected character.");
+            _lox->syntaxError(_line, "Unexpected character.");
             break;
         }
     }
@@ -190,7 +190,7 @@ Token Scanner::string()
     }
 
     if (isAtEnd()) {
-        _lox->error(_line, "Unterminated string.");
+        _lox->syntaxError(_line, "Unterminated string.");
         return makeToken(Token::END_OF_FILE);
     }
 

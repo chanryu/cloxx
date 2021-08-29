@@ -47,7 +47,7 @@ void Resolver::declare(Token const& name)
     auto& scope = _scopes.back();
 
     if (scope.find(name.lexeme) != scope.end()) {
-        _lox->error(name, "Already a variable with this name in this scope.");
+        _lox->resolveError(name, "Already a variable with this name in this scope.");
     }
 
     scope.emplace(name.lexeme, false);
@@ -123,12 +123,12 @@ void Resolver::visit(WhileStmt const& stmt)
 void Resolver::visit(ReturnStmt const& stmt)
 {
     if (_currentFunction == FunctionType::NONE) {
-        _lox->error(stmt.keyword, "Can't return from top-level code.");
+        _lox->resolveError(stmt.keyword, "Can't return from top-level code.");
     }
 
     if (stmt.value) {
         if (_currentFunction == FunctionType::INITIALIZER) {
-            _lox->error(stmt.keyword, "Can't return a value from an initializer.");
+            _lox->resolveError(stmt.keyword, "Can't return a value from an initializer.");
         }
 
         resolve(*stmt.value);
@@ -167,7 +167,7 @@ void Resolver::visit(ClassStmt const& stmt)
 
     if (stmt.superclass) {
         if (stmt.name.lexeme == stmt.superclass->name.lexeme) {
-            _lox->error(stmt.superclass->name, "A class can't inherit from itself.");
+            _lox->resolveError(stmt.superclass->name, "A class can't inherit from itself.");
         }
 
         resolve(*stmt.superclass);
@@ -246,7 +246,7 @@ void Resolver::visit(SetExpr const& expr)
 void Resolver::visit(ThisExpr const& expr)
 {
     if (_currentClass == ClassType::NONE) {
-        _lox->error(expr.keyword, "Can't use 'this' outside of a class.");
+        _lox->resolveError(expr.keyword, "Can't use 'this' outside of a class.");
     }
 
     resolveLocal(expr, expr.keyword);
@@ -255,10 +255,10 @@ void Resolver::visit(ThisExpr const& expr)
 void Resolver::visit(SuperExpr const& expr)
 {
     if (_currentClass == ClassType::NONE) {
-        _lox->error(expr.keyword, "Can't use 'super' outside of a class.");
+        _lox->resolveError(expr.keyword, "Can't use 'super' outside of a class.");
     }
     else if (_currentClass != ClassType::SUBCLASS) {
-        _lox->error(expr.keyword, "Can't use 'super' in a class with no superclass.");
+        _lox->resolveError(expr.keyword, "Can't use 'super' in a class with no superclass.");
     }
 
     resolveLocal(expr, expr.keyword);
@@ -276,7 +276,7 @@ void Resolver::visit(VariableExpr const& expr)
         if (auto it = scope.find(expr.name.lexeme); it != scope.end()) {
             auto isDefined = it->second;
             if (!isDefined) {
-                _lox->error(expr.name, "Can't read local variable in its own initializer.");
+                _lox->resolveError(expr.name, "Can't read local variable in its own initializer.");
             }
         }
     }

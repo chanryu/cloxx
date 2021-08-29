@@ -20,7 +20,7 @@ class Interpreter : StmtVisitor, ExprVisitor {
 public:
     Interpreter(Lox* lox, GarbageCollector* gc);
 
-    void interpret(std::vector<std::shared_ptr<Stmt>> const& stmts);
+    void interpret(Stmt const& stmt);
     void resolve(Expr const& expr, size_t depth);
 
 private:
