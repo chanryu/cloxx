@@ -8,6 +8,7 @@
 #include "LoxClass.hpp"
 #include "LoxFunction.hpp"
 #include "LoxInstance.hpp"
+#include "Resolver.hpp"
 #include "RuntimeError.hpp"
 
 namespace cloxx {

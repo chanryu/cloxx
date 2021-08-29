@@ -73,7 +73,6 @@ int Lox::run(std::string source)
     Resolver resolver{this, &interpreter};
 
     auto prevSyntaxErrorCount = _syntaxErrorCount;
-    auto prevResolveErrorCount = _resolveErrorCount;
     while (true) {
         auto stmt = parser.parse();
         if (!stmt) {
@@ -91,9 +90,7 @@ int Lox::run(std::string source)
             continue;
         }
 
-        resolver.resolve({stmt});
-        if (prevResolveErrorCount < _resolveErrorCount) {
-            prevResolveErrorCount = _resolveErrorCount;
+        if (!resolver.resolve(*stmt)) {
             // Resolution or analytical error - continue on to report more errors
             continue;
         }

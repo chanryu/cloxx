@@ -14,7 +14,7 @@ class Resolver : StmtVisitor, ExprVisitor {
 public:
     explicit Resolver(Lox* lox, Interpreter* interpreter);
 
-    void resolve(std::vector<std::shared_ptr<Stmt>> const& stmts);
+    bool resolve(Stmt const& stmt);
 
 private:
     enum class FunctionType {
@@ -30,7 +30,7 @@ private:
         SUBCLASS,
     };
 
-    void resolve(Stmt const& stmt);
+    void resolve(std::vector<std::shared_ptr<Stmt>> const& stmts);
     void resolve(Expr const& expr);
 
     using Scope = std::map<std::string, /*isDefined*/ bool>;
@@ -69,12 +69,17 @@ private:
     void visit(VariableExpr const& expr) override;
 
 private:
+    void error(Token const& token, std::string_view message);
+
+private:
     Lox* const _lox;
     Interpreter* const _interpreter;
 
     std::vector<Scope> _scopes;
     FunctionType _currentFunction = FunctionType::NONE;
     ClassType _currentClass = ClassType::NONE;
+
+    unsigned int _errorCount = 0;
 };
 
 } // namespace cloxx

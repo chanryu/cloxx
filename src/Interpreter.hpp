@@ -77,6 +77,7 @@ private:
 
     Lox* const _lox;
     GarbageCollector* const _gc;
+
     std::shared_ptr<Environment> _globals;
     std::shared_ptr<Environment> _environment;
 
