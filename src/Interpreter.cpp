@@ -62,9 +62,13 @@ void Interpreter::interpret(std::vector<std::shared_ptr<Stmt>> const& stmts)
 
 void Interpreter::resolve(Expr const& expr, size_t depth)
 {
+#if 0
     LOX_ASSERT(_locals.find(&expr) == _locals.end());
 
     _locals.emplace(&expr, depth);
+#else
+    _locals[&expr] = depth;
+#endif
 }
 
 void Interpreter::visit(BlockStmt const& stmt)
