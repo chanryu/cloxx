@@ -5,10 +5,11 @@
 namespace cloxx {
 
 class Lox;
+class SourceReader;
 
 class Scanner {
 public:
-    explicit Scanner(Lox* lox);
+    explicit Scanner(Lox* lox, SourceReader* sourceReader);
 
     Token scanToken();
 
@@ -27,6 +28,7 @@ private:
     void readSource();
 
     Lox* const _lox;
+    SourceReader* const _sourceReader;
 
     std::string _source;
     bool _sourceEnded = false;

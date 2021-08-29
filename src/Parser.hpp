@@ -12,12 +12,13 @@
 namespace cloxx {
 
 class Lox;
+class SourceReader;
 
 class Parser {
 public:
-    explicit Parser(Lox* lox);
+    explicit Parser(Lox* lox, SourceReader* sourceReader);
 
-    std::vector<std::shared_ptr<Stmt>> parse();
+    std::shared_ptr<Stmt> parse();
 
 private:
     std::shared_ptr<Stmt> declaration();

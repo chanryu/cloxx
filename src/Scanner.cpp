@@ -3,6 +3,7 @@
 #include <map>
 
 #include "Lox.hpp"
+#include "SourceReader.hpp"
 
 namespace cloxx {
 
@@ -38,7 +39,7 @@ bool lookupKeyword(std::string const& identifier, Token::Type& type)
 }
 } // namespace
 
-Scanner::Scanner(Lox* const lox) : _lox{lox}
+Scanner::Scanner(Lox* lox, SourceReader* sourceReader) : _lox{lox}, _sourceReader{sourceReader}
 {
     readSource();
 }
@@ -241,7 +242,7 @@ void Scanner::readSource()
         // TODO: _source.erase(0, _start)
 
         std::string line;
-        _sourceEnded = !_lox->readLine(line);
+        _sourceEnded = !_sourceReader->readSource(line);
         _source.append(line.begin(), line.end());
     }
 }

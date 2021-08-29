@@ -8,6 +8,7 @@
 #include "Parser.hpp"
 #include "Resolver.hpp"
 #include "RuntimeError.hpp"
+#include "SourceReader.hpp"
 
 #include <chrono> // for clock() native function
 #include <iostream>
@@ -25,37 +26,61 @@ void defineBuiltins(std::shared_ptr<Environment> const& env)
                     return toLoxNumber(millis / 1000.0);
                 }));
 }
+
+class IStreamSourceReader : public SourceReader {
+public:
+    IStreamSourceReader(std::istream& istream) : _istream{istream}
+    {}
+
+    bool readSource(std::string& line)
+    {
+        if (!_istream.eof()) {
+            std::getline(_istream, line);
+            if (!_istream.eof()) {
+                line.push_back('\n');
+            }
+        }
+
+        return !_istream.eof();
+    }
+
+private:
+    std::istream& _istream;
+};
+
 } // namespace
 
 Lox::Lox()
 {}
 
-bool Lox::readLine(std::string& line)
+int Lox::run(std::string source)
 {
-    LOX_ASSERT(_input);
+    _errorCount = 0;
+    auto prevErrorCount = _errorCount;
 
-    if (!_input->eof()) {
-        std::getline(*_input, line);
-        if (!_input->eof()) {
-            line.push_back('\n');
+    std::stringstream istream(source);
+    IStreamSourceReader sourceReader{istream};
+
+    Parser parser{this, &sourceReader};
+
+    std::vector<std::shared_ptr<Stmt>> stmts;
+    while (true) {
+        auto stmt = parser.parse();
+        if (stmt) {
+            stmts.push_back(stmt);
+        }
+        else {
+            if (_errorCount > prevErrorCount) {
+                prevErrorCount = _errorCount;
+                // Continue on to report more parse errors
+                continue;
+            }
+            break;
         }
     }
 
-    return !_input->eof();
-}
-
-int Lox::run(std::string source)
-{
-    std::stringstream istream(source);
-
-    _input = &istream;
-
-    Parser parser{this};
-
-    auto stmts = parser.parse();
-
     // Indicate a syntax error in the exit code.
-    if (_hadError) {
+    if (_errorCount != 0) {
         return 65;
     }
 
@@ -70,7 +95,7 @@ int Lox::run(std::string source)
     resolver.resolve(stmts);
 
     // Stop if there was a resolution error.
-    if (_hadError) {
+    if (_errorCount != 0) {
         return 65;
     }
 
@@ -121,7 +146,7 @@ void Lox::report(size_t line, std::string_view where, std::string_view message)
     }
     std::cerr << message << '\n';
 
-    _hadError = true;
+    _errorCount += 1;
 }
 
 } // namespace cloxx

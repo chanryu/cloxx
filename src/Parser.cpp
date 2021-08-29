@@ -7,18 +7,18 @@
 
 namespace cloxx {
 
-Parser::Parser(Lox* lox) : _lox{lox}, _scanner{lox}
+Parser::Parser(Lox* lox, SourceReader* sourceReader) : _lox{lox}, _scanner{lox, sourceReader}
 {
     _current = _scanner.scanToken();
 }
 
-std::vector<std::shared_ptr<Stmt>> Parser::parse()
+std::shared_ptr<Stmt> Parser::parse()
 {
-    std::vector<std::shared_ptr<Stmt>> stmts;
-    while (!isAtEnd()) {
-        stmts.push_back(declaration());
+    if (isAtEnd()) {
+        return nullptr;
     }
-    return stmts;
+
+    return declaration();
 }
 
 std::shared_ptr<Stmt> Parser::declaration()
