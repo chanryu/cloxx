@@ -72,13 +72,12 @@ int Lox::run(std::string source)
     Interpreter interpreter{this, &gc};
     Resolver resolver{this, &interpreter};
 
-    auto prevSyntaxErrorCount = _syntaxErrorCount;
     while (true) {
-        auto stmt = parser.parse();
+        auto const prevSyntaxErrorCount = _syntaxErrorCount;
+        auto const stmt = parser.parse();
         if (!stmt) {
-            if (prevSyntaxErrorCount < _syntaxErrorCount) {
-                prevSyntaxErrorCount = _syntaxErrorCount;
-                // Scanning or parsing error - continue on to report more errors
+            if (_syntaxErrorCount > prevSyntaxErrorCount) {
+                // Scanning or parsing error(s) - continue on to report more errors
                 continue;
             }
 
@@ -91,7 +90,7 @@ int Lox::run(std::string source)
         }
 
         if (!resolver.resolve(*stmt)) {
-            // Resolution or analytical error - continue on to report more errors
+            // Resolution or analytical error(s) - continue on to report more errors
             continue;
         }
 
@@ -104,7 +103,7 @@ int Lox::run(std::string source)
     }
 
     // Indicate a syntax / resolve error in the exit code.
-    if (_syntaxErrorCount != 0 || _resolveErrorCount != 0) {
+    if (_syntaxErrorCount > 0 || _resolveErrorCount > 0) {
         return 65;
     }
 
