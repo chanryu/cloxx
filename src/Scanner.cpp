@@ -40,9 +40,7 @@ bool lookupKeyword(std::string const& identifier, Token::Type& type)
 } // namespace
 
 Scanner::Scanner(Lox* lox, SourceReader* sourceReader) : _lox{lox}, _sourceReader{sourceReader}
-{
-    readSource();
-}
+{}
 
 bool Scanner::isAtEnd()
 {
@@ -239,11 +237,13 @@ void Scanner::readSource()
 {
     if (!_sourceEnded) {
 
-        // TODO: _source.erase(0, _start)
+        _source.erase(_source.begin(), _source.begin() + _start);
+        _current -= _start;
+        _start = 0;
 
-        std::string line;
-        _sourceEnded = !_sourceReader->readSource(line);
-        _source.append(line.begin(), line.end());
+        std::string source;
+        _sourceEnded = !_sourceReader->readSource(source);
+        _source.append(source.begin(), source.end());
     }
 }
 
