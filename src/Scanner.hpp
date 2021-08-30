@@ -31,7 +31,6 @@ private:
     SourceReader* const _sourceReader;
 
     std::string _source;
-    bool _sourceEnded = false;
 
     size_t _start = 0;
     size_t _current = 0;

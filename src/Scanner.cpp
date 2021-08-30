@@ -48,7 +48,7 @@ bool Scanner::isAtEnd()
         return false;
     }
 
-    if (_sourceEnded) {
+    if (_sourceReader->isEndOfFile()) {
         return true;
     }
 
@@ -173,7 +173,7 @@ char Scanner::peekNext()
             return _source[_current + 1];
         }
 
-        if (_sourceEnded) {
+        if (_sourceReader->isEndOfFile()) {
             return '\0';
         }
 
@@ -235,14 +235,14 @@ Token Scanner::identifier()
 
 void Scanner::readSource()
 {
-    if (!_sourceEnded) {
+    if (!_sourceReader->isEndOfFile()) {
 
         _source.erase(_source.begin(), _source.begin() + _start);
         _current -= _start;
         _start = 0;
 
         std::string source;
-        _sourceEnded = !_sourceReader->readSource(source);
+        _sourceReader->readSource(source);
         _source.append(source.begin(), source.end());
     }
 }

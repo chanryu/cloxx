@@ -33,16 +33,21 @@ public:
     IStreamSourceReader(std::istream& istream) : _istream{istream}
     {}
 
-    bool readSource(std::string& line)
+    bool isEndOfFile()
+    {
+        return _istream.eof();
+    }
+
+    void readSource(std::string& line)
     {
         if (!_istream.eof()) {
             std::getline(_istream, line);
             if (!_istream.eof()) {
                 line.push_back('\n');
             }
-        }
 
-        return !_istream.eof();
+            std::cout << "line: " << line;
+        }
     }
 
 private:
