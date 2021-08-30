@@ -10,13 +10,15 @@ struct Token;
 class Environment;
 class Traceable;
 class RuntimeError;
+class SourceReader;
 
 class Lox {
 public:
     Lox();
 
 public:
-    int run(std::string source);
+    int run(SourceReader& sourceReader);
+    int runFile(char const* filepath);
 
     void syntaxError(size_t line, std::string_view message);
     void syntaxError(Token const& token, std::string_view message);

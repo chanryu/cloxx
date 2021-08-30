@@ -11,6 +11,7 @@
 #include "SourceReader.hpp"
 
 #include <chrono> // for clock() native function
+#include <fstream>
 #include <iostream>
 #include <sstream>
 
@@ -53,14 +54,24 @@ private:
 Lox::Lox()
 {}
 
-int Lox::run(std::string source)
+int Lox::runFile(char const* filepath)
+{
+    std::ifstream ifs{filepath};
+    if (!ifs.is_open()) {
+        std::cerr << "Error: Cannot open file '" << filepath << "' to read!\n";
+        return 1;
+    }
+
+    IStreamSourceReader sourceReader{ifs};
+
+    return run(sourceReader);
+}
+
+int Lox::run(SourceReader& sourceReader)
 {
     _syntaxErrorCount = 0;
     _resolveErrorCount = 0;
     _hadRuntimeError = false;
-
-    std::stringstream istream(source);
-    IStreamSourceReader sourceReader{istream};
 
     Parser parser{this, &sourceReader};
 

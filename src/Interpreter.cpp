@@ -65,7 +65,12 @@ void Interpreter::resolve(Expr const& expr, size_t depth)
 
     _locals.emplace(&expr, depth);
 #else
-    _locals[&expr] = depth;
+    if (depth == static_cast<size_t>(-1)) {
+        _locals.erase(&expr);
+    }
+    else {
+        _locals[&expr] = depth;
+    }
 #endif
 }
 

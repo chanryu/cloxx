@@ -71,9 +71,11 @@ void Resolver::resolveLocal(Expr const& expr, Token const& name)
         auto& scope = *i;
         if (scope.find(name.lexeme) != scope.end()) {
             _interpreter->resolve(expr, depth);
-            break;
+            return;
         }
     }
+
+    _interpreter->resolve(expr, static_cast<size_t>(-1));
 }
 
 void Resolver::resolveFunction(FunStmt const& stmt, FunctionType type)
