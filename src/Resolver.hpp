@@ -12,7 +12,7 @@ class Interpreter;
 
 class Resolver : StmtVisitor, ExprVisitor {
 public:
-    explicit Resolver(Lox* lox, Interpreter* interpreter);
+    explicit Resolver(ErrorReporter* errorReporter, Interpreter* interpreter);
 
     bool resolve(Stmt const& stmt);
 
@@ -72,7 +72,7 @@ private:
     void error(Token const& token, std::string_view message);
 
 private:
-    Lox* const _lox;
+    ErrorReporter* const _errorReporter;
     Interpreter* const _interpreter;
 
     std::vector<Scope> _scopes;
