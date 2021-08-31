@@ -7,7 +7,6 @@
 #include "LoxNativeFunction.hpp"
 #include "Parser.hpp"
 #include "Resolver.hpp"
-#include "RuntimeError.hpp"
 #include "SourceReader.hpp"
 
 #include <chrono> // for clock() native function
@@ -165,12 +164,12 @@ void Lox::resolveError(Token const& token, std::string_view message)
     std::cerr << message << '\n';
 }
 
-void Lox::runtimeError(RuntimeError const& error)
+void Lox::runtimeError(Token const& token, std::string_view message)
 {
     _hadRuntimeError = true;
 
-    std::cerr << "[line " << error.token.line << "] ";
-    std::cerr << error.what() << '\n';
+    std::cerr << "[line " << token.line << "] ";
+    std::cerr << message << '\n';
 }
 
 } // namespace cloxx

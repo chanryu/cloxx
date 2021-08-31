@@ -6,7 +6,8 @@
 
 namespace cloxx {
 
-Resolver::Resolver(Lox* lox, Interpreter* interpreter) : _lox{lox}, _interpreter{interpreter}
+Resolver::Resolver(ErrorReporter* errorReporter, Interpreter* interpreter)
+    : _errorReporter{errorReporter}, _interpreter{interpreter}
 {}
 
 bool Resolver::resolve(Stmt const& stmt)
@@ -293,6 +294,6 @@ void Resolver::visit(VariableExpr const& expr)
 void Resolver::error(Token const& token, std::string_view message)
 {
     _errorCount += 1;
-    _lox->resolveError(token, message);
+    _errorReporter->resolveError(token, message);
 }
 } // namespace cloxx

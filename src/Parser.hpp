@@ -12,12 +12,12 @@
 
 namespace cloxx {
 
-class Lox;
+class ErrorReporter;
 class SourceReader;
 
 class Parser {
 public:
-    explicit Parser(Lox* lox, SourceReader* sourceReader);
+    explicit Parser(ErrorReporter* errorReporter, SourceReader* sourceReader);
 
     std::shared_ptr<Stmt> parse();
 
@@ -70,7 +70,7 @@ private:
     ParseError error(Token const& token, std::string_view message);
     void synchronize();
 
-    Lox* const _lox;
+    ErrorReporter* const _errorReporter;
     Scanner _scanner;
     std::optional<Token> _previous;
     std::optional<Token> _current;

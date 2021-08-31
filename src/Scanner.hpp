@@ -4,12 +4,12 @@
 
 namespace cloxx {
 
-class Lox;
+class ErrorReporter;
 class SourceReader;
 
 class Scanner {
 public:
-    explicit Scanner(Lox* lox, SourceReader* sourceReader);
+    explicit Scanner(ErrorReporter* errorReporter, SourceReader* sourceReader);
 
     Token scanToken();
 
@@ -25,7 +25,7 @@ private:
     Token identifier();
     Token makeToken(Token::Type type);
 
-    Lox* const _lox;
+    ErrorReporter* const _errorReporter;
     SourceReader* const _sourceReader;
 
     char _currentChar = '\0';

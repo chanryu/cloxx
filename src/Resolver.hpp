@@ -7,7 +7,7 @@
 
 namespace cloxx {
 
-class Lox;
+class ErrorReporter;
 class Interpreter;
 
 class Resolver : StmtVisitor, ExprVisitor {

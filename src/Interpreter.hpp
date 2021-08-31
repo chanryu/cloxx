@@ -10,15 +10,15 @@
 
 namespace cloxx {
 
-class Lox;
+class ErrorReporter;
+class GarbageCollector;
+
 class LoxObject;
 class LoxFunction;
 
-class GarbageCollector;
-
 class Interpreter : StmtVisitor, ExprVisitor {
 public:
-    Interpreter(Lox* lox, GarbageCollector* gc);
+    Interpreter(ErrorReporter* errorReporter, GarbageCollector* gc);
 
     void interpret(Stmt const& stmt);
     void resolve(Expr const& expr, size_t depth);
@@ -75,7 +75,7 @@ private:
         std::shared_ptr<LoxObject> object;
     };
 
-    Lox* const _lox;
+    ErrorReporter* const _errorReporter;
     GarbageCollector* const _gc;
 
     std::shared_ptr<Environment> _globals;

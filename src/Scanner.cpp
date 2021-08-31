@@ -40,7 +40,8 @@ bool lookupKeyword(std::string const& identifier, Token::Type& type)
 }
 } // namespace
 
-Scanner::Scanner(Lox* lox, SourceReader* sourceReader) : _lox{lox}, _sourceReader{sourceReader}
+Scanner::Scanner(ErrorReporter* errorReporter, SourceReader* sourceReader)
+    : _errorReporter{errorReporter}, _sourceReader{sourceReader}
 {
     _currentChar = _sourceReader->readChar();
 }
@@ -115,7 +116,7 @@ Token Scanner::scanToken()
             if (isAlpha(c)) {
                 return identifier();
             }
-            _lox->syntaxError(_line, "Unexpected character.");
+            _errorReporter->syntaxError(_line, "Unexpected character.");
             break;
         }
 
@@ -181,7 +182,7 @@ Token Scanner::string()
     }
 
     if (isAtEnd()) {
-        _lox->syntaxError(_line, "Unterminated string.");
+        _errorReporter->syntaxError(_line, "Unterminated string.");
         return makeToken(Token::END_OF_FILE);
     }
 

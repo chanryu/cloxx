@@ -1,7 +1,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "ErrorReporter.hpp"
 
 namespace cloxx {
 
@@ -9,10 +10,9 @@ struct Token;
 
 class Environment;
 class Traceable;
-class RuntimeError;
 class SourceReader;
 
-class Lox {
+class Lox : public ErrorReporter {
 public:
     Lox();
 
@@ -20,10 +20,10 @@ public:
     int run(SourceReader& sourceReader);
     int runFile(char const* filepath);
 
-    void syntaxError(size_t line, std::string_view message);
-    void syntaxError(Token const& token, std::string_view message);
-    void resolveError(Token const& token, std::string_view message);
-    void runtimeError(RuntimeError const& error);
+    void syntaxError(size_t line, std::string_view message) override;
+    void syntaxError(Token const& token, std::string_view message) override;
+    void resolveError(Token const& token, std::string_view message) override;
+    void runtimeError(Token const& token, std::string_view message) override;
 
 private:
     unsigned int _syntaxErrorCount = 0;

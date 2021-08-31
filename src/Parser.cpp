@@ -7,7 +7,8 @@
 
 namespace cloxx {
 
-Parser::Parser(Lox* lox, SourceReader* sourceReader) : _lox{lox}, _scanner{lox, sourceReader}
+Parser::Parser(ErrorReporter* errorReporter, SourceReader* sourceReader)
+    : _errorReporter{errorReporter}, _scanner{errorReporter, sourceReader}
 {
     _current = _scanner.scanToken();
 }
@@ -296,7 +297,7 @@ std::shared_ptr<Expr> Parser::assignment()
             return std::make_shared<SetExpr>(get->object, get->name, value);
         }
 
-        _lox->syntaxError(equals, "Invalid assignment target.");
+        _errorReporter->syntaxError(equals, "Invalid assignment target.");
     }
 
     return expr;
@@ -429,7 +430,7 @@ std::shared_ptr<Expr> Parser::finishCall(std::shared_ptr<Expr> const& callee)
     if (!check(Token::RIGHT_PAREN)) {
         do {
             if (args.size() >= 255) {
-                _lox->syntaxError(peek(), "Can't have more than 255 arguments.");
+                _errorReporter->syntaxError(peek(), "Can't have more than 255 arguments.");
             }
             args.push_back(expression());
         } while (match(Token::COMMA));
@@ -555,7 +556,7 @@ Token const& Parser::consume(Token::Type type, std::string_view message)
 
 Parser::ParseError Parser::error(Token const& token, std::string_view message)
 {
-    _lox->syntaxError(token, message);
+    _errorReporter->syntaxError(token, message);
     return ParseError{};
 }
 
