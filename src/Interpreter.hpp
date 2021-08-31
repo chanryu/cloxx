@@ -21,7 +21,6 @@ public:
     Interpreter(ErrorReporter* errorReporter, GarbageCollector* gc);
 
     void interpret(Stmt const& stmt);
-    void resolve(Expr const& expr, size_t depth);
 
 private:
     // StmtVisitor
@@ -54,8 +53,6 @@ private:
 
     std::shared_ptr<LoxObject> evaluate(Expr const& expr);
 
-    std::shared_ptr<LoxObject> lookUpVariable(Token const& name, Expr const& expr) const;
-
     template <typename OperandType, typename Callback>
     bool matchOperand(std::shared_ptr<LoxObject> const& right, Callback&& callback);
     template <typename OperandType, typename Callback>
@@ -80,8 +77,6 @@ private:
 
     std::shared_ptr<Environment> _globals;
     std::shared_ptr<Environment> _environment;
-
-    std::map<Expr const*, /*depth*/ size_t> _locals;
 
     std::vector<std::shared_ptr<LoxObject>> _evalResults;
 };

@@ -12,7 +12,7 @@ class Interpreter;
 
 class Resolver : StmtVisitor, ExprVisitor {
 public:
-    explicit Resolver(ErrorReporter* errorReporter, Interpreter* interpreter);
+    explicit Resolver(ErrorReporter* errorReporter);
 
     bool resolve(Stmt const& stmt);
 
@@ -40,8 +40,10 @@ private:
     void declare(Token const& name);
     void define(Token const& name);
 
-    void resolveLocal(Expr const& expr, Token const& name);
+    int resolveLocal(Token const& name);
     void resolveFunction(FunStmt const& stmt, FunctionType functionType);
+
+    void error(Token const& token, std::string_view message);
 
     // StmtVisitor
     void visit(BlockStmt const& stmt) override;
@@ -69,11 +71,7 @@ private:
     void visit(VariableExpr const& expr) override;
 
 private:
-    void error(Token const& token, std::string_view message);
-
-private:
     ErrorReporter* const _errorReporter;
-    Interpreter* const _interpreter;
 
     std::vector<Scope> _scopes;
     FunctionType _currentFunction = FunctionType::NONE;

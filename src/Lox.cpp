@@ -88,8 +88,8 @@ int Lox::run(SourceReader& sourceReader)
     // Define built-in global object such as "clock"
     defineBuiltins(gc.root());
 
+    Resolver resolver{this};
     Interpreter interpreter{this, &gc};
-    Resolver resolver{this, &interpreter};
 
     while (true) {
         auto const prevSyntaxErrorCount = _syntaxErrorCount;

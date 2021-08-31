@@ -6,8 +6,7 @@
 
 namespace cloxx {
 
-Resolver::Resolver(ErrorReporter* errorReporter, Interpreter* interpreter)
-    : _errorReporter{errorReporter}, _interpreter{interpreter}
+Resolver::Resolver(ErrorReporter* errorReporter) : _errorReporter{errorReporter}
 {}
 
 bool Resolver::resolve(Stmt const& stmt)
@@ -65,18 +64,17 @@ void Resolver::define(Token const& name)
     }
 }
 
-void Resolver::resolveLocal(Expr const& expr, Token const& name)
+int Resolver::resolveLocal(Token const& name)
 {
-    size_t depth = 0;
+    int depth = 0;
     for (auto i = _scopes.rbegin(); i != _scopes.rend(); ++i, ++depth) {
         auto& scope = *i;
         if (scope.find(name.lexeme) != scope.end()) {
-            _interpreter->resolve(expr, depth);
-            return;
+            return depth;
         }
     }
 
-    _interpreter->resolve(expr, static_cast<size_t>(-1));
+    return -1; // global
 }
 
 void Resolver::resolveFunction(FunStmt const& stmt, FunctionType type)
@@ -93,6 +91,12 @@ void Resolver::resolveFunction(FunStmt const& stmt, FunctionType type)
     endScope();
 
     _currentFunction = enclosingFunction;
+}
+
+void Resolver::error(Token const& token, std::string_view message)
+{
+    _errorCount += 1;
+    _errorReporter->resolveError(token, message);
 }
 
 void Resolver::visit(BlockStmt const& stmt)
@@ -206,7 +210,7 @@ void Resolver::visit(ClassStmt const& stmt)
 void Resolver::visit(AssignExpr const& expr)
 {
     resolve(*expr.value);
-    resolveLocal(expr, expr.name);
+    const_cast<AssignExpr&>(expr).resolvedDepth = resolveLocal(expr.name);
 }
 
 void Resolver::visit(BinaryExpr const& expr)
@@ -256,7 +260,7 @@ void Resolver::visit(ThisExpr const& expr)
         error(expr.keyword, "Can't use 'this' outside of a class.");
     }
 
-    resolveLocal(expr, expr.keyword);
+    const_cast<ThisExpr&>(expr).resolvedDepth = resolveLocal(expr.keyword);
 }
 
 void Resolver::visit(SuperExpr const& expr)
@@ -268,7 +272,7 @@ void Resolver::visit(SuperExpr const& expr)
         error(expr.keyword, "Can't use 'super' in a class with no superclass.");
     }
 
-    resolveLocal(expr, expr.keyword);
+    const_cast<SuperExpr&>(expr).resolvedDepth = resolveLocal(expr.keyword);
 }
 
 void Resolver::visit(UnaryExpr const& expr)
@@ -288,12 +292,7 @@ void Resolver::visit(VariableExpr const& expr)
         }
     }
 
-    resolveLocal(expr, expr.name);
+    const_cast<VariableExpr&>(expr).resolvedDepth = resolveLocal(expr.name);
 }
 
-void Resolver::error(Token const& token, std::string_view message)
-{
-    _errorCount += 1;
-    _errorReporter->resolveError(token, message);
-}
 } // namespace cloxx
