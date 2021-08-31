@@ -96,7 +96,7 @@ std::shared_ptr<Stmt> Parser::classDeclaration()
     std::shared_ptr<VariableExpr> superclass;
     if (match(Token::LESS)) {
         consume(Token::IDENTIFIER, "Expect superclass name.");
-        superclass = std::make_shared<VariableExpr>(previous(), /*depth*/ -1);
+        superclass = std::make_shared<VariableExpr>(previous());
     }
 
     consume(Token::LEFT_BRACE, "Expect '{' before class body.");
@@ -287,7 +287,7 @@ std::shared_ptr<Expr> Parser::assignment()
         auto const& value = assignment();
 
         if (auto const var = dynamic_cast<VariableExpr*>(expr.get())) {
-            return std::make_shared<AssignExpr>(var->name, value, /*depth*/ -1);
+            return std::make_shared<AssignExpr>(var->name, value);
         }
 
         if (auto const get = dynamic_cast<GetExpr*>(expr.get())) {
@@ -468,18 +468,18 @@ std::shared_ptr<Expr> Parser::primary()
     }
 
     if (match(Token::IDENTIFIER)) {
-        return std::make_shared<VariableExpr>(previous(), /*depth*/ -1);
+        return std::make_shared<VariableExpr>(previous());
     }
 
     if (match(Token::THIS)) {
-        return std::make_shared<ThisExpr>(previous(), /*depth*/ -1);
+        return std::make_shared<ThisExpr>(previous());
     }
 
     if (match(Token::SUPER)) {
         auto const& keyword = previous();
         consume(Token::DOT, "Expect '.' after 'super'.");
         auto const& method = consume(Token::IDENTIFIER, "Expect superclass method name.");
-        return std::make_shared<SuperExpr>(keyword, method, /*depth*/ -1);
+        return std::make_shared<SuperExpr>(keyword, method);
     }
 
     throw error(peek(), "Expect expression.");

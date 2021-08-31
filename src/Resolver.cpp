@@ -200,7 +200,7 @@ void Resolver::visit(ClassStmt const& stmt)
 void Resolver::visit(AssignExpr const& expr)
 {
     resolve(*expr.value);
-    const_cast<AssignExpr&>(expr).depth = resolveLocal(expr.name);
+    const_cast<AssignExpr&>(expr).resolvedDepth = resolveLocal(expr.name);
 }
 
 void Resolver::visit(BinaryExpr const& expr)
@@ -250,7 +250,7 @@ void Resolver::visit(ThisExpr const& expr)
         _lox->error(expr.keyword, "Can't use 'this' outside of a class.");
     }
 
-    const_cast<ThisExpr&>(expr).depth = resolveLocal(expr.keyword);
+    const_cast<ThisExpr&>(expr).resolvedDepth = resolveLocal(expr.keyword);
 }
 
 void Resolver::visit(SuperExpr const& expr)
@@ -262,7 +262,7 @@ void Resolver::visit(SuperExpr const& expr)
         _lox->error(expr.keyword, "Can't use 'super' in a class with no superclass.");
     }
 
-    const_cast<SuperExpr&>(expr).depth = resolveLocal(expr.keyword);
+    const_cast<SuperExpr&>(expr).resolvedDepth = resolveLocal(expr.keyword);
 }
 
 void Resolver::visit(UnaryExpr const& expr)
@@ -282,7 +282,7 @@ void Resolver::visit(VariableExpr const& expr)
         }
     }
 
-    const_cast<VariableExpr&>(expr).depth = resolveLocal(expr.name);
+    const_cast<VariableExpr&>(expr).resolvedDepth = resolveLocal(expr.name);
 }
 
 } // namespace cloxx

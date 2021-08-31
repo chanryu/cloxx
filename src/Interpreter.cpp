@@ -166,8 +166,8 @@ void Interpreter::visit(AssignExpr const& expr)
     auto value = evaluate(*expr.value);
     LOX_ASSERT(value);
 
-    if (expr.depth >= 0) {
-        _environment->assignAt(expr.depth, expr.name.lexeme, value);
+    if (expr.resolvedDepth >= 0) {
+        _environment->assignAt(expr.resolvedDepth, expr.name.lexeme, value);
     }
     else {
         _globals->assign(expr.name, value);
@@ -327,8 +327,8 @@ void Interpreter::visit(SetExpr const& expr)
 void Interpreter::visit(ThisExpr const& expr)
 {
     std::shared_ptr<LoxObject> object;
-    if (expr.depth >= 0) {
-        object = _environment->getAt(expr.depth, expr.keyword.lexeme);
+    if (expr.resolvedDepth >= 0) {
+        object = _environment->getAt(expr.resolvedDepth, expr.keyword.lexeme);
     }
     else {
         object = _globals->get(expr.keyword);
@@ -341,8 +341,8 @@ void Interpreter::visit(SuperExpr const& expr)
 {
     LOX_ASSERT(expr.keyword.lexeme == "super");
 
-    if (expr.depth >= 0) {
-        auto distance = expr.depth;
+    if (expr.resolvedDepth >= 0) {
+        auto distance = expr.resolvedDepth;
         auto superclass = std::dynamic_pointer_cast<LoxClass>(_environment->getAt(distance, "super"));
         auto instance = std::dynamic_pointer_cast<LoxInstance>(_environment->getAt(distance - 1, "this"));
         if (superclass && instance) {
@@ -377,8 +377,8 @@ void Interpreter::visit(UnaryExpr const& expr)
 void Interpreter::visit(VariableExpr const& expr)
 {
     std::shared_ptr<LoxObject> object;
-    if (expr.depth >= 0) {
-        object = _environment->getAt(expr.depth, expr.name.lexeme);
+    if (expr.resolvedDepth >= 0) {
+        object = _environment->getAt(expr.resolvedDepth, expr.name.lexeme);
     }
     else {
         object = _globals->get(expr.name);
