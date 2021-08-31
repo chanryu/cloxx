@@ -3,7 +3,7 @@
 #include <map>
 
 #include "Assert.hpp"
-#include "Lox.hpp"
+#include "ErrorReporter.hpp"
 #include "SourceReader.hpp"
 
 namespace cloxx {

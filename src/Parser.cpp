@@ -1,7 +1,7 @@
 #include "Parser.hpp"
 
 #include "Assert.hpp"
-#include "Lox.hpp"
+#include "ErrorReporter.hpp"
 
 #define LOX_ASSERT_PREVIOUS(__t) LOX_ASSERT(previous().type == Token::__t)
 

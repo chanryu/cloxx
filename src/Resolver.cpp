@@ -1,8 +1,7 @@
 #include "Resolver.hpp"
 
 #include "Assert.hpp"
-#include "Interpreter.hpp"
-#include "Lox.hpp"
+#include "ErrorReporter.hpp"
 
 namespace cloxx {
 

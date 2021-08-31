@@ -1,6 +1,7 @@
 #include "Lox.hpp"
 
 #include "Assert.hpp"
+#include "ErrorReporter.hpp"
 #include "GC.hpp"
 #include "Interpreter.hpp"
 #include "LoxFunction.hpp"
@@ -57,6 +58,67 @@ private:
     char _nextChar;
 };
 
+class ConsoleErrorReporter : public ErrorReporter {
+public:
+    void syntaxError(size_t line, std::string_view message) override
+    {
+        _syntaxErrorCount += 1;
+
+        std::cerr << "[line " << line << "] Error: " << message << '\n';
+    }
+
+    void syntaxError(Token const& token, std::string_view message) override
+    {
+        _syntaxErrorCount += 1;
+
+        std::cerr << "[line " << token.line << "] ";
+        if (token.type == Token::END_OF_FILE) {
+            std::cerr << "Error at end: ";
+        }
+        else {
+            std::cerr << "Error at '" << token.lexeme << "': ";
+        }
+        std::cerr << message << '\n';
+    }
+
+    void resolveError(Token const& token, std::string_view message) override
+    {
+        _resolveErrorCount += 1;
+
+        std::cerr << "[line " << token.line << "] ";
+        std::cerr << "Error at '" << token.lexeme << "': ";
+        std::cerr << message << '\n';
+    }
+
+    void runtimeError(Token const& token, std::string_view message) override
+    {
+        _hadRuntimeError = true;
+
+        std::cerr << "[line " << token.line << "] ";
+        std::cerr << message << '\n';
+    }
+
+    unsigned int syntaxErrorCount() const
+    {
+        return _syntaxErrorCount;
+    }
+
+    unsigned int resolveErrorCount() const
+    {
+        return _resolveErrorCount;
+    }
+
+    bool hadRuntimeError() const
+    {
+        return _hadRuntimeError;
+    }
+
+private:
+    unsigned int _syntaxErrorCount = 0;
+    unsigned int _resolveErrorCount = 0;
+    bool _hadRuntimeError = false;
+};
+
 } // namespace
 
 Lox::Lox()
@@ -77,25 +139,22 @@ int Lox::runFile(char const* filepath)
 
 int Lox::run(SourceReader& sourceReader)
 {
-    _syntaxErrorCount = 0;
-    _resolveErrorCount = 0;
-    _hadRuntimeError = false;
-
-    Parser parser{this, &sourceReader};
-
+    ConsoleErrorReporter errorReporter;
     GarbageCollector gc;
+
+    Parser parser{&errorReporter, &sourceReader};
 
     // Define built-in global object such as "clock"
     defineBuiltins(gc.root());
 
-    Resolver resolver{this};
-    Interpreter interpreter{this, &gc};
+    Resolver resolver{&errorReporter};
+    Interpreter interpreter{&errorReporter, &gc};
 
     while (true) {
-        auto const prevSyntaxErrorCount = _syntaxErrorCount;
+        auto const prevSyntaxErrorCount = errorReporter.syntaxErrorCount();
         auto const stmt = parser.parse();
         if (!stmt) {
-            if (_syntaxErrorCount > prevSyntaxErrorCount) {
+            if (errorReporter.syntaxErrorCount() > prevSyntaxErrorCount) {
                 // Scanning or parsing error(s) - continue on to report more errors
                 continue;
             }
@@ -104,7 +163,7 @@ int Lox::run(SourceReader& sourceReader)
             break;
         }
 
-        if (_syntaxErrorCount != 0) {
+        if (errorReporter.syntaxErrorCount() != 0) {
             continue;
         }
 
@@ -113,7 +172,7 @@ int Lox::run(SourceReader& sourceReader)
             continue;
         }
 
-        if (_resolveErrorCount != 0 || _hadRuntimeError) {
+        if (errorReporter.resolveErrorCount() != 0 || errorReporter.hadRuntimeError()) {
             continue;
         }
 
@@ -122,54 +181,16 @@ int Lox::run(SourceReader& sourceReader)
     }
 
     // Indicate a syntax / resolve error in the exit code.
-    if (_syntaxErrorCount > 0 || _resolveErrorCount > 0) {
+    if (errorReporter.syntaxErrorCount() > 0 || errorReporter.resolveErrorCount() > 0) {
         return 65;
     }
 
     // Indicate a run-time error in the exit code.
-    if (_hadRuntimeError) {
+    if (errorReporter.hadRuntimeError()) {
         return 70;
     }
 
     return 0;
-}
-
-void Lox::syntaxError(size_t line, std::string_view message)
-{
-    _syntaxErrorCount += 1;
-
-    std::cerr << "[line " << line << "] Error: " << message << '\n';
-}
-
-void Lox::syntaxError(Token const& token, std::string_view message)
-{
-    _syntaxErrorCount += 1;
-
-    std::cerr << "[line " << token.line << "] ";
-    if (token.type == Token::END_OF_FILE) {
-        std::cerr << "Error at end: ";
-    }
-    else {
-        std::cerr << "Error at '" << token.lexeme << "': ";
-    }
-    std::cerr << message << '\n';
-}
-
-void Lox::resolveError(Token const& token, std::string_view message)
-{
-    _resolveErrorCount += 1;
-
-    std::cerr << "[line " << token.line << "] ";
-    std::cerr << "Error at '" << token.lexeme << "': ";
-    std::cerr << message << '\n';
-}
-
-void Lox::runtimeError(Token const& token, std::string_view message)
-{
-    _hadRuntimeError = true;
-
-    std::cerr << "[line " << token.line << "] ";
-    std::cerr << message << '\n';
 }
 
 } // namespace cloxx
