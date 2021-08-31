@@ -3,6 +3,8 @@
 import os.path
 import sys
 
+_RESOLVING_CLASSES = ["AssignExpr", "ThisExpr", "SuperExpr", "VariableExpr"]
+
 def _makeCtorParamType(type):
     if type == 'Token':
         return type + ' const&'
@@ -15,13 +17,13 @@ def _makeCtorParamType(type):
 
 def _makeMemVarType(type):
     if type == 'Token':
-        return type + ' const'
+        return type
     if type.startswith('List<'):
         itemType = type[5:-1]
         if itemType == 'Token':
-            return 'std::vector<' + itemType + '> const'
-        return 'std::vector<std::shared_ptr<' + itemType + '>> const'
-    return 'std::shared_ptr<' + type + '> const'
+            return 'std::vector<' + itemType + '>'
+        return 'std::vector<std::shared_ptr<' + itemType + '>>'
+    return 'std::shared_ptr<' + type + '>'
 
 def _defineType(file, baseName, className, fields):
     file.write('class ' + className + ' : public ' + baseName + ' {\n')
@@ -62,6 +64,8 @@ def _defineType(file, baseName, className, fields):
         type = _makeMemVarType(tokens[0]);
         name = tokens[1];
         file.write('    ' + type + ' ' + name + ';\n')
+    if className in _RESOLVING_CLASSES:
+        file.write('    int resolvedDepth = -1;\n')
     file.write('};\n')
 
 def _defineVisitor(file, baseName, types):

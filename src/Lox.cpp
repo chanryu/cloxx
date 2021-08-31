@@ -49,7 +49,7 @@ int Lox::run(std::string source)
 
     Interpreter interpreter{this, &gc};
 
-    Resolver resolver{this, &interpreter};
+    Resolver resolver{this};
     resolver.resolve(stmts);
 
     // Stop if there was a resolution error.
