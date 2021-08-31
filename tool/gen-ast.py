@@ -4,6 +4,8 @@ import os.path
 import sys
 
 def _makeCtorParamType(type):
+    if type == 'int':
+        return type
     if type == 'Token':
         return type + ' const&'
     if type.startswith('List<'):
@@ -14,6 +16,8 @@ def _makeCtorParamType(type):
     return 'std::shared_ptr<' + type + '> const&'
 
 def _makeMemVarType(type):
+    if type == 'int':
+        return type
     if type == 'Token':
         return type + ' const'
     if type.startswith('List<'):
@@ -125,7 +129,7 @@ if __name__ == '__main__':
     outputDir = sys.argv[1]
 
     _generateAst(outputDir, ['Token.hpp'], 'Expr', [
-        "Assign   : Token name, Expr value",
+        "Assign   : Token name, Expr value, int depth",
         "Binary   : Token op, Expr left, Expr right",
         "Call     : Expr callee, Token paren, List<Expr> args",
         "Get      : Expr object, Token name",
@@ -133,10 +137,10 @@ if __name__ == '__main__':
         "Literal  : LoxObject value",
         "Logical  : Token op, Expr left, Expr right",
         "Set      : Expr object, Token name, Expr value",
-        "This     : Token keyword",
-        "Super    : Token keyword, Token method",
+        "This     : Token keyword, int depth",
+        "Super    : Token keyword, Token method, int depth",
         "Unary    : Token op, Expr right",
-        "Variable : Token name",
+        "Variable : Token name, int depth",
     ])
 
     _generateAst(outputDir, ['Token.hpp', 'Expr.hpp'], 'Stmt', [

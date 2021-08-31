@@ -12,7 +12,7 @@ class Interpreter;
 
 class Resolver : StmtVisitor, ExprVisitor {
 public:
-    explicit Resolver(Lox* lox, Interpreter* interpreter);
+    explicit Resolver(Lox* lox);
 
     void resolve(std::vector<std::shared_ptr<Stmt>> const& stmts);
 
@@ -40,7 +40,7 @@ private:
     void declare(Token const& name);
     void define(Token const& name);
 
-    void resolveLocal(Expr const& expr, Token const& name);
+    int resolveLocal(Token const& name);
     void resolveFunction(FunStmt const& stmt, FunctionType functionType);
 
     // StmtVisitor
@@ -70,7 +70,6 @@ private:
 
 private:
     Lox* const _lox;
-    Interpreter* const _interpreter;
 
     std::vector<Scope> _scopes;
     FunctionType _currentFunction = FunctionType::NONE;

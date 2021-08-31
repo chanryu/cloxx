@@ -60,13 +60,6 @@ void Interpreter::interpret(std::vector<std::shared_ptr<Stmt>> const& stmts)
     }
 }
 
-void Interpreter::resolve(Expr const& expr, size_t depth)
-{
-    LOX_ASSERT(_locals.find(&expr) == _locals.end());
-
-    _locals.emplace(&expr, depth);
-}
-
 void Interpreter::visit(BlockStmt const& stmt)
 {
     auto blockEnv = _gc->create<Environment>(_environment);
@@ -173,9 +166,8 @@ void Interpreter::visit(AssignExpr const& expr)
     auto value = evaluate(*expr.value);
     LOX_ASSERT(value);
 
-    if (auto it = _locals.find(&expr); it != _locals.end()) {
-        auto distance = it->second;
-        _environment->assignAt(distance, expr.name.lexeme, value);
+    if (expr.depth >= 0) {
+        _environment->assignAt(expr.depth, expr.name.lexeme, value);
     }
     else {
         _globals->assign(expr.name, value);
@@ -334,15 +326,23 @@ void Interpreter::visit(SetExpr const& expr)
 
 void Interpreter::visit(ThisExpr const& expr)
 {
-    _evalResults.push_back(lookUpVariable(expr.keyword, expr));
+    std::shared_ptr<LoxObject> object;
+    if (expr.depth >= 0) {
+        object = _environment->getAt(expr.depth, expr.keyword.lexeme);
+    }
+    else {
+        object = _globals->get(expr.keyword);
+    }
+
+    _evalResults.push_back(object);
 }
 
 void Interpreter::visit(SuperExpr const& expr)
 {
     LOX_ASSERT(expr.keyword.lexeme == "super");
 
-    if (auto it = _locals.find(&expr); it != _locals.end()) {
-        auto distance = it->second;
+    if (expr.depth >= 0) {
+        auto distance = expr.depth;
         auto superclass = std::dynamic_pointer_cast<LoxClass>(_environment->getAt(distance, "super"));
         auto instance = std::dynamic_pointer_cast<LoxInstance>(_environment->getAt(distance - 1, "this"));
         if (superclass && instance) {
@@ -376,7 +376,14 @@ void Interpreter::visit(UnaryExpr const& expr)
 
 void Interpreter::visit(VariableExpr const& expr)
 {
-    _evalResults.push_back(lookUpVariable(expr.name, expr));
+    std::shared_ptr<LoxObject> object;
+    if (expr.depth >= 0) {
+        object = _environment->getAt(expr.depth, expr.name.lexeme);
+    }
+    else {
+        object = _globals->get(expr.name);
+    }
+    _evalResults.push_back(object);
 }
 
 void Interpreter::execute(Stmt const& stmt)
@@ -416,15 +423,6 @@ std::shared_ptr<LoxObject> Interpreter::evaluate(Expr const& expr)
     auto value = _evalResults.back();
     _evalResults.pop_back();
     return value;
-}
-
-std::shared_ptr<LoxObject> Interpreter::lookUpVariable(Token const& name, Expr const& expr) const
-{
-    if (auto it = _locals.find(&expr); it != _locals.end()) {
-        auto distance = it->second;
-        return _environment->getAt(distance, name.lexeme);
-    }
-    return _globals->get(name);
 }
 
 template <typename OperandType, typename Callback>

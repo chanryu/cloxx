@@ -6,7 +6,7 @@
 
 namespace cloxx {
 
-Resolver::Resolver(Lox* lox, Interpreter* interpreter) : _lox{lox}, _interpreter{interpreter}
+Resolver::Resolver(Lox* lox) : _lox{lox}
 {}
 
 void Resolver::resolve(std::vector<std::shared_ptr<Stmt>> const& stmts)
@@ -60,16 +60,17 @@ void Resolver::define(Token const& name)
     }
 }
 
-void Resolver::resolveLocal(Expr const& expr, Token const& name)
+int Resolver::resolveLocal(Token const& name)
 {
-    size_t depth = 0;
+    int depth = 0;
     for (auto i = _scopes.rbegin(); i != _scopes.rend(); ++i, ++depth) {
         auto& scope = *i;
         if (scope.find(name.lexeme) != scope.end()) {
-            _interpreter->resolve(expr, depth);
-            break;
+            return depth;
         }
     }
+
+    return -1; // global
 }
 
 void Resolver::resolveFunction(FunStmt const& stmt, FunctionType type)
@@ -199,7 +200,7 @@ void Resolver::visit(ClassStmt const& stmt)
 void Resolver::visit(AssignExpr const& expr)
 {
     resolve(*expr.value);
-    resolveLocal(expr, expr.name);
+    const_cast<AssignExpr&>(expr).depth = resolveLocal(expr.name);
 }
 
 void Resolver::visit(BinaryExpr const& expr)
@@ -249,7 +250,7 @@ void Resolver::visit(ThisExpr const& expr)
         _lox->error(expr.keyword, "Can't use 'this' outside of a class.");
     }
 
-    resolveLocal(expr, expr.keyword);
+    const_cast<ThisExpr&>(expr).depth = resolveLocal(expr.keyword);
 }
 
 void Resolver::visit(SuperExpr const& expr)
@@ -261,7 +262,7 @@ void Resolver::visit(SuperExpr const& expr)
         _lox->error(expr.keyword, "Can't use 'super' in a class with no superclass.");
     }
 
-    resolveLocal(expr, expr.keyword);
+    const_cast<SuperExpr&>(expr).depth = resolveLocal(expr.keyword);
 }
 
 void Resolver::visit(UnaryExpr const& expr)
@@ -281,7 +282,7 @@ void Resolver::visit(VariableExpr const& expr)
         }
     }
 
-    resolveLocal(expr, expr.name);
+    const_cast<VariableExpr&>(expr).depth = resolveLocal(expr.name);
 }
 
 } // namespace cloxx
