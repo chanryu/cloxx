@@ -2,6 +2,7 @@
 
 #include <map>
 
+#include "Assert.hpp"
 #include "Lox.hpp"
 #include "SourceReader.hpp"
 
@@ -40,20 +41,13 @@ bool lookupKeyword(std::string const& identifier, Token::Type& type)
 } // namespace
 
 Scanner::Scanner(Lox* lox, SourceReader* sourceReader) : _lox{lox}, _sourceReader{sourceReader}
-{}
+{
+    _currentChar = _sourceReader->readChar();
+}
 
 bool Scanner::isAtEnd()
 {
-    if (_current < _source.length()) {
-        return false;
-    }
-
-    if (_sourceReader->isEndOfFile()) {
-        return true;
-    }
-
-    readSource();
-    return _current >= _source.length();
+    return _currentChar == '\0';
 }
 
 Token Scanner::scanToken()
@@ -61,8 +55,6 @@ Token Scanner::scanToken()
     using T = Token;
 
     while (!isAtEnd()) {
-        _start = _current;
-
         char c = advance();
         switch (c) {
         case '(':
@@ -83,7 +75,6 @@ Token Scanner::scanToken()
             return makeToken(T::PLUS);
         case ';':
             return makeToken(T::SEMICOLON);
-            break;
         case '*':
             return makeToken(T::STAR);
         case '!':
@@ -127,6 +118,8 @@ Token Scanner::scanToken()
             _lox->syntaxError(_line, "Unexpected character.");
             break;
         }
+
+        _lexeme.clear();
     }
 
     return makeToken(T::END_OF_FILE);
@@ -134,15 +127,22 @@ Token Scanner::scanToken()
 
 char Scanner::advance()
 {
-    return _source[_current++];
+    LOX_ASSERT(_currentChar != '\0');
+
+    _lexeme.push_back(_currentChar);
+
+    peekNext();
+
+    _currentChar = _nextChar;
+    _nextChar = '\0';
+
+    return _lexeme.back();
 }
 
 Token Scanner::makeToken(Token::Type type)
 {
     std::string lexeme;
-    if (type != Token::END_OF_FILE) {
-        lexeme = _source.substr(_start, _current - _start);
-    }
+    lexeme.swap(_lexeme);
     return {type, std::move(lexeme), _line};
 }
 
@@ -151,34 +151,25 @@ bool Scanner::match(char expected)
     if (isAtEnd())
         return false;
 
-    if (_source[_current] != expected)
+    if (peek() != expected)
         return false;
 
-    _current++;
+    advance();
     return true;
 }
 
 char Scanner::peek()
 {
-    if (isAtEnd())
-        return '\0';
-
-    return _source[_current];
+    return _currentChar;
 }
 
 char Scanner::peekNext()
 {
-    while (true) {
-        if (_current + 1 < _source.length()) {
-            return _source[_current + 1];
-        }
-
-        if (_sourceReader->isEndOfFile()) {
-            return '\0';
-        }
-
-        readSource();
+    if (_nextChar == '\0' && !_sourceReader->isEndOfSource()) {
+        _nextChar = _sourceReader->readChar();
     }
+
+    return _nextChar;
 }
 
 Token Scanner::string()
@@ -225,26 +216,11 @@ Token Scanner::identifier()
         advance();
     }
 
-    auto text = _source.substr(_start, _current - _start);
-    if (Token::Type type; lookupKeyword(text, type)) {
+    if (Token::Type type; lookupKeyword(_lexeme, type)) {
         return makeToken(type);
     }
 
     return makeToken(Token::IDENTIFIER);
-}
-
-void Scanner::readSource()
-{
-    if (!_sourceReader->isEndOfFile()) {
-
-        _source.erase(_source.begin(), _source.begin() + _start);
-        _current -= _start;
-        _start = 0;
-
-        std::string source;
-        _sourceReader->readSource(source);
-        _source.append(source.begin(), source.end());
-    }
 }
 
 } // namespace cloxx

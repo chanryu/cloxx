@@ -523,20 +523,25 @@ bool Parser::isAtEnd()
 Token const& Parser::advance()
 {
     if (!isAtEnd()) {
-        _previous = _current;
-        _current = _scanner.scanToken();
+        _previous.swap(_current);
+        _current.reset();
     }
     return previous();
 }
 
 Token const& Parser::peek()
 {
-    return _current;
+    if (!_current.has_value()) {
+        _current = _scanner.scanToken();
+        LOX_ASSERT(_current.has_value());
+    }
+    return *_current;
 }
 
 Token const& Parser::previous() const
 {
-    return _previous;
+    LOX_ASSERT(_previous.has_value());
+    return *_previous;
 }
 
 Token const& Parser::consume(Token::Type type, std::string_view message)

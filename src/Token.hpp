@@ -57,7 +57,6 @@ struct Token {
         END_OF_FILE
     };
 
-    Token();
     Token(Type type, std::string lexeme, size_t line);
 
 #ifndef NDEBUG

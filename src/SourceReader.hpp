@@ -9,8 +9,8 @@ class SourceReader {
 public:
     virtual ~SourceReader() = default;
 
-    virtual bool isEndOfFile() = 0;
-    virtual void readSource(std::string& source) = 0;
+    virtual bool isEndOfSource() = 0;
+    virtual char readChar() = 0;
 };
 
 } // namespace cloxx

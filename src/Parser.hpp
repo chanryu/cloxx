@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string_view>
 #include <vector>
 
@@ -71,8 +72,8 @@ private:
 
     Lox* const _lox;
     Scanner _scanner;
-    Token _previous;
-    Token _current;
+    std::optional<Token> _previous;
+    std::optional<Token> _current;
 };
 
 } // namespace cloxx

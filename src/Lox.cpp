@@ -31,27 +31,31 @@ void defineBuiltins(std::shared_ptr<Environment> const& env)
 class IStreamSourceReader : public SourceReader {
 public:
     IStreamSourceReader(std::istream& istream) : _istream{istream}
-    {}
-
-    bool isEndOfFile()
     {
-        return _istream.eof();
+        readNextChar();
     }
 
-    void readSource(std::string& line)
+    bool isEndOfSource()
     {
-        if (!_istream.eof()) {
-            std::getline(_istream, line);
-            if (!_istream.eof()) {
-                line.push_back('\n');
-            }
+        return _nextChar == '\0';
+    }
 
-            std::cout << "line: " << line;
-        }
+    char readChar()
+    {
+        char c = _nextChar;
+        readNextChar();
+        return c;
     }
 
 private:
+    void readNextChar()
+    {
+        if (!_istream.get(_nextChar)) {
+            _nextChar = '\0';
+        }
+    }
     std::istream& _istream;
+    char _nextChar;
 };
 
 } // namespace

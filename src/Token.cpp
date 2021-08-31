@@ -67,9 +67,6 @@ char const* getTokenName(Token::Type tokenType)
 } // namespace
 #endif
 
-Token::Token() : type{Token::END_OF_FILE}, lexeme{}, line{}
-{}
-
 Token::Token(Type type, std::string lexeme, size_t line) : type{type}, lexeme{std::move(lexeme)}, line{line}
 {}
 

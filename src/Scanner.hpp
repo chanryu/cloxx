@@ -25,15 +25,13 @@ private:
     Token identifier();
     Token makeToken(Token::Type type);
 
-    void readSource();
-
     Lox* const _lox;
     SourceReader* const _sourceReader;
 
-    std::string _source;
+    char _currentChar = '\0';
+    char _nextChar = '\0';
+    std::string _lexeme;
 
-    size_t _start = 0;
-    size_t _current = 0;
     size_t _line = 1;
 };
 } // namespace cloxx
