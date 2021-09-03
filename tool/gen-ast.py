@@ -6,27 +6,53 @@ import sys
 _RESOLVING_CLASSES = ["AssignExpr", "ThisExpr", "SuperExpr", "VariableExpr"]
 
 def _makeCtorParamType(type):
-    if type == 'Token':
-        return type + ' const&'
     if type.startswith('List<'):
         itemType = type[5:-1]
-        if itemType == 'Token':
-            return 'std::vector<' + itemType + '> const&'
-        return 'std::vector<std::shared_ptr<' + itemType + '>> const&'
-    return 'std::shared_ptr<' + type + '> const&'
+        return 'std::vector<' + itemType + '> const&'
+    return type + ' const&'
 
 def _makeMemVarType(type):
-    if type == 'Token':
-        return type
     if type.startswith('List<'):
         itemType = type[5:-1]
-        if itemType == 'Token':
-            return 'std::vector<' + itemType + '>'
-        return 'std::vector<std::shared_ptr<' + itemType + '>>'
-    return 'std::shared_ptr<' + type + '>'
+        return 'std::vector<' + itemType + '>'
+    return type
 
-def _defineType(file, baseName, className, fields):
-    file.write('class ' + className + ' : public ' + baseName + ' {\n')
+def _declareFactoryFunc(file, baseName, className, fields):
+    file.write('    static ' + baseName + ' make' + className + '(')
+    for index, field in enumerate(fields):
+        tokens = [token.strip() for token in field.split(' ')]
+        type = _makeCtorParamType(tokens[0])
+        name = tokens[1]
+        file.write(type + ' ' + name)
+        if index < len(fields) - 1:
+           file.write(', ')
+        else:
+           file.write(');\n')
+
+def _implementFactoryFunc(file, baseName, className, fields):
+    file.write(baseName + ' ' + baseName + '::' + 'make' + className + '(')
+    for index, field in enumerate(fields):
+        tokens = [token.strip() for token in field.split(' ')]
+        type = _makeCtorParamType(tokens[0])
+        name = tokens[1]
+        file.write(type + ' ' + name)
+        if index < len(fields) - 1:
+           file.write(', ')
+        else:
+           file.write(')\n')
+    file.write('{\n')
+    file.write('    return {')
+    for index, field in enumerate(fields):
+        name = [token.strip() for token in field.split(' ')][1]
+        file.write(name)
+        if index < len(fields) - 1:
+           file.write(', ')
+        else:
+           file.write('};\n')
+    file.write('}\n')
+
+def _declareNode(file, baseName, className, fields):
+    file.write('class ' + baseName + '::' + className + ' : public ' + baseName + '::Impl {\n')
     file.write('public:\n')
 
     # Constructor.
@@ -39,23 +65,11 @@ def _defineType(file, baseName, className, fields):
         if index < len(fields) - 1:
            file.write(', ')
         else:
-           file.write(')\n')
-
-    # Store parameters in fields.
-    file.write('        : ')
-    for index, field in enumerate(fields):
-        name = field.split(' ')[1].strip()
-        file.write(name + '{' + name + '}')
-        if index < len(fields) - 1:
-            file.write(', ')
-        else:
-            file.write(' {}\n')
+           file.write(');\n')
     file.write('\n')
     
     # Visitor pattern.
-    file.write('    void accept(' + baseName + 'Visitor& visitor) const override {\n')
-    file.write('        visitor.visit(*this);\n')
-    file.write('    }\n')
+    file.write('    void accept(' + baseName + '::Visitor& visitor) override;\n')
     file.write('\n')
     
     # Fields.
@@ -68,17 +82,37 @@ def _defineType(file, baseName, className, fields):
         file.write('    int resolvedDepth = -1;\n')
     file.write('};\n')
 
-def _defineVisitor(file, baseName, types):
-    file.write('class ' + baseName + 'Visitor {\n')
-    file.write('public:\n')
-    file.write('    virtual ~' + baseName + 'Visitor() = default;\n')
+def _implementNode(file, baseName, className, fields):
+    # Constructor.
+    file.write(baseName + '::' + className + '::' + className + '(')
+    for index, field in enumerate(fields):
+        tokens = [token.strip() for token in field.split(' ')]
+        type = _makeCtorParamType(tokens[0])
+        name = tokens[1]
+        file.write(type + ' ' + name)
+        if index < len(fields) - 1:
+           file.write(', ')
+        else:
+           file.write(')\n')
+    file.write('    : ')
+    for index, field in enumerate(fields):
+        name = field.split(' ')[1].strip()
+        file.write(name + '{' + name + '}')
+        if index < len(fields) - 1:
+            file.write(', ')
+        else:
+            file.write(' {}\n')
     file.write('\n')
-    for type in types:
-        className = type.split(':')[0].strip() + baseName
-        file.write('    virtual void visit(' + className + ' const&) = 0;\n')
-    file.write('};\n')
 
-def _defineAst(file, headers, baseName, types):
+    # Visitor pattern.
+    file.write('void ' + baseName + '::' + className + '::accept(' + baseName + '::Visitor& visitor)\n')
+    file.write('{\n')
+    file.write('    visitor.visit(*this);\n')
+    file.write('}\n')
+    file.write('\n') 
+
+
+def _declareAst(file, headers, baseName, types):
     file.write('// This is auto-generated by ' + os.path.basename(__file__) + '. Do not modify manually.\n')
     file.write('\n')
     file.write('#pragma once\n')
@@ -92,35 +126,103 @@ def _defineAst(file, headers, baseName, types):
     file.write('namespace cloxx {\n')
     file.write('\n')
     
-    # Forward declare types.
-    for type in types:
-        className = type.split(':')[0].strip() + baseName
-        file.write('class ' + className + ';\n')
-    file.write('\n')
-    
-    _defineVisitor(file, baseName, types)
-    file.write('\n')
-    
-    # Declare the base class.
+    # Begin the base class.
     file.write('class ' + baseName + ' {\n')
     file.write('public:\n')
-    file.write('    virtual ~' + baseName + '() = default;\n')
+    
+    # Forward declare types.
+    for type in types:
+        className = type.split(':')[0].strip()
+        file.write('    class ' + className + ';\n')
     file.write('\n')
-    file.write('    virtual void accept(' + baseName + 'Visitor& visitor) const = 0;\n')
-    file.write('};\n')
+
+    # Define Visitor
+    file.write('    class Visitor {\n')
+    file.write('    public:\n')
+    file.write('        virtual ~Visitor() = default;\n')
+    file.write('\n')
+    for type in types:
+        className = type.split(':')[0].strip()
+        file.write('        virtual void visit(' + className + ' const&) = 0;\n')
+    file.write('    };\n')
     file.write('\n')
     
+    # Define Impl
+    file.write('    class Impl {\n')
+    file.write('    public:\n')
+    file.write('        virtual ~Impl() = default;\n')
+    file.write('        virtual void accept(Visitor& visitor) = 0;\n')
+    file.write('    };\n')
+    file.write('\n')
+
+    # Declare accept() forwarding
+    file.write('    void accept(Visitor& visitor) const;\n')
+    file.write('\n')
+
+    # Factory functions
     for type in types:
         tokens = type.split(':')
-        className = tokens[0].strip() + baseName
+        className = tokens[0].strip()
         fields = [field.strip() for field in tokens[1].split(',')]
-        _defineType(file, baseName, className, fields)
+        _declareFactoryFunc(file, baseName, className, fields)
+    file.write('\n')    
+
+    # End the base class
+    file.write('private:\n')
+    file.write('    ' + baseName + '(std::shared_ptr<Impl> const& impl) : _impl{impl} {}\n')
+    file.write('    std::shared_ptr<Impl> _impl;\n')
+    file.write('};\n')
+    file.write('\n')
+
+    for type in types:
+        tokens = type.split(':')
+        className = tokens[0].strip()
+        fields = [field.strip() for field in tokens[1].split(',')]
+        _declareNode(file, baseName, className, fields)
         file.write('\n')
-    file.write('} // loxx\n')
+
+    file.write('} // cloxx\n')
+
+def _implementAst(file, baseName, types):
+    file.write('// This is auto-generated by ' + os.path.basename(__file__) + '. Do not modify manually.\n')
+    file.write('\n')
+    file.write('#include "' + baseName + '.hpp"\n')
+    file.write('\n')
+    file.write('namespace cloxx {\n')
+
+    # Base class and accept wrapper
+    file.write('void ' + baseName + '::accept(Visitor& visitor) const\n')
+    file.write('{\n')
+    file.write('    if (_impl) {\n')
+    file.write('        _impl->accept(visitor);\n')
+    file.write('    }\n')
+    file.write('}\n')
+    file.write('\n')
+
+    # Factory functions
+    for type in types:
+        tokens = type.split(':')
+        className = tokens[0].strip()
+        fields = [field.strip() for field in tokens[1].split(',')]
+        _implementFactoryFunc(file, baseName, className, fields)
+        file.write('\n') 
+
+    # AST nodes
+    for type in types:
+        tokens = type.split(':')
+        className = tokens[0].strip()
+        fields = [field.strip() for field in tokens[1].split(',')]
+        _implementNode(file, baseName, className, fields)
+        file.write('\n')
+
+    file.write('} // namespace cloxx\n')
+
 
 def _generateAst(outputDir, headers, baseName, types):
     with open(os.path.join(outputDir, baseName + '.hpp'), 'w') as file:
-        _defineAst(file, headers, baseName, types)
+        _declareAst(file, headers, baseName, types)
+    with open(os.path.join(outputDir, baseName + '.cpp'), 'w') as file:
+        _implementAst(file, baseName, types)
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
@@ -152,5 +254,5 @@ if __name__ == '__main__':
         "Print  : Expr expr",
         "Var    : Token name, Expr initializer",
         "Fun    : Token name, List<Token> params, List<Stmt> body",
-        "Class  : Token name, VariableExpr superclass, List<FunStmt> methods",
+        "Class  : Token name, Expr superclass, List<Stmt> methods",
     ])
