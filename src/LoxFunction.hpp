@@ -17,12 +17,12 @@ class LoxInstance;
 
 class LoxFunction : public LoxCallable, public Traceable {
 public:
-    using Executor = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<Environment> const&,
-                                                              std::vector<std::shared_ptr<Stmt>> const&)>;
+    using Executor =
+        std::function<std::shared_ptr<LoxObject>(std::shared_ptr<Environment> const&, std::vector<Stmt> const&)>;
 
     LoxFunction(PrivateCreationTag tag, GarbageCollector* gc, std::shared_ptr<Environment> const& closure,
-                bool isInitializer, Token const& name, std::vector<Token> const& params,
-                std::vector<std::shared_ptr<Stmt>> const& body, Executor const& executor);
+                bool isInitializer, Token const& name, std::vector<Token> const& params, std::vector<Stmt> const& body,
+                Executor const& executor);
 
     std::shared_ptr<LoxFunction> bind(std::shared_ptr<LoxInstance> const& instance) const;
 
@@ -43,7 +43,7 @@ private:
     bool const _isInitializer;
     Token const _name;
     std::vector<Token> const _params;
-    std::vector<std::shared_ptr<Stmt>> const _body;
+    std::vector<Stmt> const _body;
     Executor const _executor;
 };
 

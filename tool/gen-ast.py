@@ -70,6 +70,7 @@ def _defineNode(file, baseName, node):
     # file.write('\n')
 
     if node.needsResolving:
+        file.write('    int depth() const;\n')
         file.write('    void resolve(int depth);\n')
 
     file.write('private:\n')
@@ -125,6 +126,10 @@ def _defineNode(file, baseName, node):
         file.write('}\n')
 
     if node.needsResolving:
+        file.write('inline int ' + node.name + '::depth() const\n')
+        file.write('{\n')
+        file.write('    return _data->depth;\n')
+        file.write('}\n')
         file.write('inline void ' + node.name + '::resolve(int depth)\n')
         file.write('{\n')
         file.write('    _data->depth = depth;\n')
