@@ -4,8 +4,6 @@
 import os.path
 import sys
 
-_RESOLVING_CLASSES = ["AssignExpr", "ThisExpr", "SuperExpr", "VariableExpr"]
-
 def _makeParamType(type):
     if type == 'LoxObject':
         return 'std::shared_ptr<LoxObject> const&'
@@ -57,38 +55,30 @@ def _implementFactoryFunction(file, node):
 
 
 def _defineNode(file, baseName, node):
+    # Node class
     file.write('class ' + node.name + ' final {\n')
     file.write('public:\n')
-    
-    for field in node.fields:
-        file.write('    ' + _makeParamType(field.type) + ' ' + field.name + '() const;\n')
+    file.write('    ' + node.name + '(' + node.name + ' const& other);\n')
     file.write('\n')
-
-    # file.write('    operator ' + baseName + '() const\n')
-    # file.write('    {\n')
-    # file.write('        return ' + baseName + '{_data};\n')
-    # file.write('    }\n')
-    # file.write('\n')
-
+    for field in node.fields:
+        file.write('    ' + _makeParamType(field.type) + ' ' + field.name + ';\n')
     if node.needsResolving:
+        file.write('\n')
         file.write('    int depth() const;\n')
         file.write('    void resolve(int depth);\n')
-
+    file.write('\n')
     file.write('private:\n')
     file.write('    friend class ' + baseName + ';\n')
     _declareFactoryFunction(file, node)
     file.write('\n')
-
     file.write('    struct Data;\n')
-
-    # Private constructor.
-    file.write('    explicit ' + node.name + '(std::shared_ptr<Data> const& data)\n')
-    file.write('        : _data{data} {}\n')
-
-    # Data class.
     file.write('    std::shared_ptr<Data> _data;\n')
+    file.write('\n')
+    file.write('    explicit ' + node.name + '(std::shared_ptr<Data> const& data);\n')
     file.write('};\n')
     file.write('\n')
+
+    # Data class
     file.write('struct ' + node.name + '::Data : ' + baseName + '::Data, std::enable_shared_from_this<Data> {\n')
     file.write('    Data(')
     for index, field in enumerate(node.fields):
@@ -120,22 +110,30 @@ def _defineNode(file, baseName, node):
     file.write('};\n')
     file.write('\n')
 
+    # Node constructors
+    file.write('inline ' + node.name + '::' + node.name +  '(' + node.name + ' const& other)\n')
+    file.write('    : ')
     for field in node.fields:
-        file.write('inline ' + _makeParamType(field.type) + ' ' + node.name + '::' + field.name + '() const\n')
-        file.write('{\n')
-        file.write('    return _data->' + field.name + ';\n')
-        file.write('}\n')
+        file.write(field.name + '{other.' + field.name + '}, ')
+    file.write('_data{other._data} {}\n')
+    file.write('\n')
+    file.write('inline ' + node.name + '::' + node.name +  '(std::shared_ptr<Data> const& data)\n')
+    file.write('    : ')
+    for field in node.fields:
+        file.write(field.name + '{data->' + field.name + '}, ')
+    file.write('_data{data} {}\n')
 
     if node.needsResolving:
+        file.write('\n')
         file.write('inline int ' + node.name + '::depth() const\n')
         file.write('{\n')
         file.write('    return _data->depth;\n')
         file.write('}\n')
+        file.write('\n')
         file.write('inline void ' + node.name + '::resolve(int depth)\n')
         file.write('{\n')
         file.write('    _data->depth = depth;\n')
         file.write('}\n')
-
 
 
 def _defineAst(file, headers, baseName, nodes):

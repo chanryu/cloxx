@@ -81,11 +81,11 @@ void Resolver::resolveFunction(FunStmt const& stmt, FunctionType type)
     _currentFunction = type;
 
     beginScope();
-    for (auto const& param : stmt.params()) {
+    for (auto const& param : stmt.params) {
         declare(param);
         define(param);
     }
-    resolve(stmt.body());
+    resolve(stmt.body);
     endScope();
 
     _currentFunction = enclosingFunction;
@@ -100,63 +100,63 @@ void Resolver::error(Token const& token, std::string_view message)
 void Resolver::visit(BlockStmt const& stmt)
 {
     beginScope();
-    resolve(stmt.stmts());
+    resolve(stmt.stmts);
     endScope();
 }
 
 void Resolver::visit(ExprStmt const& stmt)
 {
-    resolve(stmt.expr());
+    resolve(stmt.expr);
 }
 
 void Resolver::visit(IfStmt const& stmt)
 {
-    resolve(stmt.cond());
-    resolve(stmt.thenBranch());
-    if (stmt.elseBranch()) {
-        resolve(*stmt.elseBranch());
+    resolve(stmt.cond);
+    resolve(stmt.thenBranch);
+    if (stmt.elseBranch) {
+        resolve(*stmt.elseBranch);
     }
 }
 
 void Resolver::visit(WhileStmt const& stmt)
 {
-    resolve(stmt.cond());
-    resolve(stmt.body());
+    resolve(stmt.cond);
+    resolve(stmt.body);
 }
 
 void Resolver::visit(ReturnStmt const& stmt)
 {
     if (_currentFunction == FunctionType::NONE) {
-        error(stmt.keyword(), "Can't return from top-level code.");
+        error(stmt.keyword, "Can't return from top-level code.");
     }
 
-    if (stmt.value()) {
+    if (stmt.value) {
         if (_currentFunction == FunctionType::INITIALIZER) {
-            error(stmt.keyword(), "Can't return a value from an initializer.");
+            error(stmt.keyword, "Can't return a value from an initializer.");
         }
 
-        resolve(*stmt.value());
+        resolve(*stmt.value);
     }
 }
 
 void Resolver::visit(PrintStmt const& stmt)
 {
-    resolve(stmt.expr());
+    resolve(stmt.expr);
 }
 
 void Resolver::visit(VarStmt const& stmt)
 {
-    declare(stmt.name());
-    if (stmt.initializer()) {
-        resolve(*stmt.initializer());
+    declare(stmt.name);
+    if (stmt.initializer) {
+        resolve(*stmt.initializer);
     }
-    define(stmt.name());
+    define(stmt.name);
 }
 
 void Resolver::visit(FunStmt const& stmt)
 {
-    declare(stmt.name());
-    define(stmt.name());
+    declare(stmt.name);
+    define(stmt.name);
 
     resolveFunction(stmt, FunctionType::FUNCTION);
 }
@@ -164,17 +164,17 @@ void Resolver::visit(FunStmt const& stmt)
 void Resolver::visit(ClassStmt const& stmt)
 {
     auto enclosingClass = _currentClass;
-    _currentClass = stmt.superclass() ? ClassType::SUBCLASS : ClassType::CLASS;
+    _currentClass = stmt.superclass ? ClassType::SUBCLASS : ClassType::CLASS;
 
-    declare(stmt.name());
-    define(stmt.name());
+    declare(stmt.name);
+    define(stmt.name);
 
-    if (stmt.superclass()) {
-        if (stmt.name().lexeme == stmt.superclass()->name().lexeme) {
-            error(stmt.superclass()->name(), "A class can't inherit from itself.");
+    if (stmt.superclass) {
+        if (stmt.name.lexeme == stmt.superclass->name.lexeme) {
+            error(stmt.superclass->name, "A class can't inherit from itself.");
         }
 
-        resolve(*stmt.superclass());
+        resolve(*stmt.superclass);
 
         auto& superScope = beginScope();
         superScope.emplace("super", true);
@@ -183,9 +183,9 @@ void Resolver::visit(ClassStmt const& stmt)
     auto& thisScope = beginScope();
     thisScope.emplace("this", true);
 
-    for (auto const& method : stmt.methods()) {
+    for (auto const& method : stmt.methods) {
         auto type = FunctionType::METHOD;
-        if (method.name().lexeme == "init") {
+        if (method.name.lexeme == "init") {
             type = FunctionType::INITIALIZER;
         }
         resolveFunction(method, type);
@@ -193,7 +193,7 @@ void Resolver::visit(ClassStmt const& stmt)
 
     endScope(); // end thisScope
 
-    if (stmt.superclass()) {
+    if (stmt.superclass) {
         endScope(); // end superScope
     }
 
@@ -202,32 +202,32 @@ void Resolver::visit(ClassStmt const& stmt)
 
 void Resolver::visit(AssignExpr const& expr)
 {
-    resolve(expr.value());
-    const_cast<AssignExpr&>(expr).resolve(resolveLocal(expr.name()));
+    resolve(expr.value);
+    const_cast<AssignExpr&>(expr).resolve(resolveLocal(expr.name));
 }
 
 void Resolver::visit(BinaryExpr const& expr)
 {
-    resolve(expr.left());
-    resolve(expr.right());
+    resolve(expr.left);
+    resolve(expr.right);
 }
 
 void Resolver::visit(CallExpr const& expr)
 {
-    resolve(expr.callee());
-    for (auto const& arg : expr.args()) {
+    resolve(expr.callee);
+    for (auto const& arg : expr.args) {
         resolve(arg);
     }
 }
 
 void Resolver::visit(GetExpr const& expr)
 {
-    resolve(expr.object());
+    resolve(expr.object);
 }
 
 void Resolver::visit(GroupingExpr const& expr)
 {
-    resolve(expr.expr());
+    resolve(expr.expr);
 }
 
 void Resolver::visit(LiteralExpr const& /*expr*/)
@@ -237,55 +237,55 @@ void Resolver::visit(LiteralExpr const& /*expr*/)
 
 void Resolver::visit(LogicalExpr const& expr)
 {
-    resolve(expr.left());
-    resolve(expr.right());
+    resolve(expr.left);
+    resolve(expr.right);
 }
 
 void Resolver::visit(SetExpr const& expr)
 {
-    resolve(expr.object());
-    resolve(expr.value());
+    resolve(expr.object);
+    resolve(expr.value);
 }
 
 void Resolver::visit(ThisExpr const& expr)
 {
     if (_currentClass == ClassType::NONE) {
-        error(expr.keyword(), "Can't use 'this' outside of a class.");
+        error(expr.keyword, "Can't use 'this' outside of a class.");
     }
 
-    const_cast<ThisExpr&>(expr).resolve(resolveLocal(expr.keyword()));
+    const_cast<ThisExpr&>(expr).resolve(resolveLocal(expr.keyword));
 }
 
 void Resolver::visit(SuperExpr const& expr)
 {
     if (_currentClass == ClassType::NONE) {
-        error(expr.keyword(), "Can't use 'super' outside of a class.");
+        error(expr.keyword, "Can't use 'super' outside of a class.");
     }
     else if (_currentClass != ClassType::SUBCLASS) {
-        error(expr.keyword(), "Can't use 'super' in a class with no superclass.");
+        error(expr.keyword, "Can't use 'super' in a class with no superclass.");
     }
 
-    const_cast<SuperExpr&>(expr).resolve(resolveLocal(expr.keyword()));
+    const_cast<SuperExpr&>(expr).resolve(resolveLocal(expr.keyword));
 }
 
 void Resolver::visit(UnaryExpr const& expr)
 {
-    resolve(expr.right());
+    resolve(expr.right);
 }
 
 void Resolver::visit(VariableExpr const& expr)
 {
     if (!_scopes.empty()) {
         auto& scope = _scopes.back();
-        if (auto it = scope.find(expr.name().lexeme); it != scope.end()) {
+        if (auto it = scope.find(expr.name.lexeme); it != scope.end()) {
             auto isDefined = it->second;
             if (!isDefined) {
-                error(expr.name(), "Can't read local variable in its own initializer.");
+                error(expr.name, "Can't read local variable in its own initializer.");
             }
         }
     }
 
-    const_cast<VariableExpr&>(expr).resolve(resolveLocal(expr.name()));
+    const_cast<VariableExpr&>(expr).resolve(resolveLocal(expr.name));
 }
 
 } // namespace cloxx
