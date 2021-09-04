@@ -2,6 +2,19 @@
 #include <iostream>
 #include <streambuf>
 
+#if 1
+#include "ast/Expr.hpp"
+#include "ast/Stmt.hpp"
+
+using namespace cloxx;
+
+int main(int /*argc*/, char const** /*argv*/)
+{
+    return 0;
+}
+
+#else
+
 #include "Assert.hpp"
 #include "GC.hpp"
 #include "Lox.hpp"
@@ -37,3 +50,5 @@ int main(int argc, char const* argv[])
 
     return result;
 }
+
+#endif
