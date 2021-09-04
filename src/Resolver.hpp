@@ -14,7 +14,7 @@ class Resolver : StmtVisitor, ExprVisitor {
 public:
     explicit Resolver(Lox* lox);
 
-    void resolve(std::vector<std::shared_ptr<Stmt>> const& stmts);
+    void resolve(std::vector<Stmt> const& stmts);
 
 private:
     enum class FunctionType {

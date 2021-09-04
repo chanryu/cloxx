@@ -20,7 +20,7 @@ class Interpreter : StmtVisitor, ExprVisitor {
 public:
     Interpreter(Lox* lox, GarbageCollector* gc);
 
-    void interpret(std::vector<std::shared_ptr<Stmt>> const& stmts);
+    void interpret(std::vector<Stmt> const& stmts);
 
 private:
     // StmtVisitor
@@ -49,7 +49,7 @@ private:
     void visit(VariableExpr const& expr) override;
 
     void execute(Stmt const& stmt);
-    void executeBlock(std::vector<std::shared_ptr<Stmt>> const& stmts, std::shared_ptr<Environment> const& environment);
+    void executeBlock(std::vector<Stmt> const& stmts, std::shared_ptr<Environment> const& environment);
 
     std::shared_ptr<LoxObject> evaluate(Expr const& expr);
 
@@ -66,7 +66,7 @@ private:
                         std::shared_ptr<LoxObject> const& right, Callback&& callback);
 
     std::shared_ptr<LoxFunction> makeFunction(bool isInitializer, Token const& name, std::vector<Token> const params,
-                                              std::vector<std::shared_ptr<Stmt>> const& body);
+                                              std::vector<Stmt> const& body);
 
     struct ReturnValue {
         std::shared_ptr<LoxObject> object;
