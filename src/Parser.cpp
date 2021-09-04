@@ -15,8 +15,10 @@ std::vector<Stmt> Parser::parse()
     std::vector<Stmt> stmts;
     while (!isAtEnd()) {
         auto stmt = declaration();
-        if (!stmt)
-            break;
+        if (!stmt) {
+            // continue on to report more errors
+            continue;
+        }
         stmts.push_back(*stmt);
     }
     return stmts;
