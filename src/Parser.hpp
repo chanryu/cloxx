@@ -19,33 +19,33 @@ class Parser {
 public:
     explicit Parser(ErrorReporter* errorReporter, SourceReader* sourceReader);
 
-    std::shared_ptr<Stmt> parse();
+    std::optional<Stmt> parse();
 
 private:
-    std::shared_ptr<Stmt> declaration();
-    std::shared_ptr<Stmt> varDeclaration();
-    std::shared_ptr<FunStmt> function(std::string const& kind);
-    std::shared_ptr<Stmt> classDeclaration();
-    std::shared_ptr<Stmt> statement();
-    std::shared_ptr<Stmt> ifStatement();
-    std::shared_ptr<Stmt> whileStatement();
-    std::shared_ptr<Stmt> forStatement();
-    std::shared_ptr<Stmt> returnStatement();
-    std::shared_ptr<Stmt> printStatement();
-    std::shared_ptr<Stmt> expressionStatement();
-    std::vector<std::shared_ptr<Stmt>> block();
-    std::shared_ptr<Expr> expression();
-    std::shared_ptr<Expr> assignment();
-    std::shared_ptr<Expr> logicalOr();
-    std::shared_ptr<Expr> logicalAnd();
-    std::shared_ptr<Expr> equality();
-    std::shared_ptr<Expr> comparison();
-    std::shared_ptr<Expr> term();
-    std::shared_ptr<Expr> factor();
-    std::shared_ptr<Expr> unary();
-    std::shared_ptr<Expr> call();
-    std::shared_ptr<Expr> finishCall(std::shared_ptr<Expr> const& callee);
-    std::shared_ptr<Expr> primary();
+    std::optional<Stmt> declaration();
+    Stmt varDeclaration();
+    FunStmt function(std::string const& kind);
+    Stmt classDeclaration();
+    Stmt statement();
+    Stmt ifStatement();
+    Stmt whileStatement();
+    Stmt forStatement();
+    Stmt returnStatement();
+    Stmt printStatement();
+    Stmt expressionStatement();
+    std::vector<Stmt> block();
+    Expr expression();
+    Expr assignment();
+    Expr logicalOr();
+    Expr logicalAnd();
+    Expr equality();
+    Expr comparison();
+    Expr term();
+    Expr factor();
+    Expr unary();
+    Expr call();
+    Expr finishCall(Expr const& callee);
+    Expr primary();
 
     bool match(Token::Type type);
     template <typename... Types>

@@ -61,36 +61,36 @@ void Interpreter::interpret(Stmt const& stmt)
 void Interpreter::visit(BlockStmt const& stmt)
 {
     auto blockEnv = _gc->create<Environment>(_environment);
-    executeBlock(stmt.stmts, blockEnv);
+    executeBlock(stmt.stmts(), blockEnv);
 }
 
 void Interpreter::visit(ExprStmt const& stmt)
 {
-    evaluate(*stmt.expr);
+    evaluate(stmt.expr());
 }
 
 void Interpreter::visit(IfStmt const& stmt)
 {
-    if (evaluate(*stmt.cond)->isTruthy()) {
-        execute(*stmt.thenBranch);
+    if (evaluate(stmt.cond())->isTruthy()) {
+        execute(stmt.thenBranch());
     }
-    else if (stmt.elseBranch) {
-        execute(*stmt.elseBranch);
+    else if (stmt.elseBranch()) {
+        execute(*stmt.elseBranch());
     }
 }
 
 void Interpreter::visit(WhileStmt const& stmt)
 {
-    while (evaluate(*stmt.cond)->isTruthy()) {
-        execute(*stmt.body);
+    while (evaluate(stmt.cond())->isTruthy()) {
+        execute(stmt.body());
     }
 }
 
 void Interpreter::visit(ReturnStmt const& stmt)
 {
     ReturnValue returnValue;
-    if (stmt.value) {
-        returnValue.object = evaluate(*stmt.value);
+    if (stmt.value()) {
+        returnValue.object = evaluate(*stmt.value());
     }
     else {
         returnValue.object = makeLoxNil();
@@ -101,7 +101,7 @@ void Interpreter::visit(ReturnStmt const& stmt)
 
 void Interpreter::visit(PrintStmt const& stmt)
 {
-    auto value = evaluate(*stmt.expr);
+    auto value = evaluate(stmt.expr());
     LOX_ASSERT(value);
     std::cout << value->toString() << '\n';
 }
@@ -109,33 +109,33 @@ void Interpreter::visit(PrintStmt const& stmt)
 void Interpreter::visit(VarStmt const& stmt)
 {
     std::shared_ptr<LoxObject> value;
-    if (stmt.initializer) {
-        value = evaluate(*stmt.initializer);
+    if (stmt.initializer()) {
+        value = evaluate(*stmt.initializer());
     }
     else {
         value = makeLoxNil();
     }
-    _environment->define(stmt.name.lexeme, value);
+    _environment->define(stmt.name().lexeme, value);
 }
 
 void Interpreter::visit(FunStmt const& stmt)
 {
-    auto function = makeFunction(false, stmt.name, stmt.params, stmt.body);
-    _environment->define(stmt.name.lexeme, function);
+    auto function = makeFunction(false, stmt.name(), stmt.params(), stmt.body());
+    _environment->define(stmt.name().lexeme, function);
 }
 
 void Interpreter::visit(ClassStmt const& stmt)
 {
     std::shared_ptr<LoxClass> superclass;
-    if (stmt.superclass) {
-        auto object = evaluate(*stmt.superclass);
+    if (stmt.superclass()) {
+        auto object = evaluate(*stmt.superclass());
         superclass = std::dynamic_pointer_cast<LoxClass>(object);
         if (!superclass) {
-            throw RuntimeError(stmt.superclass->name, "Superclass must be a class.");
+            throw RuntimeError(stmt.superclass()->name(), "Superclass must be a class.");
         }
     }
 
-    _environment->define(stmt.name.lexeme, makeLoxNil());
+    _environment->define(stmt.name().lexeme, makeLoxNil());
 
     auto enclosingEnvironment = _environment;
     if (superclass) {
@@ -144,66 +144,66 @@ void Interpreter::visit(ClassStmt const& stmt)
     }
 
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
-    for (auto const& method : stmt.methods) {
-        bool isInitializer = method->name.lexeme == "init";
-        auto function = makeFunction(isInitializer, method->name, method->params, method->body);
-        methods.emplace(method->name.lexeme, function);
+    for (auto const& method : stmt.methods()) {
+        bool isInitializer = method.name().lexeme == "init";
+        auto function = makeFunction(isInitializer, method.name(), method.params(), method.body());
+        methods.emplace(method.name().lexeme, function);
     }
 
-    auto klass = _gc->create<LoxClass>(_gc, stmt.name.lexeme, superclass, methods);
+    auto klass = _gc->create<LoxClass>(_gc, stmt.name().lexeme, superclass, methods);
 
     if (superclass) {
         _environment = enclosingEnvironment;
     }
 
-    _environment->assign(stmt.name, klass);
+    _environment->assign(stmt.name(), klass);
 }
 
 void Interpreter::visit(AssignExpr const& expr)
 {
-    auto value = evaluate(*expr.value);
+    auto value = evaluate(expr.value());
     LOX_ASSERT(value);
 
-    if (expr.resolvedDepth >= 0) {
-        _environment->assignAt(expr.resolvedDepth, expr.name.lexeme, value);
+    if (expr.depth() >= 0) {
+        _environment->assignAt(expr.depth(), expr.name().lexeme, value);
     }
     else {
-        _globals->assign(expr.name, value);
+        _globals->assign(expr.name(), value);
     }
     _evalResults.push_back(value);
 }
 
 void Interpreter::visit(BinaryExpr const& expr)
 {
-    auto left = evaluate(*expr.left);
-    auto right = evaluate(*expr.right);
+    auto left = evaluate(expr.left());
+    auto right = evaluate(expr.right());
 
     LOX_ASSERT(left);
     LOX_ASSERT(right);
 
-    switch (expr.op.type) {
+    switch (expr.op().type) {
     case Token::GREATER:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
+        ensureOperands<LoxNumber>(expr.op(), left, right, [this](double left, double right) {
             _evalResults.push_back(toLoxBoolean(left > right));
         });
         break;
     case Token::GREATER_EQUAL:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
+        ensureOperands<LoxNumber>(expr.op(), left, right, [this](double left, double right) {
             _evalResults.push_back(toLoxBoolean(left >= right));
         });
         break;
     case Token::LESS:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
+        ensureOperands<LoxNumber>(expr.op(), left, right, [this](double left, double right) {
             _evalResults.push_back(toLoxBoolean(left < right));
         });
         break;
     case Token::LESS_EQUAL:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
+        ensureOperands<LoxNumber>(expr.op(), left, right, [this](double left, double right) {
             _evalResults.push_back(toLoxBoolean(left <= right));
         });
         break;
     case Token::MINUS:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
+        ensureOperands<LoxNumber>(expr.op(), left, right, [this](double left, double right) {
             _evalResults.push_back(toLoxNumber(left - right));
         });
         break;
@@ -218,14 +218,14 @@ void Interpreter::visit(BinaryExpr const& expr)
             })) {
             break; // handled string + string
         }
-        throw RuntimeError(expr.op, "Operands must be two numbers or two strings.");
+        throw RuntimeError(expr.op(), "Operands must be two numbers or two strings.");
     case Token::SLASH:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
+        ensureOperands<LoxNumber>(expr.op(), left, right, [this](double left, double right) {
             _evalResults.push_back(toLoxNumber(left / right));
         });
         break;
     case Token::STAR:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
+        ensureOperands<LoxNumber>(expr.op(), left, right, [this](double left, double right) {
             _evalResults.push_back(toLoxNumber(left * right));
         });
         break;
@@ -243,21 +243,21 @@ void Interpreter::visit(BinaryExpr const& expr)
 
 void Interpreter::visit(CallExpr const& expr)
 {
-    auto callee = evaluate(*expr.callee);
+    auto callee = evaluate(expr.callee());
 
     std::vector<std::shared_ptr<LoxObject>> args;
-    for (auto const& arg : expr.args) {
-        args.push_back(evaluate(*arg));
+    for (auto const& arg : expr.args()) {
+        args.push_back(evaluate(arg));
     }
 
     auto callable = dynamic_cast<LoxCallable*>(callee.get());
     if (!callable) {
-        throw RuntimeError(expr.paren, "Can only call functions and classes.");
+        throw RuntimeError(expr.paren(), "Can only call functions and classes.");
     }
 
     if (args.size() != callable->arity()) {
-        throw RuntimeError(expr.paren, "Expected " + std::to_string(callable->arity()) + " arguments but got " +
-                                           std::to_string(args.size()) + ".");
+        throw RuntimeError(expr.paren(), "Expected " + std::to_string(callable->arity()) + " arguments but got " +
+                                             std::to_string(args.size()) + ".");
     }
 
     _evalResults.push_back(callable->call(args));
@@ -265,71 +265,71 @@ void Interpreter::visit(CallExpr const& expr)
 
 void Interpreter::visit(GetExpr const& expr)
 {
-    auto object = evaluate(*expr.object);
+    auto object = evaluate(expr.object());
 
     if (auto instance = dynamic_cast<LoxInstance*>(object.get())) {
-        _evalResults.push_back(instance->get(expr.name));
+        _evalResults.push_back(instance->get(expr.name()));
         return;
     }
 
-    throw RuntimeError(expr.name, "Only instances have properties.");
+    throw RuntimeError(expr.name(), "Only instances have properties.");
 }
 
 void Interpreter::visit(GroupingExpr const& expr)
 {
-    _evalResults.push_back(evaluate(*expr.expr));
+    _evalResults.push_back(evaluate(expr.expr()));
 }
 
 void Interpreter::visit(LiteralExpr const& expr)
 {
-    _evalResults.push_back(expr.value);
+    _evalResults.push_back(expr.value());
 }
 
 void Interpreter::visit(LogicalExpr const& expr)
 {
-    auto left = evaluate(*expr.left);
+    auto left = evaluate(expr.left());
 
     // Check left and short-circuit if possible.
-    if (expr.op.type == Token::OR) {
+    if (expr.op().type == Token::OR) {
         if (left->isTruthy()) {
             _evalResults.push_back(left);
             return;
         }
     }
     else {
-        LOX_ASSERT(expr.op.type == Token::AND);
+        LOX_ASSERT(expr.op().type == Token::AND);
         if (!left->isTruthy()) {
             _evalResults.push_back(left);
             return;
         }
     }
 
-    _evalResults.push_back(evaluate(*expr.right));
+    _evalResults.push_back(evaluate(expr.right()));
 }
 
 void Interpreter::visit(SetExpr const& expr)
 {
-    auto object = evaluate(*expr.object);
+    auto object = evaluate(expr.object());
 
     if (auto instance = dynamic_cast<LoxInstance*>(object.get())) {
-        auto value = evaluate(*expr.value);
-        instance->set(expr.name, value);
+        auto value = evaluate(expr.value());
+        instance->set(expr.name(), value);
 
         _evalResults.push_back(value);
         return;
     }
 
-    throw RuntimeError(expr.name, "Only instances have fields.");
+    throw RuntimeError(expr.name(), "Only instances have fields.");
 }
 
 void Interpreter::visit(ThisExpr const& expr)
 {
     std::shared_ptr<LoxObject> object;
-    if (expr.resolvedDepth >= 0) {
-        object = _environment->getAt(expr.resolvedDepth, expr.keyword.lexeme);
+    if (expr.depth() >= 0) {
+        object = _environment->getAt(expr.depth(), expr.keyword().lexeme);
     }
     else {
-        object = _globals->get(expr.keyword);
+        object = _globals->get(expr.keyword());
     }
 
     _evalResults.push_back(object);
@@ -337,16 +337,16 @@ void Interpreter::visit(ThisExpr const& expr)
 
 void Interpreter::visit(SuperExpr const& expr)
 {
-    LOX_ASSERT(expr.keyword.lexeme == "super");
+    LOX_ASSERT(expr.keyword().lexeme == "super");
 
-    if (expr.resolvedDepth >= 0) {
-        auto distance = expr.resolvedDepth;
+    if (expr.depth() >= 0) {
+        auto distance = expr.depth();
         auto superclass = std::dynamic_pointer_cast<LoxClass>(_environment->getAt(distance, "super"));
         auto instance = std::dynamic_pointer_cast<LoxInstance>(_environment->getAt(distance - 1, "this"));
         if (superclass && instance) {
-            auto method = superclass->findMethod(expr.method.lexeme);
+            auto method = superclass->findMethod(expr.method().lexeme);
             if (!method) {
-                throw RuntimeError(expr.method, "Undefined property '" + expr.method.lexeme + "'.");
+                throw RuntimeError(expr.method(), "Undefined property '" + expr.method().lexeme + "'.");
             }
             _evalResults.push_back(method->bind(instance));
             return;
@@ -358,15 +358,15 @@ void Interpreter::visit(SuperExpr const& expr)
 
 void Interpreter::visit(UnaryExpr const& expr)
 {
-    auto right = evaluate(*expr.right);
+    auto right = evaluate(expr.right());
     LOX_ASSERT(right);
 
-    if (expr.op.type == Token::BANG) {
+    if (expr.op().type == Token::BANG) {
         _evalResults.push_back(toLoxBoolean(!right->isTruthy()));
     }
     else {
-        LOX_ASSERT(expr.op.type == Token::MINUS);
-        ensureOperand<LoxNumber>(expr.op, right, [this](double value) {
+        LOX_ASSERT(expr.op().type == Token::MINUS);
+        ensureOperand<LoxNumber>(expr.op(), right, [this](double value) {
             _evalResults.push_back(toLoxNumber(-value));
         });
     }
@@ -375,11 +375,11 @@ void Interpreter::visit(UnaryExpr const& expr)
 void Interpreter::visit(VariableExpr const& expr)
 {
     std::shared_ptr<LoxObject> object;
-    if (expr.resolvedDepth >= 0) {
-        object = _environment->getAt(expr.resolvedDepth, expr.name.lexeme);
+    if (expr.depth() >= 0) {
+        object = _environment->getAt(expr.depth(), expr.name().lexeme);
     }
     else {
-        object = _globals->get(expr.name);
+        object = _globals->get(expr.name());
     }
     _evalResults.push_back(object);
 }
@@ -389,14 +389,13 @@ void Interpreter::execute(Stmt const& stmt)
     stmt.accept(*this);
 }
 
-void Interpreter::executeBlock(std::vector<std::shared_ptr<Stmt>> const& stmts,
-                               std::shared_ptr<Environment> const& environment)
+void Interpreter::executeBlock(std::vector<Stmt> const& stmts, std::shared_ptr<Environment> const& environment)
 {
     auto previous = _environment;
     try {
         _environment = environment;
         for (auto const& stmt : stmts) {
-            execute(*stmt);
+            execute(stmt);
         }
         _environment = previous;
     }
@@ -466,11 +465,10 @@ void Interpreter::ensureOperands(Token const& op, std::shared_ptr<LoxObject> con
 }
 
 std::shared_ptr<LoxFunction> Interpreter::makeFunction(bool isInitializer, Token const& name,
-                                                       std::vector<Token> const params,
-                                                       std::vector<std::shared_ptr<Stmt>> const& body)
+                                                       std::vector<Token> const params, std::vector<Stmt> const& body)
 {
     auto executor = [this](std::shared_ptr<Environment> const& env,
-                           std::vector<std::shared_ptr<Stmt>> const& stmts) -> std::shared_ptr<LoxObject> {
+                           std::vector<Stmt> const& stmts) -> std::shared_ptr<LoxObject> {
         try {
             executeBlock(stmts, env);
         }

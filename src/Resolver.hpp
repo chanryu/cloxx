@@ -30,7 +30,7 @@ private:
         SUBCLASS,
     };
 
-    void resolve(std::vector<std::shared_ptr<Stmt>> const& stmts);
+    void resolve(std::vector<Stmt> const& stmts);
     void resolve(Expr const& expr);
 
     using Scope = std::map<std::string, /*isDefined*/ bool>;
