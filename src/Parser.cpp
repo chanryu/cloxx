@@ -101,7 +101,7 @@ Stmt Parser::classDeclaration()
     std::optional<VariableExpr> superclass;
     if (match(Token::LESS)) {
         consume(Token::IDENTIFIER, "Expect superclass name.");
-        superclass = makeVariableExpr(previous());
+        superclass.emplace(makeVariableExpr(previous()));
     }
 
     consume(Token::LEFT_BRACE, "Expect '{' before class body.");
@@ -297,11 +297,11 @@ Expr Parser::assignment()
         auto const& value = assignment();
 
         if (auto const var = expr.toVariableExpr()) {
-            return makeAssignExpr(var->name(), value);
+            return makeAssignExpr(var->name, value);
         }
 
         if (auto const get = expr.toGetExpr()) {
-            return makeSetExpr(get->object(), get->name(), value);
+            return makeSetExpr(get->object, get->name, value);
         }
 
         _lox->error(equals, "Invalid assignment target.");
