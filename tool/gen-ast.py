@@ -8,6 +8,8 @@ _RESOLVING_CLASSES = ["AssignExpr", "ThisExpr", "SuperExpr", "VariableExpr"]
 def _makeParamType(type):
     if type == 'LoxObject':
         return 'std::shared_ptr<LoxObject> const&'
+    if type[-1] == '?':
+        return 'std::optional<' + type[:-1] + '> const&'
     if type.startswith('List<'):
         itemType = type[5:-1]
         return 'std::vector<' + itemType + '> const&'
@@ -15,7 +17,9 @@ def _makeParamType(type):
 
 def _makeMemVarType(type):
     if type == 'LoxObject':
-        return 'std::shared_ptr<LoxObject> const'
+        return 'std::shared_ptr<LoxObject>'
+    if type[-1] == '?':
+        return 'std::optional<' + type[:-1] + '>'
     if type.startswith('List<'):
         itemType = type[5:-1]
         return 'std::vector<' + itemType + '>'
@@ -64,14 +68,15 @@ def _defineNode(file, baseName, node):
     #    file.write('    int resolvedDepth = -1;\n')
 
     file.write('private:\n')
-    file.write('    friend class Expr;\n')
+    file.write('    friend class ' + baseName + ';\n')
     _declareFactoryFunction(file, node)
     file.write('\n')
 
     file.write('    struct Data;\n')
 
     # Private constructor.
-    file.write('    explicit ' + node.name + '(std::shared_ptr<Data> const& data);\n')
+    file.write('    explicit ' + node.name + '(std::shared_ptr<Data> const& data)\n')
+    file.write('    : _data{data} {}\n')
 
     # Data class.
     file.write('    std::shared_ptr<Data> _data;\n')
@@ -106,11 +111,11 @@ def _defineNode(file, baseName, node):
     file.write('};\n')
     file.write('\n')
 
-    file.write('inline ' + _makeParamType(field.type) + ' ' + node.name + '::' + field.name + '() const\n')
-    file.write('{\n')
-    file.write('    return _data->' + field.name + ';\n')
-    file.write('}\n')
-
+    for field in node.fields:
+        file.write('inline ' + _makeParamType(field.type) + ' ' + node.name + '::' + field.name + '() const\n')
+        file.write('{\n')
+        file.write('    return _data->' + field.name + ';\n')
+        file.write('}\n')
 
 
 def _defineAst(file, headers, baseName, nodes):
@@ -118,6 +123,7 @@ def _defineAst(file, headers, baseName, nodes):
     file.write('\n')
     file.write('#pragma once\n')
     file.write('\n')
+    file.write('#include <optional>\n')
     file.write('#include <memory>\n')
     file.write('#include <vector>\n')
     file.write('\n')
@@ -145,11 +151,12 @@ def _defineAst(file, headers, baseName, nodes):
     # Begin the base class.
     file.write('class ' + baseName + ' final {\n')
     file.write('public:\n')
-    
-    # Declare accept() forwarding
-    file.write('    void accept(' + baseName + 'Visitor& visitor) const\n')
+
+    # Node to Base conversion
+    file.write('    template <typename T>\n')
+    file.write('    ' + baseName + '(T const& other)\n')
     file.write('    {\n')
-    file.write('        _impl->accept(visitor);\n')
+    file.write('        _data = other._data;\n')
     file.write('    }\n')
     file.write('\n')
 
@@ -157,10 +164,21 @@ def _defineAst(file, headers, baseName, nodes):
     file.write('    template <typename T>\n')
     file.write('    ' + baseName + '& operator=(T const& rhs)\n')
     file.write('    {\n')
-    file.write('        _impl = rhs._impl;\n')
+    file.write('        _data = rhs._data;\n')
     file.write('        return *this;\n')
     file.write('    }\n')
-    file.write('\n')    
+    file.write('\n')
+    
+    # Declare accept() forwarding
+    file.write('    void accept(' + baseName + 'Visitor& visitor) const\n')
+    file.write('    {\n')
+    file.write('        _data->accept(visitor);\n')
+    file.write('    }\n')
+    file.write('\n')
+
+    for node in nodes:
+        file.write('    std::optional<' + node.name + '> to' + node.name + '() const;\n')
+    file.write('\n')
 
     file.write('private:\n')
 
@@ -169,14 +187,14 @@ def _defineAst(file, headers, baseName, nodes):
     file.write('\n')
 
     file.write('    struct Data;\n')
-    file.write('    explicit ' + baseName + '(std::shared_ptr<Data> const& impl) : _impl{impl} {}\n')
+    file.write('    explicit ' + baseName + '(std::shared_ptr<Data> const& impl) : _data{impl} {}\n')
     file.write('\n')
 
     file.write('    struct Data {\n')
     file.write('        virtual ~Data() = default;\n')
     file.write('        virtual void accept(' + baseName + 'Visitor& visitor) = 0;\n')
     file.write('    };\n')
-    file.write('    std::shared_ptr<Data> _impl;\n')
+    file.write('    std::shared_ptr<Data> _data;\n')
     file.write('};\n')
     file.write('\n')
 
@@ -184,6 +202,14 @@ def _defineAst(file, headers, baseName, nodes):
         _defineNode(file, baseName, node)
         file.write('\n')
         _implementFactoryFunction(file, node)
+        file.write('\n')
+        file.write('inline std::optional<' + node.name + '> ' + baseName + '::to' + node.name + '() const\n')
+        file.write('{\n')
+        file.write('    if (auto data = std::dynamic_pointer_cast<' + node.name + '::Data>(_data)) {\n')
+        file.write('        return ' + node.name + '{data};\n')
+        file.write('    }\n')
+        file.write('    return std::nullopt;\n')
+        file.write('}\n')
         file.write('\n')
 
     file.write('} // cloxx\n')
@@ -226,7 +252,7 @@ if __name__ == '__main__':
     outputDir = sys.argv[1]
 
     _generateAst(outputDir, ['Token.hpp'], 'Expr', [
-        "Assign   : Token name, Expr value",
+        "Assign   : Token name, Expr? value",
         "Binary   : Token op, Expr left, Expr right",
         "Call     : Expr callee, Token paren, List<Expr> args",
         "Get      : Expr object, Token name",
@@ -243,11 +269,11 @@ if __name__ == '__main__':
     _generateAst(outputDir, ['Token.hpp', 'Expr.hpp'], 'Stmt', [
         "Block  : List<Stmt> stmts",
         "Expr   : Expr expr",
-        "If     : Expr cond, Stmt thenBranch, Stmt elseBranch",
+        "If     : Expr cond, Stmt thenBranch, Stmt? elseBranch",
         "While  : Expr cond, Stmt body",
-        "Return : Token keyword, Expr value",
+        "Return : Token keyword, Expr? value",
         "Print  : Expr expr",
-        "Var    : Token name, Expr initializer",
+        "Var    : Token name, Expr? initializer",
         "Fun    : Token name, List<Token> params, List<Stmt> body",
-        "Class  : Token name, Expr superclass, List<Stmt> methods",
+        "Class  : Token name, VariableExpr? superclass, List<FunStmt> methods",
     ])
