@@ -63,9 +63,14 @@ def _defineNode(file, baseName, node):
         file.write('    ' + _makeParamType(field.type) + ' ' + field.name + '() const;\n')
     file.write('\n')
 
-    #FIXME
-    #if className in _RESOLVING_CLASSES:
-    #    file.write('    int resolvedDepth = -1;\n')
+    # file.write('    operator ' + baseName + '() const\n')
+    # file.write('    {\n')
+    # file.write('        return ' + baseName + '{_data};\n')
+    # file.write('    }\n')
+    # file.write('\n')
+
+    if node.needsResolving:
+        file.write('    void resolve(int depth);\n')
 
     file.write('private:\n')
     file.write('    friend class ' + baseName + ';\n')
@@ -76,7 +81,7 @@ def _defineNode(file, baseName, node):
 
     # Private constructor.
     file.write('    explicit ' + node.name + '(std::shared_ptr<Data> const& data)\n')
-    file.write('    : _data{data} {}\n')
+    file.write('        : _data{data} {}\n')
 
     # Data class.
     file.write('    std::shared_ptr<Data> _data;\n')
@@ -108,6 +113,8 @@ def _defineNode(file, baseName, node):
     for field in node.fields:
         type = _makeMemVarType(field.type);
         file.write('    ' + type + ' ' + field.name + ';\n')
+    if node.needsResolving:
+        file.write('    int depth;\n')
     file.write('};\n')
     file.write('\n')
 
@@ -116,6 +123,13 @@ def _defineNode(file, baseName, node):
         file.write('{\n')
         file.write('    return _data->' + field.name + ';\n')
         file.write('}\n')
+
+    if node.needsResolving:
+        file.write('inline void ' + node.name + '::resolve(int depth)\n')
+        file.write('{\n')
+        file.write('    _data->depth = depth;\n')
+        file.write('}\n')
+
 
 
 def _defineAst(file, headers, baseName, nodes):
@@ -153,11 +167,12 @@ def _defineAst(file, headers, baseName, nodes):
     file.write('public:\n')
 
     # Node to Base conversion
-    file.write('    template <typename T>\n')
-    file.write('    ' + baseName + '(T const& other)\n')
-    file.write('    {\n')
-    file.write('        _data = other._data;\n')
-    file.write('    }\n')
+    for node in nodes:
+        file.write('    ' + baseName + '(' + node.name + ' const& other);\n')
+    file.write('\n')
+
+    for node in nodes:
+        file.write('    std::optional<' + node.name + '> to' + node.name + '() const;\n')
     file.write('\n')
 
     # Node to Base conversion
@@ -174,10 +189,6 @@ def _defineAst(file, headers, baseName, nodes):
     file.write('    {\n')
     file.write('        _data->accept(visitor);\n')
     file.write('    }\n')
-    file.write('\n')
-
-    for node in nodes:
-        file.write('    std::optional<' + node.name + '> to' + node.name + '() const;\n')
     file.write('\n')
 
     file.write('private:\n')
@@ -211,6 +222,12 @@ def _defineAst(file, headers, baseName, nodes):
         file.write('    return std::nullopt;\n')
         file.write('}\n')
         file.write('\n')
+        file.write('inline ' + baseName + '::' + baseName + '(' + node.name + ' const& other)\n')
+        file.write('{\n')
+        file.write('    _data = other._data;\n')
+        file.write('}\n')
+        file.write('\n')
+    file.write('\n')
 
     file.write('} // cloxx\n')
 
@@ -228,7 +245,13 @@ class Field:
 class Node:
     def __init__(self, baseName, spec):
         tokens = spec.split(':')
-        self.name = tokens[0].strip() + baseName
+        prefix = tokens[0].strip()
+        if prefix[-1] == '^':
+            prefix = prefix[:-1]
+            self.needsResolving = True
+        else:
+            self.needsResolving = False
+        self.name = prefix + baseName
         self.fields = []
         for fieldSpec in [x.strip() for x in tokens[1].split(',')]:
             self.fields.append(Field(fieldSpec))
@@ -252,18 +275,18 @@ if __name__ == '__main__':
     outputDir = sys.argv[1]
 
     _generateAst(outputDir, ['Token.hpp'], 'Expr', [
-        "Assign   : Token name, Expr? value",
-        "Binary   : Token op, Expr left, Expr right",
-        "Call     : Expr callee, Token paren, List<Expr> args",
-        "Get      : Expr object, Token name",
-        "Grouping : Expr expr",
-        "Literal  : LoxObject value",
-        "Logical  : Token op, Expr left, Expr right",
-        "Set      : Expr object, Token name, Expr value",
-        "This     : Token keyword",
-        "Super    : Token keyword, Token method",
-        "Unary    : Token op, Expr right",
-        "Variable : Token name",
+        "Assign^   : Token name, Expr value",
+        "Binary    : Token op, Expr left, Expr right",
+        "Call      : Expr callee, Token paren, List<Expr> args",
+        "Get       : Expr object, Token name",
+        "Grouping  : Expr expr",
+        "Literal   : LoxObject value",
+        "Logical   : Token op, Expr left, Expr right",
+        "Set       : Expr object, Token name, Expr value",
+        "This^     : Token keyword",
+        "Super^    : Token keyword, Token method",
+        "Unary     : Token op, Expr right",
+        "Variable^ : Token name",
     ])
 
     _generateAst(outputDir, ['Token.hpp', 'Expr.hpp'], 'Stmt', [
