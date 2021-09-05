@@ -331,8 +331,13 @@ def _defineTestSuites():
         noJavaLimits
     )
 
+    cloxxTests = _merge_dicts(
+        jloxTests,
+        { "test/print": "skip" },
+    )
+
     # cloxx behaves like jlox
-    _allSuites["cloxx"] = Suite("cloxx", jloxTests)
+    _allSuites["cloxx"] = Suite("cloxx", cloxxTests)
 
     # more suites can go here...
 
