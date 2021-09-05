@@ -128,6 +128,11 @@ private:
 Lox::Lox()
 {}
 
+int Lox::repl()
+{
+    return 0;
+}
+
 int Lox::runFile(char const* filepath)
 {
     std::ifstream ifs{filepath};
