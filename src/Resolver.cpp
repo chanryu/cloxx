@@ -5,6 +5,26 @@
 
 namespace cloxx {
 
+namespace {
+template <typename T>
+class ScopedSwapper {
+public:
+    ScopedSwapper(T& value, T newValue) : _value{value}, _oldValue{value}
+    {
+        _value = newValue;
+    }
+
+    ~ScopedSwapper()
+    {
+        _value = _oldValue;
+    }
+
+private:
+    T& _value;
+    T _oldValue;
+};
+} // namespace
+
 Resolver::Resolver(ErrorReporter* errorReporter) : _errorReporter{errorReporter}
 {}
 
@@ -77,8 +97,7 @@ int Resolver::resolveLocal(Token const& name)
 
 void Resolver::resolveFunction(FunStmt const& stmt, FunctionType type)
 {
-    auto enclosingFunction = _currentFunction;
-    _currentFunction = type;
+    ScopedSwapper _{_currentFunction, type};
 
     beginScope();
     for (auto const& param : stmt.params) {
@@ -87,8 +106,6 @@ void Resolver::resolveFunction(FunStmt const& stmt, FunctionType type)
     }
     resolve(stmt.body);
     endScope();
-
-    _currentFunction = enclosingFunction;
 }
 
 void Resolver::error(Token const& token, std::string_view message)
@@ -120,13 +137,10 @@ void Resolver::visit(IfStmt const& stmt)
 
 void Resolver::visit(WhileStmt const& stmt)
 {
-    auto enclosingLoop = _currentLoop;
-    _currentLoop = LoopType::LOOP;
+    ScopedSwapper _{_currentLoop, LoopType::LOOP};
 
     resolve(stmt.cond);
     resolve(stmt.body);
-
-    _currentLoop = enclosingLoop;
 }
 
 void Resolver::visit(BreakStmt const& stmt)
@@ -162,21 +176,17 @@ void Resolver::visit(VarStmt const& stmt)
 
 void Resolver::visit(FunStmt const& stmt)
 {
-    auto enclosingLoop = _currentLoop;
-    _currentLoop = LoopType::NONE;
+    ScopedSwapper _{_currentLoop, LoopType::NONE};
 
     declare(stmt.name);
     define(stmt.name);
 
     resolveFunction(stmt, FunctionType::FUNCTION);
-
-    _currentLoop = enclosingLoop;
 }
 
 void Resolver::visit(ClassStmt const& stmt)
 {
-    auto enclosingClass = _currentClass;
-    _currentClass = stmt.superclass ? ClassType::SUBCLASS : ClassType::CLASS;
+    ScopedSwapper _{_currentClass, stmt.superclass ? ClassType::SUBCLASS : ClassType::CLASS};
 
     declare(stmt.name);
     define(stmt.name);
@@ -208,8 +218,6 @@ void Resolver::visit(ClassStmt const& stmt)
     if (stmt.superclass) {
         endScope(); // end superScope
     }
-
-    _currentClass = enclosingClass;
 }
 
 void Resolver::visit(AssignExpr const& expr)
