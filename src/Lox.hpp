@@ -1,33 +1,15 @@
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <string_view>
-
 namespace cloxx {
 
-struct Token;
-
-class Environment;
-class Traceable;
-class RuntimeError;
+class SourceReader;
 
 class Lox {
 public:
     Lox();
 
-public:
-    int run(std::string source);
-
-    void error(size_t line, std::string_view message);
-    void error(Token const& token, std::string_view message);
-    void runtimeError(RuntimeError const& error);
-
-private:
-    void report(size_t line, std::string_view where, std::string_view message);
-
-    bool _hadError = false;
-    bool _hadRuntimeError = false;
+    int run(SourceReader& sourceReader);
+    int runFile(char const* filepath);
 };
 
 } // namespace cloxx

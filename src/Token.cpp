@@ -66,21 +66,14 @@ char const* getTokenName(Token::Type tokenType)
 } // namespace
 #endif
 
-Token::Token(Type type, std::string lexeme, std::shared_ptr<LoxObject> const& literal, size_t line)
-    : type{type}, lexeme{std::move(lexeme)}, literal{literal}, line{line}
+Token::Token(Type type, std::string lexeme, size_t line) : type{type}, lexeme{std::move(lexeme)}, line{line}
 {}
 
 #ifndef NDEBUG
 std::string Token::toString() const
 {
     std::ostringstream oss;
-
-    oss << getTokenName(type) << " ";
-    if (literal) {
-        oss << literal->toString() << " ";
-    }
-    oss << line;
-
+    oss << line << " " << getTokenName(type) << "[" << lexeme << "]";
     return oss.str();
 }
 #endif

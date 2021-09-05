@@ -1,6 +1,5 @@
 #include "LoxClass.hpp"
 
-#include "Lox.hpp"
 #include "LoxFunction.hpp"
 #include "LoxInstance.hpp"
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#!/usr/bin/env python3
 
 import os.path
 import sys
@@ -277,7 +278,7 @@ if __name__ == '__main__':
 
     outputDir = sys.argv[1]
 
-    _generateAst(outputDir, ['Token.hpp'], 'Expr', [
+    _generateAst(outputDir, ['Token.hpp', 'LoxObject.hpp'], 'Expr', [
         "Assign^   : Token name, Expr value",
         "Binary    : Token op, Expr left, Expr right",
         "Call      : Expr callee, Token paren, List<Expr> args",

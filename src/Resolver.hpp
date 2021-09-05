@@ -7,14 +7,14 @@
 
 namespace cloxx {
 
-class Lox;
+class ErrorReporter;
 class Interpreter;
 
 class Resolver : StmtVisitor, ExprVisitor {
 public:
-    explicit Resolver(Lox* lox);
+    explicit Resolver(ErrorReporter* errorReporter);
 
-    void resolve(std::vector<Stmt> const& stmts);
+    bool resolve(Stmt const& stmt);
 
 private:
     enum class FunctionType {
@@ -30,7 +30,7 @@ private:
         SUBCLASS,
     };
 
-    void resolve(Stmt const& stmt);
+    void resolve(std::vector<Stmt> const& stmts);
     void resolve(Expr const& expr);
 
     using Scope = std::map<std::string, /*isDefined*/ bool>;
@@ -42,6 +42,8 @@ private:
 
     int resolveLocal(Token const& name);
     void resolveFunction(FunStmt const& stmt, FunctionType functionType);
+
+    void error(Token const& token, std::string_view message);
 
     // StmtVisitor
     void visit(BlockStmt const& stmt) override;
@@ -68,11 +70,13 @@ private:
     void visit(VariableExpr const& expr) override;
 
 private:
-    Lox* const _lox;
+    ErrorReporter* const _errorReporter;
 
     std::vector<Scope> _scopes;
     FunctionType _currentFunction = FunctionType::NONE;
     ClassType _currentClass = ClassType::NONE;
+
+    unsigned int _errorCount = 0;
 };
 
 } // namespace cloxx
