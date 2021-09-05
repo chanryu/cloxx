@@ -271,7 +271,7 @@ class Test:
         if exitCode == this._expectedExitCode:
             return
         if len(errorLines) > 10:
-            errorLines = errorLines[0, 10]
+            errorLines = errorLines[:10]
             errorLines.append("(truncated...)")
             this._fail("Expected return code {} and got {}. Stderr:".format(this._expectedExitCode, exitCode),
                     errorLines)
