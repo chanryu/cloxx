@@ -1,7 +1,5 @@
 #include "LoxFunction.hpp"
 
-#include "Lox.hpp"
-
 #include "Assert.hpp"
 #include "Environment.hpp"
 #include "LoxInstance.hpp"

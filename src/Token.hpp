@@ -3,8 +3,6 @@
 #include <memory>
 #include <string>
 
-#include "LoxObject.hpp"
-
 namespace cloxx {
 
 struct Token {
@@ -59,16 +57,15 @@ struct Token {
         END_OF_FILE
     };
 
-    Token(Type type, std::string lexeme, std::shared_ptr<LoxObject> const& literal, size_t line);
+    Token(Type type, std::string lexeme, size_t line);
 
 #ifndef NDEBUG
     std::string toString() const;
 #endif
 
-    Type const type;
-    std::string const lexeme;
-    std::shared_ptr<LoxObject> const literal;
-    size_t const line;
+    Type type;
+    std::string lexeme;
+    size_t line;
 };
 
 } // namespace cloxx

@@ -1,6 +1,10 @@
 #include "Scanner.hpp"
 
-#include "Lox.hpp"
+#include <map>
+
+#include "Assert.hpp"
+#include "ErrorReporter.hpp"
+#include "SourceReader.hpp"
 
 namespace cloxx {
 
@@ -17,136 +21,130 @@ bool isAlphaNumeric(char c)
 {
     return isAlpha(c) || isDigit(c);
 }
-} // namespace
 
-std::map<std::string, Token::Type> const Scanner::_keywords = {
-    {"and", Token::AND},   {"class", Token::CLASS}, {"else", Token::ELSE},     {"false", Token::FALSE},
-    {"for", Token::FOR},   {"fun", Token::FUN},     {"if", Token::IF},         {"nil", Token::NIL},
-    {"or", Token::OR},     {"print", Token::PRINT}, {"return", Token::RETURN}, {"super", Token::SUPER},
-    {"this", Token::THIS}, {"true", Token::TRUE},   {"var", Token::VAR},       {"while", Token::WHILE},
-};
-
-Scanner::Scanner(Lox* const lox, std::string source) : _lox{lox}, _source{std::move(source)}
-{}
-
-std::vector<Token> Scanner::scanTokens()
+bool lookupKeyword(std::string const& identifier, Token::Type& type)
 {
-    while (!isAtEnd()) {
-        // We are at the beginning of the next lexeme.
-        _start = _current;
-        scanToken();
+    const std::map<std::string, Token::Type> keywords = {
+        {"and", Token::AND},   {"class", Token::CLASS}, {"else", Token::ELSE},     {"false", Token::FALSE},
+        {"for", Token::FOR},   {"fun", Token::FUN},     {"if", Token::IF},         {"nil", Token::NIL},
+        {"or", Token::OR},     {"print", Token::PRINT}, {"return", Token::RETURN}, {"super", Token::SUPER},
+        {"this", Token::THIS}, {"true", Token::TRUE},   {"var", Token::VAR},       {"while", Token::WHILE},
+    };
+
+    if (auto const i = keywords.find(identifier); i != keywords.end()) {
+        type = i->second;
+        return true;
     }
 
-    _tokens.emplace_back(Token::END_OF_FILE, "", nullptr, _line);
-    return _tokens;
+    return false;
 }
+} // namespace
 
-bool Scanner::isAtEnd() const
+Scanner::Scanner(ErrorReporter* errorReporter, SourceReader* sourceReader)
+    : _errorReporter{errorReporter}, _sourceReader{sourceReader}
 {
-    return _current >= _source.length();
+    _currentChar = _sourceReader->readChar();
 }
 
-void Scanner::scanToken()
+bool Scanner::isAtEnd()
+{
+    return _currentChar == '\0';
+}
+
+Token Scanner::scanToken()
 {
     using T = Token;
 
-    char c = advance();
-    switch (c) {
-    case '(':
-        addToken(T::LEFT_PAREN);
-        break;
-    case ')':
-        addToken(T::RIGHT_PAREN);
-        break;
-    case '{':
-        addToken(T::LEFT_BRACE);
-        break;
-    case '}':
-        addToken(T::RIGHT_BRACE);
-        break;
-    case ',':
-        addToken(T::COMMA);
-        break;
-    case '.':
-        addToken(T::DOT);
-        break;
-    case '-':
-        addToken(T::MINUS);
-        break;
-    case '+':
-        addToken(T::PLUS);
-        break;
-    case ';':
-        addToken(T::SEMICOLON);
-        break;
-    case '*':
-        addToken(T::STAR);
-        break;
-    case '!':
-        addToken(match('=') ? T::BANG_EQUAL : T::BANG);
-        break;
-    case '=':
-        addToken(match('=') ? T::EQUAL_EQUAL : T::EQUAL);
-        break;
-    case '<':
-        addToken(match('=') ? T::LESS_EQUAL : T::LESS);
-        break;
-    case '>':
-        addToken(match('=') ? T::GREATER_EQUAL : T::GREATER);
-        break;
-    case '/':
-        if (match('/')) {
-            // A comment goes until the end of the line.
-            while (peek() != '\n' && !isAtEnd())
-                advance();
-        }
-        else {
-            addToken(T::SLASH);
-        }
-        break;
+    while (!isAtEnd()) {
+        char c = advance();
+        switch (c) {
+        case '(':
+            return makeToken(T::LEFT_PAREN);
+        case ')':
+            return makeToken(T::RIGHT_PAREN);
+        case '{':
+            return makeToken(T::LEFT_BRACE);
+        case '}':
+            return makeToken(T::RIGHT_BRACE);
+        case ',':
+            return makeToken(T::COMMA);
+        case '.':
+            return makeToken(T::DOT);
+        case '-':
+            return makeToken(T::MINUS);
+        case '+':
+            return makeToken(T::PLUS);
+        case ';':
+            return makeToken(T::SEMICOLON);
+        case '*':
+            return makeToken(T::STAR);
+        case '!':
+            return makeToken(match('=') ? T::BANG_EQUAL : T::BANG);
+        case '=':
+            return makeToken(match('=') ? T::EQUAL_EQUAL : T::EQUAL);
+        case '<':
+            return makeToken(match('=') ? T::LESS_EQUAL : T::LESS);
+        case '>':
+            return makeToken(match('=') ? T::GREATER_EQUAL : T::GREATER);
+        case '/':
+            if (match('/')) {
+                // A comment goes until the end of the line.
+                while (peek() != '\n' && !isAtEnd()) {
+                    advance();
+                }
+                break;
+            }
+            return makeToken(T::SLASH);
 
-    case ' ':
-    case '\r':
-    case '\t':
-        // Ignore whitespace.
-        break;
+        case ' ':
+        case '\r':
+        case '\t':
+            // Ignore whitespace.
+            break;
 
-    case '\n':
-        _line++;
-        break;
+        case '\n':
+            _line++;
+            break;
 
-    case '"':
-        string();
-        break;
+        case '"':
+            return string();
 
-    default:
-        if (isDigit(c)) {
-            number();
+        default:
+            if (isDigit(c)) {
+                return number();
+            }
+            if (isAlpha(c)) {
+                return identifier();
+            }
+            _errorReporter->syntaxError(_line, "Unexpected character.");
+            break;
         }
-        else if (isAlpha(c)) {
-            identifier();
-        }
-        else {
-            _lox->error(_line, "Unexpected character.");
-        }
-        break;
+
+        _lexeme.clear();
     }
+
+    return makeToken(T::END_OF_FILE);
 }
 
 char Scanner::advance()
 {
-    return _source[_current++];
+    LOX_ASSERT(_currentChar != '\0');
+
+    _lexeme.push_back(_currentChar);
+
+    peekNext();
+
+    _currentChar = _nextChar;
+    _nextChar = '\0';
+
+    return _lexeme.back();
 }
 
-void Scanner::addToken(Token::Type type)
+Token Scanner::makeToken(Token::Type type)
 {
-    addToken(type, nullptr);
-}
-
-void Scanner::addToken(Token::Type type, std::shared_ptr<LoxObject> const& literal)
-{
-    auto lexeme = _source.substr(_start, _current - _start);
-    _tokens.emplace_back(type, std::move(lexeme), literal, _line);
+    std::string lexeme;
+    lexeme.swap(_lexeme);
+    return {type, std::move(lexeme), _line};
 }
 
 bool Scanner::match(char expected)
@@ -154,29 +152,28 @@ bool Scanner::match(char expected)
     if (isAtEnd())
         return false;
 
-    if (_source[_current] != expected)
+    if (peek() != expected)
         return false;
 
-    _current++;
+    advance();
     return true;
 }
 
-char Scanner::peek() const
+char Scanner::peek()
 {
-    if (isAtEnd())
-        return '\0';
-
-    return _source[_current];
+    return _currentChar;
 }
 
-char Scanner::peekNext() const
+char Scanner::peekNext()
 {
-    if (_current + 1 >= _source.length())
-        return '\0';
-    return _source[_current + 1];
+    if (_nextChar == '\0' && !_sourceReader->isEndOfSource()) {
+        _nextChar = _sourceReader->readChar();
+    }
+
+    return _nextChar;
 }
 
-void Scanner::string()
+Token Scanner::string()
 {
     while (peek() != '"' && !isAtEnd()) {
         if (peek() == '\n')
@@ -185,19 +182,17 @@ void Scanner::string()
     }
 
     if (isAtEnd()) {
-        _lox->error(_line, "Unterminated string.");
-        return;
+        _errorReporter->syntaxError(_line, "Unterminated string.");
+        return makeToken(Token::END_OF_FILE);
     }
 
     // The closing ".
     advance();
 
-    // Trim the surrounding quotes.
-    auto value = _source.substr(_start + 1, _current - _start - 2);
-    addToken(Token::STRING, std::make_shared<LoxString>(std::move(value)));
+    return makeToken(Token::STRING);
 }
 
-void Scanner::number()
+Token Scanner::number()
 {
     while (isDigit(peek())) {
         advance();
@@ -208,27 +203,25 @@ void Scanner::number()
         // Consume the "."
         advance();
 
-        while (isDigit(peek()))
+        while (isDigit(peek())) {
             advance();
+        }
     }
 
-    auto value = std::stod(_source.substr(_start, _current - _start));
-    addToken(Token::NUMBER, std::make_shared<LoxNumber>(value));
+    return makeToken(Token::NUMBER);
 }
 
-void Scanner::identifier()
+Token Scanner::identifier()
 {
     while (isAlphaNumeric(peek())) {
         advance();
     }
 
-    auto text = _source.substr(_start, _current - _start);
-    if (auto it = _keywords.find(text); it != _keywords.end()) {
-        addToken(it->second);
+    if (Token::Type type; lookupKeyword(_lexeme, type)) {
+        return makeToken(type);
     }
-    else {
-        addToken(Token::IDENTIFIER);
-    }
+
+    return makeToken(Token::IDENTIFIER);
 }
 
 } // namespace cloxx

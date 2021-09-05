@@ -3,11 +3,12 @@
 #include <iostream> // for print statement
 
 #include "Assert.hpp"
+#include "ErrorReporter.hpp"
 #include "GC.hpp"
-#include "Lox.hpp"
 #include "LoxClass.hpp"
 #include "LoxFunction.hpp"
 #include "LoxInstance.hpp"
+#include "Resolver.hpp"
 #include "RuntimeError.hpp"
 
 namespace cloxx {
@@ -43,19 +44,17 @@ struct OperandErrorMessage<LoxString, N> {
 
 } // namespace
 
-Interpreter::Interpreter(Lox* lox, GarbageCollector* gc)
-    : _lox{lox}, _gc{gc}, _globals{gc->root()}, _environment{_globals}
+Interpreter::Interpreter(ErrorReporter* errorReporter, GarbageCollector* gc)
+    : _errorReporter{errorReporter}, _gc{gc}, _globals{gc->root()}, _environment{_globals}
 {}
 
-void Interpreter::interpret(std::vector<Stmt> const& stmts)
+void Interpreter::interpret(Stmt const& stmt)
 {
     try {
-        for (auto const& stmt : stmts) {
-            execute(stmt);
-        }
+        execute(stmt);
     }
     catch (RuntimeError& error) {
-        _lox->runtimeError(error);
+        _errorReporter->runtimeError(error.token, error.what());
     }
 }
 

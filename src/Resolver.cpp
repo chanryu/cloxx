@@ -1,24 +1,27 @@
 #include "Resolver.hpp"
 
 #include "Assert.hpp"
-#include "Interpreter.hpp"
-#include "Lox.hpp"
+#include "ErrorReporter.hpp"
 
 namespace cloxx {
 
-Resolver::Resolver(Lox* lox) : _lox{lox}
+Resolver::Resolver(ErrorReporter* errorReporter) : _errorReporter{errorReporter}
 {}
+
+bool Resolver::resolve(Stmt const& stmt)
+{
+    auto prevErrorCount = _errorCount;
+
+    stmt.accept(*this);
+
+    return _errorCount == prevErrorCount;
+}
 
 void Resolver::resolve(std::vector<Stmt> const& stmts)
 {
     for (auto const& stmt : stmts) {
         resolve(stmt);
     }
-}
-
-void Resolver::resolve(Stmt const& stmt)
-{
-    stmt.accept(*this);
 }
 
 void Resolver::resolve(Expr const& expr)
@@ -46,7 +49,7 @@ void Resolver::declare(Token const& name)
     auto& scope = _scopes.back();
 
     if (scope.find(name.lexeme) != scope.end()) {
-        _lox->error(name, "Already a variable with this name in this scope.");
+        error(name, "Already a variable with this name in this scope.");
     }
 
     scope.emplace(name.lexeme, false);
@@ -88,6 +91,12 @@ void Resolver::resolveFunction(FunStmt const& stmt, FunctionType type)
     _currentFunction = enclosingFunction;
 }
 
+void Resolver::error(Token const& token, std::string_view message)
+{
+    _errorCount += 1;
+    _errorReporter->resolveError(token, message);
+}
+
 void Resolver::visit(BlockStmt const& stmt)
 {
     beginScope();
@@ -118,12 +127,12 @@ void Resolver::visit(WhileStmt const& stmt)
 void Resolver::visit(ReturnStmt const& stmt)
 {
     if (_currentFunction == FunctionType::NONE) {
-        _lox->error(stmt.keyword, "Can't return from top-level code.");
+        error(stmt.keyword, "Can't return from top-level code.");
     }
 
     if (stmt.value) {
         if (_currentFunction == FunctionType::INITIALIZER) {
-            _lox->error(stmt.keyword, "Can't return a value from an initializer.");
+            error(stmt.keyword, "Can't return a value from an initializer.");
         }
 
         resolve(*stmt.value);
@@ -162,7 +171,7 @@ void Resolver::visit(ClassStmt const& stmt)
 
     if (stmt.superclass) {
         if (stmt.name.lexeme == stmt.superclass->name.lexeme) {
-            _lox->error(stmt.superclass->name, "A class can't inherit from itself.");
+            error(stmt.superclass->name, "A class can't inherit from itself.");
         }
 
         resolve(*stmt.superclass);
@@ -241,7 +250,7 @@ void Resolver::visit(SetExpr const& expr)
 void Resolver::visit(ThisExpr const& expr)
 {
     if (_currentClass == ClassType::NONE) {
-        _lox->error(expr.keyword, "Can't use 'this' outside of a class.");
+        error(expr.keyword, "Can't use 'this' outside of a class.");
     }
 
     const_cast<ThisExpr&>(expr).resolve(resolveLocal(expr.keyword));
@@ -250,10 +259,10 @@ void Resolver::visit(ThisExpr const& expr)
 void Resolver::visit(SuperExpr const& expr)
 {
     if (_currentClass == ClassType::NONE) {
-        _lox->error(expr.keyword, "Can't use 'super' outside of a class.");
+        error(expr.keyword, "Can't use 'super' outside of a class.");
     }
     else if (_currentClass != ClassType::SUBCLASS) {
-        _lox->error(expr.keyword, "Can't use 'super' in a class with no superclass.");
+        error(expr.keyword, "Can't use 'super' in a class with no superclass.");
     }
 
     const_cast<SuperExpr&>(expr).resolve(resolveLocal(expr.keyword));
@@ -271,7 +280,7 @@ void Resolver::visit(VariableExpr const& expr)
         if (auto it = scope.find(expr.name.lexeme); it != scope.end()) {
             auto isDefined = it->second;
             if (!isDefined) {
-                _lox->error(expr.name, "Can't read local variable in its own initializer.");
+                error(expr.name, "Can't read local variable in its own initializer.");
             }
         }
     }
