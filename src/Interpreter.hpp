@@ -1,24 +1,25 @@
 #pragma once
 
+#include <map>
 #include <memory>
 #include <vector>
 
 #include "ast/Expr.hpp"
 #include "ast/Stmt.hpp"
 
-#include "Environment.hpp"
+#include "GC.hpp"
 
 namespace cloxx {
 
+class Environment;
 class ErrorReporter;
-class GarbageCollector;
 
 class LoxObject;
 class LoxFunction;
 
 class Interpreter : StmtVisitor, ExprVisitor {
 public:
-    Interpreter(ErrorReporter* errorReporter, GarbageCollector* gc);
+    Interpreter(ErrorReporter* errorReporter, std::map<std::string, std::shared_ptr<LoxObject>> const& builtIns);
 
     void interpret(Stmt const& stmt);
 
@@ -74,8 +75,9 @@ private:
 
     struct LoopBreaker {};
 
+    GarbageCollector _gc;
+
     ErrorReporter* const _errorReporter;
-    GarbageCollector* const _gc;
 
     std::shared_ptr<Environment> _globals;
     std::shared_ptr<Environment> _environment;

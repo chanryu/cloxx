@@ -2,7 +2,6 @@
 
 #include "Assert.hpp"
 #include "ErrorReporter.hpp"
-#include "GC.hpp"
 #include "Interpreter.hpp"
 #include "LoxFunction.hpp"
 #include "LoxNativeFunction.hpp"
@@ -18,18 +17,19 @@
 namespace cloxx {
 
 namespace {
-void defineBuiltins(std::shared_ptr<Environment> const& env)
+auto makeBuiltIns()
 {
-    LOX_ASSERT(env);
-    env->define("print", std::make_shared<LoxNativeFunction>(1, [](auto& args) {
-                    std::cout << args[0]->toString() << '\n';
-                    return makeLoxNil();
-                }));
-    env->define("clock", std::make_shared<LoxNativeFunction>(0, [](auto& /*args*/) {
-                    auto duration = std::chrono::steady_clock::now().time_since_epoch();
-                    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-                    return toLoxNumber(millis / 1000.0);
-                }));
+    std::map<std::string, std::shared_ptr<LoxObject>> builtIns;
+    builtIns.emplace("print", std::make_shared<LoxNativeFunction>(1, [](auto& args) {
+                         std::cout << args[0]->toString() << '\n';
+                         return makeLoxNil();
+                     }));
+    builtIns.emplace("clock", std::make_shared<LoxNativeFunction>(0, [](auto& /*args*/) {
+                         auto duration = std::chrono::steady_clock::now().time_since_epoch();
+                         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+                         return toLoxNumber(millis / 1000.0);
+                     }));
+    return builtIns;
 }
 
 class IStreamSourceReader : public SourceReader {
@@ -144,15 +144,11 @@ int Lox::runFile(char const* filepath)
 int Lox::run(SourceReader& sourceReader)
 {
     ConsoleErrorReporter errorReporter;
-    GarbageCollector gc;
 
     Parser parser{&errorReporter, &sourceReader};
 
-    // Define built-in global object such as "clock"
-    defineBuiltins(gc.root());
-
     Resolver resolver{&errorReporter};
-    Interpreter interpreter{&errorReporter, &gc};
+    Interpreter interpreter{&errorReporter, makeBuiltIns()};
 
     while (true) {
         auto const prevSyntaxErrorCount = errorReporter.syntaxErrorCount();
@@ -181,7 +177,6 @@ int Lox::run(SourceReader& sourceReader)
         }
 
         interpreter.interpret(*stmt);
-        gc.collect();
     }
 
     // Indicate a syntax / resolve error in the exit code.
