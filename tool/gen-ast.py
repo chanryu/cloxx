@@ -299,7 +299,6 @@ if __name__ == '__main__':
         "If     : Expr cond, Stmt thenBranch, Stmt? elseBranch",
         "While  : Expr cond, Stmt body",
         "Return : Token keyword, Expr? value",
-        "Print  : Expr expr",
         "Var    : Token name, Expr? initializer",
         "Fun    : Token name, List<Token> params, List<Stmt> body",
         "Class  : Token name, VariableExpr? superclass, List<FunStmt> methods",

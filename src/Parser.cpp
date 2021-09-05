@@ -136,9 +136,6 @@ Stmt Parser::statement()
     if (match(Token::RETURN)) {
         return returnStatement();
     }
-    if (match(Token::PRINT)) {
-        return printStatement();
-    }
     if (match(Token::LEFT_BRACE)) {
         return makeBlockStmt(block());
     }
@@ -243,13 +240,6 @@ Stmt Parser::returnStatement()
     }
 
     return makeReturnStmt(keyword, expr);
-}
-
-Stmt Parser::printStatement()
-{
-    auto const value = expression();
-    consume(Token::SEMICOLON, "Expect ';' after value.");
-    return makePrintStmt(value);
 }
 
 Stmt Parser::expressionStatement()
@@ -580,7 +570,6 @@ void Parser::synchronize()
         case Token::FOR:
         case Token::IF:
         case Token::WHILE:
-        case Token::PRINT:
         case Token::RETURN:
             return;
         default:

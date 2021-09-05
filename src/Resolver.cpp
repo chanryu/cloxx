@@ -139,11 +139,6 @@ void Resolver::visit(ReturnStmt const& stmt)
     }
 }
 
-void Resolver::visit(PrintStmt const& stmt)
-{
-    resolve(stmt.expr);
-}
-
 void Resolver::visit(VarStmt const& stmt)
 {
     declare(stmt.name);

@@ -51,7 +51,6 @@ private:
     void visit(IfStmt const& stmt) override;
     void visit(WhileStmt const& stmt) override;
     void visit(ReturnStmt const& stmt) override;
-    void visit(PrintStmt const& stmt) override;
     void visit(VarStmt const& stmt) override;
     void visit(FunStmt const& stmt) override;
     void visit(ClassStmt const& stmt) override;

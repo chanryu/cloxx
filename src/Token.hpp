@@ -46,7 +46,6 @@ struct Token {
         IF,
         NIL,
         OR,
-        PRINT,
         RETURN,
         SUPER,
         THIS,
