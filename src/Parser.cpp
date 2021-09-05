@@ -133,6 +133,9 @@ Stmt Parser::statement()
     if (match(Token::FOR)) {
         return forStatement();
     }
+    if (match(Token::BREAK)) {
+        return breakStatement();
+    }
     if (match(Token::RETURN)) {
         return returnStatement();
     }
@@ -225,6 +228,16 @@ Stmt Parser::forStatement()
     }
 
     return body;
+}
+
+Stmt Parser::breakStatement()
+{
+    LOX_ASSERT_PREVIOUS(BREAK);
+
+    auto keyword = previous();
+    consume(Token::SEMICOLON, "Expect ';' after break.");
+
+    return makeBreakStmt(keyword);
 }
 
 Stmt Parser::returnStatement()

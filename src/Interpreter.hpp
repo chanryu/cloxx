@@ -72,6 +72,8 @@ private:
         std::shared_ptr<LoxObject> object;
     };
 
+    struct LoopBreaker {};
+
     ErrorReporter* const _errorReporter;
     GarbageCollector* const _gc;
 

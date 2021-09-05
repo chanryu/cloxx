@@ -30,6 +30,11 @@ private:
         SUBCLASS,
     };
 
+    enum class LoopType {
+        NONE,
+        LOOP,
+    };
+
     void resolve(std::vector<Stmt> const& stmts);
     void resolve(Expr const& expr);
 
@@ -76,6 +81,7 @@ private:
     std::vector<Scope> _scopes;
     FunctionType _currentFunction = FunctionType::NONE;
     ClassType _currentClass = ClassType::NONE;
+    LoopType _currentLoop = LoopType::NONE;
 
     unsigned int _errorCount = 0;
 };
