@@ -162,10 +162,15 @@ void Resolver::visit(VarStmt const& stmt)
 
 void Resolver::visit(FunStmt const& stmt)
 {
+    auto enclosingLoop = _currentLoop;
+    _currentLoop = LoopType::NONE;
+
     declare(stmt.name);
     define(stmt.name);
 
     resolveFunction(stmt, FunctionType::FUNCTION);
+
+    _currentLoop = enclosingLoop;
 }
 
 void Resolver::visit(ClassStmt const& stmt)
