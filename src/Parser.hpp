@@ -30,6 +30,7 @@ private:
     Stmt ifStatement();
     Stmt whileStatement();
     Stmt forStatement();
+    Stmt breakStatement();
     Stmt returnStatement();
     Stmt expressionStatement();
     std::vector<Stmt> block();

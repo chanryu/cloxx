@@ -120,8 +120,20 @@ void Resolver::visit(IfStmt const& stmt)
 
 void Resolver::visit(WhileStmt const& stmt)
 {
+    auto enclosingLoop = _currentLoop;
+    _currentLoop = LoopType::LOOP;
+
     resolve(stmt.cond);
     resolve(stmt.body);
+
+    _currentLoop = enclosingLoop;
+}
+
+void Resolver::visit(BreakStmt const& stmt)
+{
+    if (_currentLoop == LoopType::NONE) {
+        error(stmt.keyword, "No loop to break.");
+    }
 }
 
 void Resolver::visit(ReturnStmt const& stmt)
@@ -150,10 +162,15 @@ void Resolver::visit(VarStmt const& stmt)
 
 void Resolver::visit(FunStmt const& stmt)
 {
+    auto enclosingLoop = _currentLoop;
+    _currentLoop = LoopType::NONE;
+
     declare(stmt.name);
     define(stmt.name);
 
     resolveFunction(stmt, FunctionType::FUNCTION);
+
+    _currentLoop = enclosingLoop;
 }
 
 void Resolver::visit(ClassStmt const& stmt)

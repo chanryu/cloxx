@@ -28,6 +28,7 @@ private:
     void visit(ExprStmt const& stmt) override;
     void visit(IfStmt const& stmt) override;
     void visit(WhileStmt const& stmt) override;
+    void visit(BreakStmt const& stmt) override;
     void visit(ReturnStmt const& stmt) override;
     void visit(VarStmt const& stmt) override;
     void visit(FunStmt const& stmt) override;
@@ -70,6 +71,8 @@ private:
     struct ReturnValue {
         std::shared_ptr<LoxObject> object;
     };
+
+    struct LoopBreaker {};
 
     ErrorReporter* const _errorReporter;
     GarbageCollector* const _gc;

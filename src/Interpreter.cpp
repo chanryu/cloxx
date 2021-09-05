@@ -79,9 +79,18 @@ void Interpreter::visit(IfStmt const& stmt)
 
 void Interpreter::visit(WhileStmt const& stmt)
 {
-    while (evaluate(stmt.cond)->isTruthy()) {
-        execute(stmt.body);
+    try {
+        while (evaluate(stmt.cond)->isTruthy()) {
+            execute(stmt.body);
+        }
     }
+    catch (LoopBreaker&) {
+    }
+}
+
+void Interpreter::visit(BreakStmt const& /*stmt*/)
+{
+    throw LoopBreaker{};
 }
 
 void Interpreter::visit(ReturnStmt const& stmt)
