@@ -84,6 +84,11 @@ void Interpreter::visit(WhileStmt const& stmt)
     }
 }
 
+void Interpreter::visit(BreakStmt const& /*stmt*/)
+{
+    // TODO: throw break exception
+}
+
 void Interpreter::visit(ReturnStmt const& stmt)
 {
     ReturnValue returnValue;

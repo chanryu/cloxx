@@ -124,6 +124,14 @@ void Resolver::visit(WhileStmt const& stmt)
     resolve(stmt.body);
 }
 
+void Resolver::visit(BreakStmt const& /*stmt*/)
+{
+    // TODO: _currentLoop && LoopType
+    // if (_currentLoop == LoopType::NONE) {
+    //     error(stmt.keyword, "No loop to break.");
+    // }
+}
+
 void Resolver::visit(ReturnStmt const& stmt)
 {
     if (_currentFunction == FunctionType::NONE) {

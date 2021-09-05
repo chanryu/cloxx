@@ -298,6 +298,7 @@ if __name__ == '__main__':
         "Expr   : Expr expr",
         "If     : Expr cond, Stmt thenBranch, Stmt? elseBranch",
         "While  : Expr cond, Stmt body",
+        "Break  : Token keyword",
         "Return : Token keyword, Expr? value",
         "Var    : Token name, Expr? initializer",
         "Fun    : Token name, List<Token> params, List<Stmt> body",
