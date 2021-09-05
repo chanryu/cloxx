@@ -20,10 +20,10 @@ bool isAlphaNumeric(char c)
 } // namespace
 
 std::map<std::string, Token::Type> const Scanner::_keywords = {
-    {"and", Token::AND},   {"class", Token::CLASS}, {"else", Token::ELSE},     {"false", Token::FALSE},
-    {"for", Token::FOR},   {"fun", Token::FUN},     {"if", Token::IF},         {"nil", Token::NIL},
-    {"or", Token::OR},     {"print", Token::PRINT}, {"return", Token::RETURN}, {"super", Token::SUPER},
-    {"this", Token::THIS}, {"true", Token::TRUE},   {"var", Token::VAR},       {"while", Token::WHILE},
+    {"and", Token::AND},   {"class", Token::CLASS},   {"else", Token::ELSE},   {"false", Token::FALSE},
+    {"for", Token::FOR},   {"fun", Token::FUN},       {"if", Token::IF},       {"nil", Token::NIL},
+    {"or", Token::OR},     {"return", Token::RETURN}, {"super", Token::SUPER}, {"this", Token::THIS},
+    {"true", Token::TRUE}, {"var", Token::VAR},       {"while", Token::WHILE},
 };
 
 Scanner::Scanner(Lox* const lox, std::string source) : _lox{lox}, _source{std::move(source)}

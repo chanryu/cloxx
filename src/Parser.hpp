@@ -27,7 +27,6 @@ private:
     Stmt whileStatement();
     Stmt forStatement();
     Stmt returnStatement();
-    Stmt printStatement();
     Stmt expressionStatement();
     std::vector<Stmt> block();
     Expr expression();

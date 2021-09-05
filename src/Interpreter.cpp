@@ -1,7 +1,5 @@
 #include "Interpreter.hpp"
 
-#include <iostream> // for print statement
-
 #include "Assert.hpp"
 #include "GC.hpp"
 #include "Lox.hpp"
@@ -98,13 +96,6 @@ void Interpreter::visit(ReturnStmt const& stmt)
     }
 
     throw returnValue;
-}
-
-void Interpreter::visit(PrintStmt const& stmt)
-{
-    auto value = evaluate(stmt.expr);
-    LOX_ASSERT(value);
-    std::cout << value->toString() << '\n';
 }
 
 void Interpreter::visit(VarStmt const& stmt)

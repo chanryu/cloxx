@@ -19,6 +19,10 @@ namespace {
 void defineBuiltins(std::shared_ptr<Environment> const& env)
 {
     LOX_ASSERT(env);
+    env->define("print", std::make_shared<LoxNativeFunction>(1, [](auto& args) {
+                    std::cout << args[0]->toString() << '\n';
+                    return makeLoxNil();
+                }));
     env->define("clock", std::make_shared<LoxNativeFunction>(0, [](auto& /*args*/) {
                     auto duration = std::chrono::steady_clock::now().time_since_epoch();
                     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
