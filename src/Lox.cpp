@@ -62,6 +62,63 @@ private:
     char _nextChar;
 };
 
+class ReplSourceReader : public SourceReader {
+public:
+    void resetLineNumber()
+    {
+        _lineNumber = 0;
+    }
+
+    bool isEndOfSource()
+    {
+        if (_index == _line.size()) {
+            readNextLine();
+        }
+        return _index == _line.size();
+    }
+
+    char readChar()
+    {
+        LOX_ASSERT(_index < _line.size());
+        return _line[_index++];
+    }
+
+private:
+    void readNextLine()
+    {
+        if (std::cin.eof()) {
+            return;
+        }
+
+        _lineNumber += 1;
+
+        if (_lineNumber == 1) {
+            std::cout << "cloxx> ";
+        }
+        else {
+            auto oldFill = std::cout.fill();
+            auto oldWidth = std::cout.width();
+            std::cout.fill('0');
+            std::cout.width(5);
+            std::cout << _lineNumber << ": ";
+            std::cout.fill(oldFill);
+            std::cout.width(oldWidth);
+        }
+
+        _index = 0;
+        _line.clear();
+        std::getline(std::cin, _line);
+
+        if (!std::cin.eof()) {
+            _line.push_back('\n');
+        }
+    }
+
+    size_t _lineNumber = 0;
+    size_t _index = 0;
+    std::string _line;
+};
+
 class ConsoleErrorReporter : public ErrorReporter {
 public:
     void syntaxError(size_t line, std::string_view message) override
@@ -127,6 +184,33 @@ private:
 
 Lox::Lox()
 {}
+
+int Lox::repl()
+{
+    ConsoleErrorReporter errorReporter;
+    GarbageCollector gc;
+    Interpreter interpreter{&errorReporter, &gc};
+
+    // Define built-in global object such as "clock"
+    defineBuiltins(gc.root());
+
+    ReplSourceReader sourceReader;
+
+    while (!sourceReader.isEndOfSource()) {
+
+        Parser parser{&errorReporter, &sourceReader};
+        Resolver resolver{&errorReporter};
+
+        if (auto stmt = parser.parse(); stmt && resolver.resolve(*stmt)) {
+            interpreter.interpret(*stmt);
+            gc.collect();
+        }
+
+        sourceReader.resetLineNumber();
+    }
+
+    return 0;
+}
 
 int Lox::runFile(char const* filepath)
 {

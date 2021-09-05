@@ -8,6 +8,7 @@ class Lox {
 public:
     Lox();
 
+    int repl();
     int run(SourceReader& sourceReader);
     int runFile(char const* filepath);
 };
