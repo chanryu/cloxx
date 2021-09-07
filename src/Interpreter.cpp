@@ -350,21 +350,24 @@ void Interpreter::visit(SuperExpr const& expr)
 {
     LOX_ASSERT(expr.keyword.lexeme == "super");
 
-    if (expr.depth() >= 0) {
-        auto distance = expr.depth();
-        auto superclass = std::dynamic_pointer_cast<LoxClass>(_environment->getAt(distance, "super"));
-        auto instance = std::dynamic_pointer_cast<LoxInstance>(_environment->getAt(distance - 1, "this"));
-        if (superclass && instance) {
-            auto method = superclass->findMethod(expr.method.lexeme);
-            if (!method) {
-                throw RuntimeError(expr.method, "Undefined property '" + expr.method.lexeme + "'.");
-            }
-            _evalResults.push_back(method->bind(instance));
-            return;
-        }
-    }
+    auto distance = expr.depth();
+    LOX_ASSERT(distance >= 0);
 
-    LOX_ASSERT(false); // If we have reached here, we have a scope resolve bug.
+#ifndef NDEBUG
+    auto superclass = std::dynamic_pointer_cast<LoxClass>(_environment->getAt(distance, "super"));
+    auto instance = std::dynamic_pointer_cast<LoxInstance>(_environment->getAt(distance - 1, "this"));
+    LOX_ASSERT(superclass);
+    LOX_ASSERT(instance);
+#else
+    auto superclass = std::static_pointer_cast<LoxClass>(_environment->getAt(distance, "super"));
+    auto instance = std::static_pointer_cast<LoxInstance>(_environment->getAt(distance - 1, "this"));
+#endif
+
+    auto method = superclass->findMethod(expr.method.lexeme);
+    if (!method) {
+        throw RuntimeError(expr.method, "Undefined property '" + expr.method.lexeme + "'.");
+    }
+    _evalResults.push_back(method->bind(instance));
 }
 
 void Interpreter::visit(UnaryExpr const& expr)
