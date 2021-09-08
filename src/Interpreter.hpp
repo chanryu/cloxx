@@ -26,14 +26,15 @@ public:
 private:
     // StmtVisitor
     void visit(BlockStmt const& stmt) override;
-    void visit(ExprStmt const& stmt) override;
-    void visit(IfStmt const& stmt) override;
-    void visit(WhileStmt const& stmt) override;
     void visit(BreakStmt const& stmt) override;
+    void visit(ClassStmt const& stmt) override;
+    void visit(ContinueStmt const& stmt) override;
+    void visit(ExprStmt const& stmt) override;
+    void visit(ForStmt const& stmt) override;
+    void visit(FunStmt const& stmt) override;
+    void visit(IfStmt const& stmt) override;
     void visit(ReturnStmt const& stmt) override;
     void visit(VarStmt const& stmt) override;
-    void visit(FunStmt const& stmt) override;
-    void visit(ClassStmt const& stmt) override;
 
     // ExprVisitor
     void visit(AssignExpr const& expr) override;
@@ -44,8 +45,8 @@ private:
     void visit(LiteralExpr const& expr) override;
     void visit(LogicalExpr const& expr) override;
     void visit(SetExpr const& expr) override;
-    void visit(ThisExpr const& expr) override;
     void visit(SuperExpr const& expr) override;
+    void visit(ThisExpr const& expr) override;
     void visit(UnaryExpr const& expr) override;
     void visit(VariableExpr const& expr) override;
 
@@ -73,7 +74,10 @@ private:
         std::shared_ptr<LoxObject> object;
     };
 
-    struct LoopBreaker {};
+    struct LoopBreak {};
+    struct LoopContinue {};
+
+    class ScopeSwitcher;
 
     GarbageCollector _gc;
 

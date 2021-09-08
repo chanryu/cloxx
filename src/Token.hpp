@@ -40,6 +40,7 @@ struct Token {
         AND,
         BREAK,
         CLASS,
+        CONTINUE,
         ELSE,
         FALSE,
         FUN,

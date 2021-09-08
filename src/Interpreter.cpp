@@ -43,6 +43,25 @@ struct OperandErrorMessage<LoxString, N> {
 
 } // namespace
 
+class Interpreter::ScopeSwitcher {
+public:
+    ScopeSwitcher(Interpreter* interpreter, std::shared_ptr<Environment> const& newEnvironment)
+        : _interpreter{interpreter}
+    {
+        _oldEnvironment = _interpreter->_environment;
+        _interpreter->_environment = newEnvironment;
+    }
+
+    ~ScopeSwitcher()
+    {
+        _interpreter->_environment = _oldEnvironment;
+    }
+
+private:
+    Interpreter* _interpreter;
+    std::shared_ptr<Environment> _oldEnvironment;
+};
+
 Interpreter::Interpreter(ErrorReporter* errorReporter,
                          std::map<std::string, std::shared_ptr<LoxObject>> const& builtIns)
     : _errorReporter{errorReporter}
@@ -78,6 +97,35 @@ void Interpreter::visit(ExprStmt const& stmt)
     evaluate(stmt.expr);
 }
 
+void Interpreter::visit(ForStmt const& stmt)
+{
+    ScopeSwitcher _{this, _gc.create<Environment>(_environment)};
+
+    if (stmt.initializer) {
+        stmt.initializer->accept(*this);
+    }
+
+    while (true) {
+        if (stmt.condition && !evaluate(*stmt.condition)->isTruthy()) {
+            break;
+        }
+
+        try {
+            execute(stmt.body);
+        }
+        catch (LoopBreak&) {
+            break;
+        }
+        catch (LoopContinue&) {
+            // fall through to increment
+        }
+
+        if (stmt.increment) {
+            stmt.increment->accept(*this);
+        }
+    }
+}
+
 void Interpreter::visit(IfStmt const& stmt)
 {
     if (evaluate(stmt.cond)->isTruthy()) {
@@ -88,20 +136,14 @@ void Interpreter::visit(IfStmt const& stmt)
     }
 }
 
-void Interpreter::visit(WhileStmt const& stmt)
+void Interpreter::visit(BreakStmt const&)
 {
-    try {
-        while (evaluate(stmt.cond)->isTruthy()) {
-            execute(stmt.body);
-        }
-    }
-    catch (LoopBreaker&) {
-    }
+    throw LoopBreak{};
 }
 
-void Interpreter::visit(BreakStmt const& /*stmt*/)
+void Interpreter::visit(ContinueStmt const&)
 {
-    throw LoopBreaker{};
+    throw LoopContinue{};
 }
 
 void Interpreter::visit(ReturnStmt const& stmt)
@@ -405,17 +447,10 @@ void Interpreter::execute(Stmt const& stmt)
 
 void Interpreter::executeBlock(std::vector<Stmt> const& stmts, std::shared_ptr<Environment> const& environment)
 {
-    auto previous = _environment;
-    try {
-        _environment = environment;
-        for (auto const& stmt : stmts) {
-            execute(stmt);
-        }
-        _environment = previous;
-    }
-    catch (...) {
-        _environment = previous;
-        throw;
+    ScopeSwitcher _{this, environment};
+
+    for (auto const& stmt : stmts) {
+        execute(stmt);
     }
 }
 

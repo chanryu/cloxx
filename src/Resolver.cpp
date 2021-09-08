@@ -7,14 +7,14 @@ namespace cloxx {
 
 namespace {
 template <typename T>
-class ScopedSwapper {
+class ScopedSwitcher {
 public:
-    ScopedSwapper(T& value, T newValue) : _value{value}, _oldValue{value}
+    ScopedSwitcher(T& value, T newValue) : _value{value}, _oldValue{value}
     {
         _value = newValue;
     }
 
-    ~ScopedSwapper()
+    ~ScopedSwitcher()
     {
         _value = _oldValue;
     }
@@ -97,7 +97,7 @@ int Resolver::resolveLocal(Token const& name)
 
 void Resolver::resolveFunction(FunStmt const& stmt, FunctionType type)
 {
-    ScopedSwapper _{_currentFunction, type};
+    ScopedSwitcher _{_currentFunction, type};
 
     beginScope();
     for (auto const& param : stmt.params) {
@@ -126,6 +126,24 @@ void Resolver::visit(ExprStmt const& stmt)
     resolve(stmt.expr);
 }
 
+void Resolver::visit(ForStmt const& stmt)
+{
+    ScopedSwitcher _{_currentLoop, LoopType::LOOP};
+
+    beginScope();
+    if (stmt.initializer) {
+        resolve(*stmt.initializer);
+    }
+    if (stmt.condition) {
+        resolve(*stmt.condition);
+    }
+    if (stmt.increment) {
+        resolve(*stmt.increment);
+    }
+    resolve(stmt.body);
+    endScope();
+}
+
 void Resolver::visit(IfStmt const& stmt)
 {
     resolve(stmt.cond);
@@ -135,18 +153,17 @@ void Resolver::visit(IfStmt const& stmt)
     }
 }
 
-void Resolver::visit(WhileStmt const& stmt)
-{
-    ScopedSwapper _{_currentLoop, LoopType::LOOP};
-
-    resolve(stmt.cond);
-    resolve(stmt.body);
-}
-
 void Resolver::visit(BreakStmt const& stmt)
 {
     if (_currentLoop == LoopType::NONE) {
         error(stmt.keyword, "No loop to break.");
+    }
+}
+
+void Resolver::visit(ContinueStmt const& stmt)
+{
+    if (_currentLoop == LoopType::NONE) {
+        error(stmt.keyword, "No loop to continue.");
     }
 }
 
@@ -176,7 +193,7 @@ void Resolver::visit(VarStmt const& stmt)
 
 void Resolver::visit(FunStmt const& stmt)
 {
-    ScopedSwapper _{_currentLoop, LoopType::NONE};
+    ScopedSwitcher _{_currentLoop, LoopType::NONE};
 
     declare(stmt.name);
     define(stmt.name);
@@ -186,7 +203,7 @@ void Resolver::visit(FunStmt const& stmt)
 
 void Resolver::visit(ClassStmt const& stmt)
 {
-    ScopedSwapper _{_currentClass, stmt.superclass ? ClassType::SUBCLASS : ClassType::CLASS};
+    ScopedSwitcher _{_currentClass, stmt.superclass ? ClassType::SUBCLASS : ClassType::CLASS};
 
     declare(stmt.name);
     define(stmt.name);
