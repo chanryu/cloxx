@@ -45,6 +45,7 @@ char const* getTokenName(Token::Type tokenType)
         LOX_TOKEN_NAME_CASE(AND);
         LOX_TOKEN_NAME_CASE(BREAK);
         LOX_TOKEN_NAME_CASE(CLASS);
+        LOX_TOKEN_NAME_CASE(CONTINUE);
         LOX_TOKEN_NAME_CASE(ELSE);
         LOX_TOKEN_NAME_CASE(FALSE);
         LOX_TOKEN_NAME_CASE(FUN);

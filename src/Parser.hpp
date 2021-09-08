@@ -31,6 +31,7 @@ private:
     Stmt whileStatement();
     Stmt forStatement();
     Stmt breakStatement();
+    Stmt continueStatement();
     Stmt returnStatement();
     Stmt expressionStatement();
     std::vector<Stmt> block();

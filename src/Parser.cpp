@@ -136,6 +136,9 @@ Stmt Parser::statement()
     if (match(Token::BREAK)) {
         return breakStatement();
     }
+    if (match(Token::CONTINUE)) {
+        return continueStatement();
+    }
     if (match(Token::RETURN)) {
         return returnStatement();
     }
@@ -171,12 +174,12 @@ Stmt Parser::whileStatement()
     // whileStmt → "while" "(" expression ")" statement ;
 
     consume(Token::LEFT_PAREN, "Expect '(' after 'while'.");
-    auto const cond = expression();
+    auto const condition = expression();
     consume(Token::RIGHT_PAREN, "Expect ')' after condition.");
 
     auto const body = statement();
 
-    return makeWhileStmt(cond, body);
+    return makeForStmt(/*initializer*/ std::nullopt, condition, /*increment*/ std::nullopt, body);
 }
 
 Stmt Parser::forStatement()
@@ -209,25 +212,7 @@ Stmt Parser::forStatement()
 
     auto body = statement();
 
-    // For loop desugaring.
-
-    // 1. Append increament to body if needed
-    if (increment) {
-        body = makeBlockStmt(std::vector<Stmt>{body, *increment});
-    }
-
-    // 2. Make condition if missing and buid while statement
-    if (!condition) {
-        condition = makeLiteralExpr(toLoxBoolean(true));
-    }
-    body = makeWhileStmt(*condition, body);
-
-    // 3. Prepand initializer if needed
-    if (initializer) {
-        body = makeBlockStmt(std::vector<Stmt>{*initializer, body});
-    }
-
-    return body;
+    return makeForStmt(initializer, condition, increment, body);
 }
 
 Stmt Parser::breakStatement()
@@ -238,6 +223,16 @@ Stmt Parser::breakStatement()
     consume(Token::SEMICOLON, "Expect ';' after break.");
 
     return makeBreakStmt(keyword);
+}
+
+Stmt Parser::continueStatement()
+{
+    LOX_ASSERT_PREVIOUS(CONTINUE);
+
+    auto keyword = previous();
+    consume(Token::SEMICOLON, "Expect ';' after continue.");
+
+    return makeContinueStmt(keyword);
 }
 
 Stmt Parser::returnStatement()
