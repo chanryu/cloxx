@@ -2,6 +2,10 @@
 
 #include "Assert.hpp"
 #include "ErrorReporter.hpp"
+#include "LoxBoolean.hpp"
+#include "LoxNil.hpp"
+#include "LoxNumber.hpp"
+#include "LoxString.hpp"
 
 #define LOX_ASSERT_PREVIOUS(__t) LOX_ASSERT(previous().type == Token::__t)
 

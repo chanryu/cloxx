@@ -4,9 +4,13 @@
 #include "Environment.hpp"
 #include "ErrorReporter.hpp"
 #include "GC.hpp"
+#include "LoxBoolean.hpp"
 #include "LoxClass.hpp"
 #include "LoxFunction.hpp"
 #include "LoxInstance.hpp"
+#include "LoxNil.hpp"
+#include "LoxNumber.hpp"
+#include "LoxString.hpp"
 #include "Resolver.hpp"
 #include "RuntimeError.hpp"
 

@@ -5,6 +5,8 @@
 #include "Interpreter.hpp"
 #include "LoxFunction.hpp"
 #include "LoxNativeFunction.hpp"
+#include "LoxNil.hpp"
+#include "LoxNumber.hpp"
 #include "Parser.hpp"
 #include "Resolver.hpp"
 #include "SourceReader.hpp"
