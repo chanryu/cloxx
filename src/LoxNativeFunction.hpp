@@ -2,11 +2,12 @@
 
 #include <functional>
 
-#include "LoxCallable.hpp"
+#include "Callable.hpp"
+#include "LoxObject.hpp"
 
 namespace cloxx {
 
-class LoxNativeFunction : public LoxCallable {
+class LoxNativeFunction : public LoxObject, public Callable {
 public:
     using Body = std::function<std::shared_ptr<LoxObject>(std::vector<std::shared_ptr<LoxObject>> const&)>;
 

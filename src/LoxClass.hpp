@@ -2,14 +2,15 @@
 
 #include <map>
 
+#include "Callable.hpp"
 #include "GC.hpp"
-#include "LoxCallable.hpp"
+#include "LoxObject.hpp"
 
 namespace cloxx {
 
 class LoxFunction;
 
-class LoxClass : public LoxCallable, public Traceable, public std::enable_shared_from_this<LoxClass> {
+class LoxClass : public LoxObject, public Callable, public Traceable, public std::enable_shared_from_this<LoxClass> {
 public:
     LoxClass(PrivateCreationTag tag, GarbageCollector* gc, std::string name,
              std::shared_ptr<LoxClass> const& superclass, std::map<std::string, std::shared_ptr<LoxFunction>> methods);

@@ -307,7 +307,7 @@ void Interpreter::visit(CallExpr const& expr)
         args.push_back(evaluate(arg));
     }
 
-    auto callable = dynamic_cast<LoxCallable*>(callee.get());
+    auto callable = dynamic_cast<Callable*>(callee.get());
     if (!callable) {
         throw RuntimeError(expr.paren, "Can only call functions and classes.");
     }

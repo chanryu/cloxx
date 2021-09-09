@@ -5,8 +5,9 @@
 #include <string>
 #include <vector>
 
+#include "Callable.hpp"
 #include "GC.hpp"
-#include "LoxCallable.hpp"
+#include "LoxObject.hpp"
 #include "Token.hpp"
 
 namespace cloxx {
@@ -15,7 +16,7 @@ class Stmt;
 class Environment;
 class LoxInstance;
 
-class LoxFunction : public LoxCallable, public Traceable {
+class LoxFunction : public LoxObject, public Callable, public Traceable {
 public:
     using Executor =
         std::function<std::shared_ptr<LoxObject>(std::shared_ptr<Environment> const&, std::vector<Stmt> const&)>;
