@@ -20,7 +20,7 @@ std::shared_ptr<LoxObject> LoxInstance::get(Token const& name)
     }
 
     if (auto method = _class->findMethod(name.lexeme)) {
-        return method->bind(std::dynamic_pointer_cast<LoxInstance>(shared_from_this()));
+        return method->bind(shared_from_this());
     }
 
     throw RuntimeError(name, "Undefined property '" + name.lexeme + "'.");

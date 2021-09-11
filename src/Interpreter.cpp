@@ -398,15 +398,10 @@ void Interpreter::visit(SuperExpr const& expr)
     auto distance = expr.depth();
     LOX_ASSERT(distance >= 0);
 
-#ifndef NDEBUG
-    auto superclass = std::dynamic_pointer_cast<LoxClass>(_environment->getAt(distance, "super"));
-    auto instance = std::dynamic_pointer_cast<LoxInstance>(_environment->getAt(distance - 1, "this"));
-    LOX_ASSERT(superclass);
-    LOX_ASSERT(instance);
-#else
     auto superclass = std::static_pointer_cast<LoxClass>(_environment->getAt(distance, "super"));
     auto instance = std::static_pointer_cast<LoxInstance>(_environment->getAt(distance - 1, "this"));
-#endif
+    LOX_ASSERT(superclass);
+    LOX_ASSERT(instance);
 
     auto method = superclass->findMethod(expr.method.lexeme);
     if (!method) {
