@@ -6,11 +6,11 @@
 #include "GC.hpp"
 #include "LoxBoolean.hpp"
 #include "LoxClass.hpp"
-#include "LoxFunction.hpp"
 #include "LoxInstance.hpp"
 #include "LoxNil.hpp"
 #include "LoxNumber.hpp"
 #include "LoxString.hpp"
+#include "LoxUserFunction.hpp"
 #include "Resolver.hpp"
 #include "RuntimeError.hpp"
 
@@ -66,14 +66,13 @@ private:
     std::shared_ptr<Environment> _oldEnvironment;
 };
 
-Interpreter::Interpreter(ErrorReporter* errorReporter,
-                         std::map<std::string, std::shared_ptr<LoxObject>> const& builtIns)
+Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalObjectsProc)
     : _errorReporter{errorReporter}
 {
     _globals = _gc.root();
     _environment = _globals;
 
-    for (auto& [name, value] : builtIns) {
+    for (auto& [name, value] : globalObjectsProc(&_gc)) {
         _globals->define(name, value);
     }
 }
@@ -531,7 +530,7 @@ std::shared_ptr<LoxFunction> Interpreter::makeFunction(bool isInitializer, Token
         return makeLoxNil();
     };
 
-    return _gc.create<LoxFunction>(&_gc, _environment, isInitializer, name, params, body, executor);
+    return _gc.create<LoxUserFunction>(&_gc, _environment, isInitializer, name, params, body, executor);
 }
 
 } // namespace cloxx
