@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <vector>
@@ -17,9 +18,11 @@ class ErrorReporter;
 class LoxObject;
 class LoxFunction;
 
+using GlobalObjectsProc = std::function<std::map<std::string, std::shared_ptr<LoxObject>>(GarbageCollector* gc)>;
+
 class Interpreter : StmtVisitor, ExprVisitor {
 public:
-    Interpreter(ErrorReporter* errorReporter, std::map<std::string, std::shared_ptr<LoxObject>> const& builtIns);
+    Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalObjectsProc);
 
     void interpret(Stmt const& stmt);
 
