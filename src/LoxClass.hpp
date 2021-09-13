@@ -9,6 +9,7 @@
 namespace cloxx {
 
 class LoxFunction;
+class LoxInstance;
 
 class LoxClass : public LoxObject, public Callable, public Traceable, public std::enable_shared_from_this<LoxClass> {
 public:
@@ -26,11 +27,31 @@ public:
     void enumerateTraceables(Traceable::Enumerator const& enumerator) override;
     void reclaim() override;
 
+    virtual std::shared_ptr<LoxInstance> createInstance(GarbageCollector* gc) = 0;
+
 private:
-    GarbageCollector* const _gc;
+    GarbageCollector* _gc;
     std::string _name;
     std::shared_ptr<LoxClass> _superclass;
     std::map<std::string, std::shared_ptr<LoxFunction>> _methods;
+};
+
+class LoxUserClass : public LoxClass {
+public:
+    using LoxClass::LoxClass;
+
+    std::shared_ptr<LoxInstance> createInstance(GarbageCollector* gc) override;
+};
+
+template <typename T>
+class LoxNativeClass : public LoxClass {
+public:
+    using LoxClass::LoxClass;
+
+    std::shared_ptr<LoxInstance> createInstance(GarbageCollector* gc) override
+    {
+        return gc->create<T>(shared_from_this());
+    }
 };
 
 } // namespace cloxx

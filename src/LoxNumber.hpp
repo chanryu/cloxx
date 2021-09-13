@@ -6,15 +6,18 @@ namespace cloxx {
 
 class LoxNumber : public LoxObject {
 public:
-    explicit LoxNumber(double value);
+    using ValueType = double;
+
+    explicit LoxNumber(ValueType value);
 
     std::string toString() const override;
     bool equals(LoxObject const& object) const override;
 
-    double const value;
+    ValueType const value;
 };
 
-inline auto toLoxNumber(double value)
+template <typename T>
+auto toLoxNumber(T value)
 {
     return std::make_shared<LoxNumber>(value);
 }

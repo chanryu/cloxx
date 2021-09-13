@@ -21,7 +21,7 @@ size_t LoxNativeFunction::arity() const
 
 std::shared_ptr<LoxObject> LoxNativeFunction::call(std::vector<std::shared_ptr<LoxObject>> const& args)
 {
-    return _body(args);
+    return _body(_instance, args);
 }
 
 void LoxNativeFunction::enumerateTraceables(Traceable::Enumerator const& enumerator)

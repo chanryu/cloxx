@@ -206,7 +206,7 @@ void Interpreter::visit(ClassStmt const& stmt)
         methods.emplace(method.name.lexeme, function);
     }
 
-    auto klass = _gc.create<LoxClass>(&_gc, stmt.name.lexeme, superclass, methods);
+    auto klass = _gc.create<LoxUserClass>(&_gc, stmt.name.lexeme, superclass, methods);
 
     if (superclass) {
         _environment = enclosingEnvironment;
@@ -239,32 +239,32 @@ void Interpreter::visit(BinaryExpr const& expr)
 
     switch (expr.op.type) {
     case Token::GREATER:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxBoolean(left > right));
         });
         break;
     case Token::GREATER_EQUAL:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxBoolean(left >= right));
         });
         break;
     case Token::LESS:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxBoolean(left < right));
         });
         break;
     case Token::LESS_EQUAL:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxBoolean(left <= right));
         });
         break;
     case Token::MINUS:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxNumber(left - right));
         });
         break;
     case Token::PLUS:
-        if (matchOperands<LoxNumber>(left, right, [this](double left, double right) {
+        if (matchOperands<LoxNumber>(left, right, [this](auto left, auto right) {
                 _evalResults.push_back(toLoxNumber(left + right));
             })) {
             break; // handled number + number
@@ -276,12 +276,12 @@ void Interpreter::visit(BinaryExpr const& expr)
         }
         throw RuntimeError(expr.op, "Operands must be two numbers or two strings.");
     case Token::SLASH:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxNumber(left / right));
         });
         break;
     case Token::STAR:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxNumber(left * right));
         });
         break;

@@ -8,7 +8,8 @@ namespace cloxx {
 
 class LoxNativeFunction : public LoxFunction {
 public:
-    using Body = std::function<std::shared_ptr<LoxObject>(std::vector<std::shared_ptr<LoxObject>> const&)>;
+    using Body = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<LoxInstance> const& instance,
+                                                          std::vector<std::shared_ptr<LoxObject>> const&)>;
 
     LoxNativeFunction(PrivateCreationTag tag, GarbageCollector* gc, size_t arity, Body body,
                       std::shared_ptr<LoxInstance> const& instance = nullptr);

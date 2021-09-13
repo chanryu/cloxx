@@ -40,7 +40,7 @@ size_t LoxClass::arity() const
 
 std::shared_ptr<LoxObject> LoxClass::call(std::vector<std::shared_ptr<LoxObject>> const& args)
 {
-    auto instance = _gc->create<LoxInstance>(shared_from_this());
+    auto instance = createInstance(_gc);
 
     if (auto initializer = findMethod("init")) {
         initializer->bind(instance)->call(args);
@@ -65,5 +65,14 @@ void LoxClass::reclaim()
     _superclass.reset();
     _methods.clear();
 }
+
+//////////
+
+std::shared_ptr<LoxInstance> LoxUserClass::createInstance(GarbageCollector* gc)
+{
+    return gc->create<LoxInstance>(shared_from_this());
+}
+
+//////////
 
 } // namespace cloxx
