@@ -31,12 +31,13 @@ struct ListNativeData : Traceable {
     }
 
     std::vector<std::shared_ptr<LoxObject>> items;
+    bool isStringifying = false;
 };
 
-auto& toListItems(std::shared_ptr<Traceable> const& nativeData)
+auto toListNativeData(std::shared_ptr<Traceable> const& nativeData)
 {
     LOX_ASSERT(std::dynamic_pointer_cast<ListNativeData>(nativeData));
-    return static_cast<ListNativeData*>(nativeData.get())->items;
+    return static_cast<ListNativeData*>(nativeData.get());
 }
 
 } // namespace
@@ -47,7 +48,7 @@ std::shared_ptr<LoxClass> createListClass(GarbageCollector* gc)
 
     methods.emplace("append", gc->create<LoxNativeFunction>(gc, /*arity*/ 1, [](auto& nativeData, auto& args) {
         LOX_ASSERT(args.size() == 1);
-        auto& items = toListItems(nativeData);
+        auto& items = toListNativeData(nativeData)->items;
         items.push_back(args[0]);
         return args[0];
     }));
@@ -57,7 +58,7 @@ std::shared_ptr<LoxClass> createListClass(GarbageCollector* gc)
 
         std::shared_ptr<LoxObject> result;
         if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
-            auto& items = toListItems(nativeData);
+            auto& items = toListNativeData(nativeData)->items;
             if (auto index = static_cast<size_t>(number->value); index < items.size()) {
                 result = items[index];
             }
@@ -73,7 +74,7 @@ std::shared_ptr<LoxClass> createListClass(GarbageCollector* gc)
 
         std::shared_ptr<LoxObject> result;
         if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
-            auto& items = toListItems(nativeData);
+            auto& items = toListNativeData(nativeData)->items;
             if (auto index = static_cast<size_t>(number->value); index < items.size()) {
                 items[index] = args[1];
                 return toLoxBoolean(true);
@@ -83,12 +84,20 @@ std::shared_ptr<LoxClass> createListClass(GarbageCollector* gc)
     }));
 
     methods.emplace("length", gc->create<LoxNativeFunction>(gc, /*arity*/ 0, [](auto& nativeData, auto& /*args*/) {
-        auto& items = toListItems(nativeData);
+        auto& items = toListNativeData(nativeData)->items;
         return toLoxNumber(items.size());
     }));
 
     methods.emplace("toString", gc->create<LoxNativeFunction>(gc, /*arity*/ 0, [](auto& nativeData, auto& /*args*/) {
-        auto& items = toListItems(nativeData);
+        auto listNativeData = toListNativeData(nativeData);
+
+        if (listNativeData->isStringifying) {
+            return toLoxString("[...]");
+        }
+
+        listNativeData->isStringifying = true;
+
+        auto const& items = listNativeData->items;
         std::string str;
         str.push_back('[');
         for (size_t i = 0; i < items.size(); ++i) {
@@ -98,6 +107,9 @@ std::shared_ptr<LoxClass> createListClass(GarbageCollector* gc)
             }
         }
         str.push_back(']');
+
+        listNativeData->isStringifying = false;
+
         return toLoxString(str);
     }));
 
