@@ -20,7 +20,7 @@ public:
                     bool isInitializer, Token const& name, std::vector<Token> const& params,
                     std::vector<Stmt> const& body, Executor const& executor);
 
-    std::string toString() const override;
+    std::string toString() override;
 
     size_t arity() const override;
     std::shared_ptr<LoxObject> call(std::vector<std::shared_ptr<LoxObject>> const& args) override;

@@ -8,7 +8,7 @@ class LoxString : public LoxObject {
 public:
     explicit LoxString(std::string value);
 
-    std::string toString() const override;
+    std::string toString() override;
     bool equals(LoxObject const& object) const override;
 
     std::string const value;

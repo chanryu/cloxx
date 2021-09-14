@@ -26,11 +26,11 @@ auto makeBuiltIns(GarbageCollector* gc)
     std::map<std::string, std::shared_ptr<LoxObject>> builtIns;
 
     // global functions
-    builtIns.emplace("print", gc->create<LoxNativeFunction>(gc, 1, [](auto& /*instance*/, auto& args) {
+    builtIns.emplace("print", gc->create<LoxNativeFunction>(gc, 1, [](auto& /*nativeData*/, auto& args) {
         std::cout << args[0]->toString() << '\n';
         return makeLoxNil();
     }));
-    builtIns.emplace("clock", gc->create<LoxNativeFunction>(gc, 0, [](auto& /*instance*/, auto& /*args*/) {
+    builtIns.emplace("clock", gc->create<LoxNativeFunction>(gc, 0, [](auto& /*nativeData*/, auto& /*args*/) {
         auto duration = std::chrono::steady_clock::now().time_since_epoch();
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
         return toLoxNumber(millis / 1000.0);

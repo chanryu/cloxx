@@ -27,7 +27,7 @@ std::shared_ptr<LoxFunction> LoxUserFunction::bind(std::shared_ptr<LoxInstance> 
     return _gc->create<LoxUserFunction>(_gc, closure, _isInitializer, _name, _params, _body, _executor);
 }
 
-std::string LoxUserFunction::toString() const
+std::string LoxUserFunction::toString()
 {
     return "<fn " + _name.lexeme + ">";
 }

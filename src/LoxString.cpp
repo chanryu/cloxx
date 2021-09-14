@@ -5,7 +5,7 @@ namespace cloxx {
 LoxString::LoxString(std::string value) : value{std::move(value)}
 {}
 
-std::string LoxString::toString() const
+std::string LoxString::toString()
 {
     return value;
 }

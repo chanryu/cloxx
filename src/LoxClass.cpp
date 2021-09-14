@@ -5,11 +5,34 @@
 
 namespace cloxx {
 
+namespace {
+LoxClassId getUniqueClassId()
+{
+    size_t classIndex = 0;
+    return static_cast<LoxClassId>(classIndex++);
+}
+} // namespace
+
 LoxClass::LoxClass(PrivateCreationTag tag, GarbageCollector* gc, std::string name,
                    std::shared_ptr<LoxClass> const& superclass,
                    std::map<std::string, std::shared_ptr<LoxFunction>> methods)
-    : Traceable{tag}, _gc{gc}, _name{std::move(name)}, _superclass{superclass}, _methods{std::move(methods)}
-{}
+    : Traceable{tag}, _classId{getUniqueClassId()}, _gc{gc}, _name{std::move(name)},
+      _superclass{superclass}, _methods{std::move(methods)}
+{
+    for (auto& [_, method] : _methods) {
+        method->setClassId(_classId);
+    }
+}
+
+LoxClassId LoxClass::classId() const
+{
+    return _classId;
+}
+
+std::shared_ptr<LoxClass> LoxClass::superclass() const
+{
+    return _superclass;
+}
 
 std::shared_ptr<LoxFunction> LoxClass::findMethod(std::string const& name) const
 {
@@ -24,7 +47,7 @@ std::shared_ptr<LoxFunction> LoxClass::findMethod(std::string const& name) const
     return nullptr;
 }
 
-std::string LoxClass::toString() const
+std::string LoxClass::toString()
 {
     return _name;
 }
@@ -40,7 +63,7 @@ size_t LoxClass::arity() const
 
 std::shared_ptr<LoxObject> LoxClass::call(std::vector<std::shared_ptr<LoxObject>> const& args)
 {
-    auto instance = createInstance(_gc);
+    auto instance = _gc->create<LoxInstance>(shared_from_this());
 
     if (auto initializer = findMethod("init")) {
         initializer->bind(instance)->call(args);
@@ -65,14 +88,5 @@ void LoxClass::reclaim()
     _superclass.reset();
     _methods.clear();
 }
-
-//////////
-
-std::shared_ptr<LoxInstance> LoxUserClass::createInstance(GarbageCollector* gc)
-{
-    return gc->create<LoxInstance>(shared_from_this());
-}
-
-//////////
 
 } // namespace cloxx

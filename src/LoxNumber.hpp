@@ -10,7 +10,7 @@ public:
 
     explicit LoxNumber(ValueType value);
 
-    std::string toString() const override;
+    std::string toString() override;
     bool equals(LoxObject const& object) const override;
 
     ValueType const value;

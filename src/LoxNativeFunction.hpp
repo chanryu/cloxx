@@ -6,15 +6,17 @@
 
 namespace cloxx {
 
+class Traceable;
+
 class LoxNativeFunction : public LoxFunction {
 public:
-    using Body = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<LoxInstance> const& instance,
+    using Body = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<Traceable> const& nativeData,
                                                           std::vector<std::shared_ptr<LoxObject>> const&)>;
 
     LoxNativeFunction(PrivateCreationTag tag, GarbageCollector* gc, size_t arity, Body body,
                       std::shared_ptr<LoxInstance> const& instance = nullptr);
 
-    std::string toString() const override;
+    std::string toString() override;
 
     size_t arity() const override;
     std::shared_ptr<LoxObject> call(std::vector<std::shared_ptr<LoxObject>> const& args) override;
@@ -24,6 +26,7 @@ public:
     void reclaim() override;
 
     std::shared_ptr<LoxFunction> bind(std::shared_ptr<LoxInstance> const& instance) const override;
+    void setClassId(LoxClassId classId) override;
 
 private:
     GarbageCollector* const _gc;
@@ -31,6 +34,7 @@ private:
     Body const _body;
 
     std::shared_ptr<LoxInstance> _instance;
+    LoxClassId _classId;
 };
 
 } // namespace cloxx
