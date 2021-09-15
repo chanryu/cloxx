@@ -18,11 +18,13 @@ LoxClass::LoxClass(PrivateCreationTag tag, GarbageCollector* gc, std::string nam
                    std::map<std::string, std::shared_ptr<LoxFunction>> methods)
     : Traceable{tag}, _classId{getUniqueClassId()}, _gc{gc}, _name{std::move(name)},
       _superclass{superclass}, _methods{std::move(methods)}
-{
-    for (auto& [_, method] : _methods) {
-        method->setClassId(_classId);
-    }
-}
+{}
+
+LoxClass::LoxClass(PrivateCreationTag tag, GarbageCollector* gc, std::string name,
+                   std::shared_ptr<LoxClass> const& superclass, LoxMethodFactory methodFactory)
+    : Traceable{tag}, _classId{getUniqueClassId()}, _gc{gc}, _name{std::move(name)},
+      _superclass{superclass}, _methods{methodFactory(_classId)}
+{}
 
 LoxClassId LoxClass::classId() const
 {

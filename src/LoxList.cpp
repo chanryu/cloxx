@@ -34,31 +34,30 @@ struct ListNativeData : Traceable {
     bool isStringifying = false;
 };
 
-auto toListNativeData(std::shared_ptr<Traceable> const& nativeData)
+auto toListNativeData(std::shared_ptr<LoxInstance> const& instance, LoxClassId classId)
 {
+    auto nativeData = instance->getNativeData(classId);
     LOX_ASSERT(std::dynamic_pointer_cast<ListNativeData>(nativeData));
     return static_cast<ListNativeData*>(nativeData.get());
 }
 
-} // namespace
-
-std::shared_ptr<LoxClass> createListClass(GarbageCollector* gc)
+std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(GarbageCollector* gc, LoxClassId classId)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
 
-    methods.emplace("append", gc->create<LoxNativeFunction>(gc, /*arity*/ 1, [](auto& nativeData, auto& args) {
+    methods.emplace("append", gc->create<LoxNativeFunction>(gc, /*arity*/ 1, [classId](auto& instance, auto& args) {
         LOX_ASSERT(args.size() == 1);
-        auto& items = toListNativeData(nativeData)->items;
+        auto& items = toListNativeData(instance, classId)->items;
         items.push_back(args[0]);
         return args[0];
     }));
 
-    methods.emplace("get", gc->create<LoxNativeFunction>(gc, /*arity*/ 1, [](auto& nativeData, auto& args) {
+    methods.emplace("get", gc->create<LoxNativeFunction>(gc, /*arity*/ 1, [classId](auto& instance, auto& args) {
         LOX_ASSERT(args.size() == 1);
 
         std::shared_ptr<LoxObject> result;
         if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
-            auto& items = toListNativeData(nativeData)->items;
+            auto& items = toListNativeData(instance, classId)->items;
             if (auto index = static_cast<size_t>(number->value); index < items.size()) {
                 result = items[index];
             }
@@ -69,12 +68,12 @@ std::shared_ptr<LoxClass> createListClass(GarbageCollector* gc)
         return result;
     }));
 
-    methods.emplace("set", gc->create<LoxNativeFunction>(gc, /*arity*/ 2, [](auto& nativeData, auto& args) {
+    methods.emplace("set", gc->create<LoxNativeFunction>(gc, /*arity*/ 2, [classId](auto& instance, auto& args) {
         LOX_ASSERT(args.size() == 2);
 
         std::shared_ptr<LoxObject> result;
         if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
-            auto& items = toListNativeData(nativeData)->items;
+            auto& items = toListNativeData(instance, classId)->items;
             if (auto index = static_cast<size_t>(number->value); index < items.size()) {
                 items[index] = args[1];
                 return toLoxBoolean(true);
@@ -83,37 +82,46 @@ std::shared_ptr<LoxClass> createListClass(GarbageCollector* gc)
         return toLoxBoolean(false);
     }));
 
-    methods.emplace("length", gc->create<LoxNativeFunction>(gc, /*arity*/ 0, [](auto& nativeData, auto& /*args*/) {
-        auto& items = toListNativeData(nativeData)->items;
+    methods.emplace("length", gc->create<LoxNativeFunction>(gc, /*arity*/ 0, [classId](auto& instance, auto& /*args*/) {
+        auto& items = toListNativeData(instance, classId)->items;
         return toLoxNumber(items.size());
     }));
 
-    methods.emplace("toString", gc->create<LoxNativeFunction>(gc, /*arity*/ 0, [](auto& nativeData, auto& /*args*/) {
-        auto listNativeData = toListNativeData(nativeData);
+    methods.emplace("toString",
+                    gc->create<LoxNativeFunction>(gc, /*arity*/ 0, [classId](auto& instance, auto& /*args*/) {
+                        auto listNativeData = toListNativeData(instance, classId);
 
-        if (listNativeData->isStringifying) {
-            return toLoxString("[...]");
-        }
+                        if (listNativeData->isStringifying) {
+                            return toLoxString("[...]");
+                        }
 
-        listNativeData->isStringifying = true;
+                        listNativeData->isStringifying = true;
 
-        auto const& items = listNativeData->items;
-        std::string str;
-        str.push_back('[');
-        for (size_t i = 0; i < items.size(); ++i) {
-            str.append(items[i]->toString());
-            if (i != items.size() - 1) {
-                str.append(", ");
-            }
-        }
-        str.push_back(']');
+                        auto const& items = listNativeData->items;
+                        std::string str;
+                        str.push_back('[');
+                        for (size_t i = 0; i < items.size(); ++i) {
+                            str.append(items[i]->toString());
+                            if (i != items.size() - 1) {
+                                str.append(", ");
+                            }
+                        }
+                        str.push_back(']');
 
-        listNativeData->isStringifying = false;
+                        listNativeData->isStringifying = false;
 
-        return toLoxString(str);
-    }));
+                        return toLoxString(str);
+                    }));
+    return methods;
+}
 
-    return gc->create<LoxNativeClass<ListNativeData>>(gc, "List", /*superclass*/ nullptr, std::move(methods));
+} // namespace
+
+std::shared_ptr<LoxClass> createListClass(GarbageCollector* gc)
+{
+    return gc->create<LoxNativeClass<ListNativeData>>(gc, "List", /*superclass*/ nullptr, [gc](LoxClassId classId) {
+        return createListMethods(gc, classId);
+    });
 }
 
 } // namespace cloxx

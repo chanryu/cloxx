@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <map>
 
 #include "Callable.hpp"
@@ -13,10 +14,15 @@ class LoxInstance;
 
 enum class LoxClassId : size_t {}; // FIXME: replace this with pointer value
 
+using LoxMethodFactory = std::function<std::map<std::string, std::shared_ptr<LoxFunction>>(LoxClassId)>;
+
 class LoxClass : public LoxObject, public Callable, public Traceable, public std::enable_shared_from_this<LoxClass> {
 public:
     LoxClass(PrivateCreationTag tag, GarbageCollector* gc, std::string name,
              std::shared_ptr<LoxClass> const& superclass, std::map<std::string, std::shared_ptr<LoxFunction>> methods);
+
+    LoxClass(PrivateCreationTag tag, GarbageCollector* gc, std::string name,
+             std::shared_ptr<LoxClass> const& superclass, LoxMethodFactory methodFactory);
 
     LoxClassId classId() const;
     std::shared_ptr<LoxClass> superclass() const;
