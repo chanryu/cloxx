@@ -8,8 +8,6 @@
 
 namespace cloxx {
 
-enum class LoxClassId : size_t;
-
 class LoxInstance;
 
 class LoxFunction : public LoxObject, public Callable, public Traceable {

@@ -13,9 +13,9 @@ LoxInstance::LoxInstance(PrivateCreationTag tag, std::shared_ptr<LoxClass> const
     LOX_ASSERT(_class);
 
     for (auto klass = _class; klass; klass = klass->superclass()) {
-        auto nativeData = klass->createNativeData();
-        if (nativeData) {
-            _nativeDataMap.emplace(klass->classId(), nativeData);
+        auto instanceData = klass->createInstanceData();
+        if (instanceData) {
+            _instanceDataMap.emplace(klass.get(), instanceData);
         }
     }
 }
@@ -38,9 +38,9 @@ void LoxInstance::set(Token const& name, std::shared_ptr<LoxObject> const& value
     _fields[name.lexeme] = value;
 }
 
-std::shared_ptr<Traceable> LoxInstance::getNativeData(LoxClassId classId) const
+std::shared_ptr<Traceable> LoxInstance::getInstanceData(LoxClass* klass) const
 {
-    if (auto it = _nativeDataMap.find(classId); it != _nativeDataMap.end()) {
+    if (auto it = _instanceDataMap.find(klass); it != _instanceDataMap.end()) {
         return it->second;
     }
     return nullptr;
@@ -65,7 +65,7 @@ void LoxInstance::enumerateTraceables(Enumerator const& enumerator)
         }
     }
 
-    for (auto& [_, nativeData] : _nativeDataMap) {
+    for (auto& [_, nativeData] : _instanceDataMap) {
         enumerator.enumerate(*nativeData);
     }
 }
@@ -74,7 +74,7 @@ void LoxInstance::reclaim()
 {
     _class.reset();
     _fields.clear();
-    _nativeDataMap.clear();
+    _instanceDataMap.clear();
 }
 
 } // namespace cloxx

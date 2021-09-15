@@ -5,31 +5,18 @@
 
 namespace cloxx {
 
-namespace {
-LoxClassId getUniqueClassId()
-{
-    size_t classIndex = 0;
-    return static_cast<LoxClassId>(classIndex++);
-}
-} // namespace
-
 LoxClass::LoxClass(PrivateCreationTag tag, GarbageCollector* gc, std::string name,
                    std::shared_ptr<LoxClass> const& superclass,
                    std::map<std::string, std::shared_ptr<LoxFunction>> methods)
-    : Traceable{tag}, _classId{getUniqueClassId()}, _gc{gc}, _name{std::move(name)},
-      _superclass{superclass}, _methods{std::move(methods)}
+    : Traceable{tag}, _gc{gc}, _name{std::move(name)}, _superclass{superclass}, _methods{std::move(methods)}
 {}
 
 LoxClass::LoxClass(PrivateCreationTag tag, GarbageCollector* gc, std::string name,
-                   std::shared_ptr<LoxClass> const& superclass, LoxMethodFactory methodFactory)
-    : Traceable{tag}, _classId{getUniqueClassId()}, _gc{gc}, _name{std::move(name)},
-      _superclass{superclass}, _methods{methodFactory(_classId)}
+                   std::shared_ptr<LoxClass> const& superclass, LoxNativeMethodFactory methodFactory,
+                   LoxNativeDataFactory nativeDataFactory)
+    : Traceable{tag}, _gc{gc}, _name{std::move(name)}, _superclass{superclass}, _methods{methodFactory(this)},
+      _nativeDataFactory{nativeDataFactory}
 {}
-
-LoxClassId LoxClass::classId() const
-{
-    return _classId;
-}
 
 std::shared_ptr<LoxClass> LoxClass::superclass() const
 {
@@ -89,6 +76,14 @@ void LoxClass::reclaim()
 {
     _superclass.reset();
     _methods.clear();
+}
+
+std::shared_ptr<Traceable> LoxClass::createInstanceData()
+{
+    if (_nativeDataFactory) {
+        return _nativeDataFactory();
+    }
+    return nullptr;
 }
 
 } // namespace cloxx
