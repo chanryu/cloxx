@@ -7,7 +7,7 @@ std::string LoxNil::toString()
     return "nil";
 }
 
-bool LoxNil::isTruthy() const
+bool LoxNil::isTruthy()
 {
     return false;
 }

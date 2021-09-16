@@ -3,6 +3,7 @@
 #include "Assert.hpp"
 #include "ErrorReporter.hpp"
 #include "Interpreter.hpp"
+#include "LoxBool.hpp"
 #include "LoxClass.hpp"
 #include "LoxFunction.hpp"
 #include "LoxList.hpp"
@@ -37,6 +38,7 @@ auto makeBuiltIns(GarbageCollector* gc)
     }));
 
     // buil-in classes
+    builtIns.emplace("Bool", createBoolClass(gc));
     builtIns.emplace("List", createListClass(gc));
 
     return builtIns;

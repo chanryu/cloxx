@@ -55,6 +55,15 @@ std::string LoxInstance::toString()
     return _class->toString() + " instance";
 }
 
+bool LoxInstance::isTruthy()
+{
+    if (auto method = _class->findMethod("isTruthy")) {
+        return method->bind(shared_from_this())->call({})->isTruthy();
+    }
+
+    return true;
+}
+
 void LoxInstance::enumerateTraceables(Enumerator const& enumerator)
 {
     enumerator.enumerate(*_class);

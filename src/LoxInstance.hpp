@@ -20,6 +20,7 @@ public:
     std::shared_ptr<Traceable> getInstanceData(LoxClass* klass) const;
 
     std::string toString() override;
+    bool isTruthy() override;
 
     // GC support
     void enumerateTraceables(Enumerator const& enumerator) override;

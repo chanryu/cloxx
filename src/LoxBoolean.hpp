@@ -9,7 +9,7 @@ public:
     explicit LoxBoolean(bool value);
 
     std::string toString() override;
-    bool isTruthy() const override;
+    bool isTruthy() override;
     bool equals(LoxObject const& object) const override;
 
     bool const value;

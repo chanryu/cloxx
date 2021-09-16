@@ -23,7 +23,7 @@ size_t LoxObject::instanceCount()
 }
 #endif
 
-bool LoxObject::isTruthy() const
+bool LoxObject::isTruthy()
 {
     return true;
 }

@@ -17,7 +17,7 @@ public:
 #endif
 
     virtual std::string toString() = 0;
-    virtual bool isTruthy() const;
+    virtual bool isTruthy();
     virtual bool equals(LoxObject const& object) const;
 };
 

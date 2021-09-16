@@ -10,7 +10,7 @@ std::string LoxBoolean::toString()
     return value ? "true" : "false";
 }
 
-bool LoxBoolean::isTruthy() const
+bool LoxBoolean::isTruthy()
 {
     return value;
 }
