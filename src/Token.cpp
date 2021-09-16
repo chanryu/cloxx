@@ -72,7 +72,7 @@ Token::Token(Type type, std::string lexeme, size_t line) : type{type}, lexeme{st
 {}
 
 #ifndef NDEBUG
-std::string Token::toString()
+std::string Token::toString() const
 {
     std::ostringstream oss;
     oss << line << " " << getTokenName(type) << "[" << lexeme << "]";
