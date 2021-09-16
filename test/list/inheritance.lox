@@ -1,0 +1,13 @@
+class DoubleList < List {
+  append(item) {
+    super.append(item);
+    super.append(item);
+  }
+}
+
+var list = DoubleList();
+
+list.append("foo");
+list.append("bar");
+
+print(list); // expect: [foo, foo, bar, bar]

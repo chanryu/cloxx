@@ -17,7 +17,9 @@ public:
     std::shared_ptr<LoxObject> get(Token const& name);
     void set(Token const& name, std::shared_ptr<LoxObject> const& value);
 
-    std::string toString() const override;
+    std::shared_ptr<Traceable> getInstanceData(LoxClass* klass) const;
+
+    std::string toString() override;
 
     // GC support
     void enumerateTraceables(Enumerator const& enumerator) override;
@@ -26,6 +28,7 @@ public:
 private:
     std::shared_ptr<LoxClass> _class;
     std::map<std::string, std::shared_ptr<LoxObject>> _fields;
+    std::map<LoxClass*, std::shared_ptr<Traceable>> _instanceDataMap;
 };
 
 } // namespace cloxx

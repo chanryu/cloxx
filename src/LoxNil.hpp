@@ -6,7 +6,7 @@ namespace cloxx {
 
 class LoxNil : public LoxObject {
 public:
-    std::string toString() const override;
+    std::string toString() override;
     bool isTruthy() const override;
     bool equals(LoxObject const& object) const override;
 };

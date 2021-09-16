@@ -16,7 +16,7 @@ public:
     virtual ~LoxObject() = default;
 #endif
 
-    virtual std::string toString() const = 0;
+    virtual std::string toString() = 0;
     virtual bool isTruthy() const;
     virtual bool equals(LoxObject const& object) const;
 };

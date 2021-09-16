@@ -2,7 +2,7 @@
 
 namespace cloxx {
 
-std::string LoxNil::toString() const
+std::string LoxNil::toString()
 {
     return "nil";
 }

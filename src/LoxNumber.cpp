@@ -2,10 +2,10 @@
 
 namespace cloxx {
 
-LoxNumber::LoxNumber(double value) : value{value}
+LoxNumber::LoxNumber(ValueType value) : value{value}
 {}
 
-std::string LoxNumber::toString() const
+std::string LoxNumber::toString()
 {
     auto str = std::to_string(value);
 

@@ -5,7 +5,7 @@ namespace cloxx {
 LoxBoolean::LoxBoolean(bool value) : value{value}
 {}
 
-std::string LoxBoolean::toString() const
+std::string LoxBoolean::toString()
 {
     return value ? "true" : "false";
 }
