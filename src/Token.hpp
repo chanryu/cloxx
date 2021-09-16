@@ -61,7 +61,7 @@ struct Token {
     Token(Type type, std::string lexeme, size_t line);
 
 #ifndef NDEBUG
-    std::string toString();
+    std::string toString() const;
 #endif
 
     Type type;
