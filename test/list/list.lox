@@ -1,0 +1,18 @@
+var list = List();
+
+list.append("a");
+print(list.length()); // expect: 1
+print(list.get(0)); // expect: a
+print(list); // expect: [a]
+
+list.append("b");
+print(list.length()); // expect: 2
+print(list.get(0)); // expect: a
+print(list.get(1)); // expect: b
+print(list); // expect: [a, b]
+
+list.set(1, "x");
+print(list.length()); // expect: 2
+print(list.get(0)); // expect: a
+print(list.get(1)); // expect: x
+print(list); // expect: [a, x]
