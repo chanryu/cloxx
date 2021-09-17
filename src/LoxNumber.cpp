@@ -24,13 +24,13 @@ std::string LoxNumber::toString()
     return str;
 }
 
-bool LoxNumber::equals(LoxObject const& object) const
+bool LoxNumber::equals(std::shared_ptr<LoxObject> const& object)
 {
     if (LoxObject::equals(object)) {
         return true;
     }
 
-    if (auto num = dynamic_cast<LoxNumber const*>(&object)) {
+    if (auto num = dynamic_cast<LoxNumber const*>(object.get())) {
         return value == num->value;
     }
 

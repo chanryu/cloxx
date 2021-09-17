@@ -20,6 +20,11 @@ LoxInstance::LoxInstance(PrivateCreationTag tag, std::shared_ptr<LoxClass> const
     }
 }
 
+std::shared_ptr<LoxClass> const& LoxInstance::klass() const
+{
+    return _class;
+}
+
 std::shared_ptr<LoxObject> LoxInstance::get(Token const& name)
 {
     if (auto it = _fields.find(name.lexeme); it != _fields.end()) {
@@ -48,7 +53,7 @@ std::shared_ptr<Traceable> LoxInstance::getInstanceData(LoxClass* klass) const
 
 std::string LoxInstance::toString()
 {
-    if (auto method = _class->findMethod("toString")) {
+    if (auto method = _class->findMethod("toString"); method && method->arity() == 0) {
         return method->bind(shared_from_this())->call({})->toString();
     }
 
@@ -57,11 +62,20 @@ std::string LoxInstance::toString()
 
 bool LoxInstance::isTruthy()
 {
-    if (auto method = _class->findMethod("isTruthy")) {
+    if (auto method = _class->findMethod("isTruthy"); method && method->arity() == 0) {
         return method->bind(shared_from_this())->call({})->isTruthy();
     }
 
     return true;
+}
+
+bool LoxInstance::equals(std::shared_ptr<LoxObject> const& object)
+{
+    if (auto method = _class->findMethod("equals"); method && method->arity() == 1) {
+        return method->bind(shared_from_this())->call({object})->isTruthy();
+    }
+
+    return this == object.get();
 }
 
 void LoxInstance::enumerateTraceables(Enumerator const& enumerator)

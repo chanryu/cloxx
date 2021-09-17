@@ -49,6 +49,14 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createBoolMethods(GarbageCol
     methods.emplace("isTruthy", gc->create<LoxNativeFunction>(gc, /*arity*/ 0, [klass](auto& instance, auto& /*args*/) {
         return toLoxBoolean(toBoolNativeData(instance, klass)->value);
     }));
+    methods.emplace("equals", gc->create<LoxNativeFunction>(gc, /*arity*/ 1, [klass](auto& instance, auto& args) {
+        LOX_ASSERT(args.size() == 1);
+        auto other = std::dynamic_pointer_cast<LoxInstance>(args[0]);
+        if (!other || other->klass().get() != klass) {
+            return toLoxBoolean(false);
+        }
+        return toLoxBoolean(toBoolNativeData(instance, klass)->value == toBoolNativeData(other, klass)->value);
+    }));
     return methods;
 }
 

@@ -28,9 +28,9 @@ bool LoxObject::isTruthy()
     return true;
 }
 
-bool LoxObject::equals(LoxObject const& object) const
+bool LoxObject::equals(std::shared_ptr<LoxObject> const& object)
 {
-    return this == &object;
+    return this == object.get();
 }
 
 } // namespace cloxx

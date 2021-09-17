@@ -9,7 +9,7 @@ public:
     explicit LoxString(std::string value);
 
     std::string toString() override;
-    bool equals(LoxObject const& object) const override;
+    bool equals(std::shared_ptr<LoxObject> const& object) override;
 
     std::string const value;
 };

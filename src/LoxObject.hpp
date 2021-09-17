@@ -18,7 +18,7 @@ public:
 
     virtual std::string toString() = 0;
     virtual bool isTruthy();
-    virtual bool equals(LoxObject const& object) const;
+    virtual bool equals(std::shared_ptr<LoxObject> const& object);
 };
 
 } // namespace cloxx

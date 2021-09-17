@@ -286,10 +286,10 @@ void Interpreter::visit(BinaryExpr const& expr)
         });
         break;
     case Token::BANG_EQUAL:
-        _evalResults.push_back(toLoxBoolean(!left->equals(*right)));
+        _evalResults.push_back(toLoxBoolean(!left->equals(right)));
         break;
     case Token::EQUAL_EQUAL:
-        _evalResults.push_back(toLoxBoolean(left->equals(*right)));
+        _evalResults.push_back(toLoxBoolean(left->equals(right)));
         break;
     default:
         // Unreachable.

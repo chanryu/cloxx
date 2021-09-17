@@ -8,7 +8,7 @@ class LoxNil : public LoxObject {
 public:
     std::string toString() override;
     bool isTruthy() override;
-    bool equals(LoxObject const& object) const override;
+    bool equals(std::shared_ptr<LoxObject> const& object) override;
 };
 
 inline auto makeLoxNil()
