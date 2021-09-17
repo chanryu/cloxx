@@ -338,7 +338,36 @@ void Interpreter::visit(GroupingExpr const& expr)
 
 void Interpreter::visit(LiteralExpr const& expr)
 {
-    _evalResults.push_back(expr.value);
+#if 0
+    if (match(Token::FALSE)) {
+        return makeLiteralExpr();
+    }
+
+    if (match(Token::TRUE)) {
+        return makeLiteralExpr(toLoxBoolean(true));
+    }
+
+#endif
+
+    std::shared_ptr<LoxObject> value;
+    if (expr.literal.type == Token::FALSE || expr.literal.type == Token::TRUE) {
+        value = toLoxBoolean(expr.literal.type == Token::TRUE);
+    }
+    else if (expr.literal.type == Token::NUMBER) {
+        value = std::make_shared<LoxNumber>(std::stod(expr.literal.lexeme));
+    }
+    else if (expr.literal.type == Token::STRING) {
+        // Trim the surrounding quotes.
+        auto const& lexmem = expr.literal.lexeme;
+        LOX_ASSERT(lexmem.length() >= 2);
+        auto text = lexmem.substr(1, lexmem.size() - 2);
+        value = std::make_shared<LoxString>(std::move(text));
+    }
+    else {
+        LOX_ASSERT(expr.literal.type == Token::NIL);
+        value = makeLoxNil();
+    }
+    _evalResults.push_back(value);
 }
 
 void Interpreter::visit(LogicalExpr const& expr)

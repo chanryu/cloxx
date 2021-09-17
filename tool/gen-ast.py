@@ -5,8 +5,6 @@ import os.path
 import sys
 
 def _makeParamType(type):
-    if type == 'LoxObject':
-        return 'std::shared_ptr<LoxObject> const&'
     if type[-1] == '?':
         return 'std::optional<' + type[:-1] + '> const&'
     if type.startswith('List<'):
@@ -15,8 +13,6 @@ def _makeParamType(type):
     return type + ' const&'
 
 def _makeMemVarType(type):
-    if type == 'LoxObject':
-        return 'std::shared_ptr<LoxObject>'
     if type[-1] == '?':
         return 'std::optional<' + type[:-1] + '>'
     if type.startswith('List<'):
@@ -278,13 +274,13 @@ if __name__ == '__main__':
 
     outputDir = sys.argv[1]
 
-    _generateAst(outputDir, ['Token.hpp', 'LoxObject.hpp'], 'Expr', [
+    _generateAst(outputDir, ['Token.hpp'], 'Expr', [
         "Assign^   : Token name, Expr value",
         "Binary    : Token op, Expr left, Expr right",
         "Call      : Expr callee, Token paren, List<Expr> args",
         "Get       : Expr object, Token name",
         "Grouping  : Expr expr",
-        "Literal   : LoxObject value",
+        "Literal   : Token literal",
         "Logical   : Token op, Expr left, Expr right",
         "Set       : Expr object, Token name, Expr value",
         "Super^    : Token keyword, Token method",
