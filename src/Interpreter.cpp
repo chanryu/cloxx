@@ -338,17 +338,6 @@ void Interpreter::visit(GroupingExpr const& expr)
 
 void Interpreter::visit(LiteralExpr const& expr)
 {
-#if 0
-    if (match(Token::FALSE)) {
-        return makeLiteralExpr();
-    }
-
-    if (match(Token::TRUE)) {
-        return makeLiteralExpr(toLoxBoolean(true));
-    }
-
-#endif
-
     std::shared_ptr<LoxObject> value;
     if (expr.literal.type == Token::FALSE || expr.literal.type == Token::TRUE) {
         value = toLoxBoolean(expr.literal.type == Token::TRUE);
