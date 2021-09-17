@@ -455,31 +455,8 @@ Expr Parser::primary()
     //         | "this"
     //         | "super" "." IDENTIFIER ;
 
-    if (match(Token::FALSE)) {
-        return makeLiteralExpr(toLoxBoolean(false));
-    }
-
-    if (match(Token::TRUE)) {
-        return makeLiteralExpr(toLoxBoolean(true));
-    }
-
-    if (match(Token::NIL)) {
-        return makeLiteralExpr(makeLoxNil());
-    }
-
-    if (match(Token::NUMBER)) {
-        auto value = std::stod(previous().lexeme);
-        auto literal = std::make_shared<LoxNumber>(value);
-        return makeLiteralExpr(literal);
-    }
-
-    if (match(Token::STRING)) {
-        // Trim the surrounding quotes.
-        auto const& lexmem = previous().lexeme;
-        LOX_ASSERT(lexmem.length() >= 2);
-        auto value = lexmem.substr(1, lexmem.size() - 2);
-        auto literal = std::make_shared<LoxString>(std::move(value));
-        return makeLiteralExpr(literal);
+    if (match(Token::FALSE, Token::TRUE, Token::NIL, Token::NUMBER, Token::STRING)) {
+        return makeLiteralExpr(previous());
     }
 
     if (match(Token::LEFT_PAREN)) {
