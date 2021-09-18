@@ -25,11 +25,11 @@ auto makeBuiltIns(Interpreter* interpreter)
     std::map<std::string, std::shared_ptr<LoxObject>> builtIns;
 
     // global functions
-    builtIns.emplace("print",
-                     interpreter->create<LoxNativeFunction>(interpreter, 1, [](auto& /*instance*/, auto& args) {
-                         std::cout << args[0]->toString() << '\n';
-                         return makeLoxNil();
-                     }));
+    builtIns.emplace(
+        "print", interpreter->create<LoxNativeFunction>(interpreter, 1, [interpreter](auto& /*instance*/, auto& args) {
+            std::cout << args[0]->toString() << '\n';
+            return interpreter->makeLoxNil();
+        }));
     builtIns.emplace("clock",
                      interpreter->create<LoxNativeFunction>(interpreter, 0, [](auto& /*instance*/, auto& /*args*/) {
                          auto duration = std::chrono::steady_clock::now().time_since_epoch();

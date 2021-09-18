@@ -1,19 +1,14 @@
 #pragma once
 
-#include "LoxObject.hpp"
+#include <memory>
 
 namespace cloxx {
 
-class LoxNil : public LoxObject {
-public:
-    std::string toString() override;
-    bool isTruthy() override;
-    bool equals(std::shared_ptr<LoxObject> const& object) override;
-};
+class LoxClass;
+class LoxInstance;
+class Interpreter;
 
-inline auto makeLoxNil()
-{
-    return std::make_shared<LoxNil>();
-}
+std::shared_ptr<LoxClass> createNilClass(Interpreter* interpreter);
+std::shared_ptr<LoxInstance> createNilInstance(Interpreter* interpreter, std::shared_ptr<LoxClass> const& nilClass);
 
 } // namespace cloxx

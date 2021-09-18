@@ -32,6 +32,7 @@ public:
     }
 
     std::shared_ptr<LoxObject> toLoxBool(bool value);
+    std::shared_ptr<LoxObject> makeLoxNil();
 
     void interpret(Stmt const& stmt);
 

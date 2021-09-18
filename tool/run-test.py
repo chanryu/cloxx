@@ -335,9 +335,13 @@ def _defineTestSuites():
         jloxTests,
         { "test/print": "skip" },
 
-        # now Bool is an object
+        # now true & false are instance of Bool
         { "test/field/set_on_bool.lox": "skip" },
         { "test/field/get_on_bool.lox": "skip" },
+
+        # now nil instance of Nil
+        { "test/field/set_on_nil.lox": "skip" },
+        { "test/field/get_on_nil.lox": "skip" },
     )
 
     # cloxx behaves like jlox
