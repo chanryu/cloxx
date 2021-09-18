@@ -18,7 +18,7 @@ class ErrorReporter;
 class LoxObject;
 class LoxFunction;
 
-using GlobalObjectsProc = std::function<std::map<std::string, std::shared_ptr<LoxObject>>(GarbageCollector* gc)>;
+using GlobalObjectsProc = std::function<std::map<std::string, std::shared_ptr<LoxObject>>(GarbageCollector*)>;
 
 class Interpreter : StmtVisitor, ExprVisitor {
 public:

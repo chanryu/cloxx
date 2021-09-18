@@ -75,7 +75,4 @@ std::shared_ptr<LoxClass> createBoolClass(GarbageCollector* gc)
     return gc->create<LoxClass>(gc, "Bool", /*superclass*/ nullptr, std::move(methodFactory), std::move(dataFactory));
 }
 
-std::shared_ptr<LoxInstance> createBoolInstance(GarbageCollector* gc)
-{}
-
 } // namespace cloxx
