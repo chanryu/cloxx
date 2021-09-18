@@ -25,13 +25,15 @@ class Interpreter : StmtVisitor, ExprVisitor {
 public:
     Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalObjectsProc);
 
-    void interpret(Stmt const& stmt);
-
     template <typename T, typename... Args>
     std::shared_ptr<T> create(Args&&... args)
     {
         return _gc.create<T>(std::forward<Args>(args)...);
     }
+
+    std::shared_ptr<LoxObject> toLoxBool(bool value);
+
+    void interpret(Stmt const& stmt);
 
 private:
     // StmtVisitor

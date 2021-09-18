@@ -334,6 +334,10 @@ def _defineTestSuites():
     cloxxTests = _merge_dicts(
         jloxTests,
         { "test/print": "skip" },
+
+        # now Bool is an object
+        { "test/field/set_on_bool.lox": "skip" },
+        { "test/field/get_on_bool.lox": "skip" },
     )
 
     # cloxx behaves like jlox

@@ -2,7 +2,6 @@
 
 #include "Assert.hpp"
 #include "Interpreter.hpp"
-#include "LoxBoolean.hpp"
 #include "LoxClass.hpp"
 #include "LoxInstance.hpp"
 #include "LoxNativeFunction.hpp"
@@ -12,56 +11,38 @@
 namespace cloxx {
 
 namespace {
-struct BoolData : Traceable {
-    BoolData(PrivateCreationTag tag) : Traceable{tag}
+
+class BoolInstance : public LoxInstance {
+public:
+    BoolInstance(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass, bool value)
+        : LoxInstance{tag, klass}, _value{value}
     {}
 
-    void enumerateTraceables(Enumerator const& /*enumerator*/) override
+    bool isTruthy() override
     {
-        // NOOP
+        return _value;
     }
 
-    void reclaim() override
-    {
-        // NOOP
-    }
-
-    bool value;
+private:
+    bool _value;
 };
-
-auto toBoolNativeData(std::shared_ptr<LoxInstance> const& instance, LoxClass* klass)
-{
-    auto nativeData = instance->getInstanceData(klass);
-    LOX_ASSERT(std::dynamic_pointer_cast<BoolData>(nativeData));
-    return static_cast<BoolData*>(nativeData.get());
-}
 
 std::map<std::string, std::shared_ptr<LoxFunction>> createBoolMethods(Interpreter* interpreter, LoxClass* klass)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
-    methods.emplace(
-        "init", interpreter->create<LoxNativeFunction>(interpreter, /*arity*/ 1, [klass](auto& instance, auto& args) {
-            LOX_ASSERT(args.size() == 1);
-            toBoolNativeData(instance, klass)->value = args[0]->isTruthy();
-            return makeLoxNil();
-        }));
     methods.emplace("toString", interpreter->create<LoxNativeFunction>(
-                                    interpreter, /*arity*/ 0, [klass](auto& instance, auto& /*args*/) {
-                                        return toLoxString(toBoolNativeData(instance, klass)->value ? "true" : "false");
+                                    interpreter, /*arity*/ 0, [](auto& instance, auto& /*args*/) {
+                                        return toLoxString(instance->isTruthy() ? "true" : "false");
                                     }));
-    methods.emplace("isTruthy", interpreter->create<LoxNativeFunction>(
-                                    interpreter, /*arity*/ 0, [klass](auto& instance, auto& /*args*/) {
-                                        return toLoxBoolean(toBoolNativeData(instance, klass)->value);
-                                    }));
-    methods.emplace(
-        "equals", interpreter->create<LoxNativeFunction>(interpreter, /*arity*/ 1, [klass](auto& instance, auto& args) {
-            LOX_ASSERT(args.size() == 1);
-            auto other = std::dynamic_pointer_cast<LoxInstance>(args[0]);
-            if (!other || other->klass().get() != klass) {
-                return toLoxBoolean(false);
-            }
-            return toLoxBoolean(toBoolNativeData(instance, klass)->value == toBoolNativeData(other, klass)->value);
-        }));
+    methods.emplace("equals", interpreter->create<LoxNativeFunction>(
+                                  interpreter, /*arity*/ 1, [interpreter, klass](auto& instance, auto& args) {
+                                      LOX_ASSERT(args.size() == 1);
+                                      auto other = std::dynamic_pointer_cast<LoxInstance>(args[0]);
+                                      if (!other || other->klass().get() != klass) {
+                                          return interpreter->toLoxBool(false);
+                                      }
+                                      return interpreter->toLoxBool(instance->isTruthy() == other->isTruthy());
+                                  }));
     return methods;
 }
 
@@ -73,12 +54,14 @@ std::shared_ptr<LoxClass> createBoolClass(Interpreter* interpreter)
         return createBoolMethods(interpreter, klass);
     };
 
-    auto dataFactory = [interpreter]() {
-        return interpreter->create<BoolData>();
-    };
-
     return interpreter->create<LoxClass>(interpreter, "Bool", /*superclass*/ nullptr, std::move(methodFactory),
-                                         std::move(dataFactory));
+                                         /*dataFactory*/ nullptr);
+}
+
+std::shared_ptr<LoxInstance> createBoolInstance(Interpreter* interpreter, std::shared_ptr<LoxClass> const& klass,
+                                                bool value)
+{
+    return interpreter->create<BoolInstance>(klass, value);
 }
 
 } // namespace cloxx

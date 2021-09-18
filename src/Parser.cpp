@@ -2,7 +2,6 @@
 
 #include "Assert.hpp"
 #include "ErrorReporter.hpp"
-#include "LoxBoolean.hpp"
 #include "LoxNil.hpp"
 #include "LoxNumber.hpp"
 #include "LoxString.hpp"

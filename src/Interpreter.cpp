@@ -4,15 +4,17 @@
 #include "Environment.hpp"
 #include "ErrorReporter.hpp"
 #include "GC.hpp"
-#include "LoxBoolean.hpp"
+#include "Resolver.hpp"
+#include "RuntimeError.hpp"
+
+#include "LoxBool.hpp"
 #include "LoxClass.hpp"
 #include "LoxInstance.hpp"
+#include "LoxList.hpp"
 #include "LoxNil.hpp"
 #include "LoxNumber.hpp"
 #include "LoxString.hpp"
 #include "LoxUserFunction.hpp"
-#include "Resolver.hpp"
-#include "RuntimeError.hpp"
 
 namespace cloxx {
 
@@ -75,6 +77,18 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
     for (auto& [name, value] : globalObjectsProc(this)) {
         _globals->define(name, value);
     }
+
+    // buil-in classes
+    _globals->define("Bool", createBoolClass(this));
+    _globals->define("List", createListClass(this));
+}
+
+std::shared_ptr<LoxObject> Interpreter::toLoxBool(bool value)
+{
+    // FIXME: we need immutable global env for built-in classes
+    auto boolClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Bool"));
+    LOX_ASSERT(boolClass);
+    return createBoolInstance(this, boolClass, value);
 }
 
 void Interpreter::interpret(Stmt const& stmt)
@@ -240,22 +254,22 @@ void Interpreter::visit(BinaryExpr const& expr)
     switch (expr.op.type) {
     case Token::GREATER:
         ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
-            _evalResults.push_back(toLoxBoolean(left > right));
+            _evalResults.push_back(toLoxBool(left > right));
         });
         break;
     case Token::GREATER_EQUAL:
         ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
-            _evalResults.push_back(toLoxBoolean(left >= right));
+            _evalResults.push_back(toLoxBool(left >= right));
         });
         break;
     case Token::LESS:
         ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
-            _evalResults.push_back(toLoxBoolean(left < right));
+            _evalResults.push_back(toLoxBool(left < right));
         });
         break;
     case Token::LESS_EQUAL:
         ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
-            _evalResults.push_back(toLoxBoolean(left <= right));
+            _evalResults.push_back(toLoxBool(left <= right));
         });
         break;
     case Token::MINUS:
@@ -286,10 +300,10 @@ void Interpreter::visit(BinaryExpr const& expr)
         });
         break;
     case Token::BANG_EQUAL:
-        _evalResults.push_back(toLoxBoolean(!left->equals(right)));
+        _evalResults.push_back(toLoxBool(!left->equals(right)));
         break;
     case Token::EQUAL_EQUAL:
-        _evalResults.push_back(toLoxBoolean(left->equals(right)));
+        _evalResults.push_back(toLoxBool(left->equals(right)));
         break;
     default:
         // Unreachable.
@@ -340,7 +354,7 @@ void Interpreter::visit(LiteralExpr const& expr)
 {
     std::shared_ptr<LoxObject> value;
     if (expr.literal.type == Token::FALSE || expr.literal.type == Token::TRUE) {
-        value = toLoxBoolean(expr.literal.type == Token::TRUE);
+        value = toLoxBool(expr.literal.type == Token::TRUE);
     }
     else if (expr.literal.type == Token::NUMBER) {
         value = std::make_shared<LoxNumber>(std::stod(expr.literal.lexeme));
@@ -434,7 +448,7 @@ void Interpreter::visit(UnaryExpr const& expr)
     LOX_ASSERT(right);
 
     if (expr.op.type == Token::BANG) {
-        _evalResults.push_back(toLoxBoolean(!right->isTruthy()));
+        _evalResults.push_back(toLoxBool(!right->isTruthy()));
     }
     else {
         LOX_ASSERT(expr.op.type == Token::MINUS);

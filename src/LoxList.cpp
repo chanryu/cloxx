@@ -2,7 +2,6 @@
 
 #include "Assert.hpp"
 #include "Interpreter.hpp"
-#include "LoxBoolean.hpp"
 #include "LoxClass.hpp"
 #include "LoxInstance.hpp"
 #include "LoxNativeFunction.hpp"
@@ -72,20 +71,20 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interprete
             return result;
         }));
 
-    methods.emplace(
-        "set", interpreter->create<LoxNativeFunction>(interpreter, /*arity*/ 2, [klass](auto& instance, auto& args) {
-            LOX_ASSERT(args.size() == 2);
+    methods.emplace("set", interpreter->create<LoxNativeFunction>(
+                               interpreter, /*arity*/ 2, [interpreter, klass](auto& instance, auto& args) {
+                                   LOX_ASSERT(args.size() == 2);
 
-            std::shared_ptr<LoxObject> result;
-            if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
-                auto& items = toListNativeData(instance, klass)->items;
-                if (auto index = static_cast<size_t>(number->value); index < items.size()) {
-                    items[index] = args[1];
-                    return toLoxBoolean(true);
-                }
-            }
-            return toLoxBoolean(false);
-        }));
+                                   std::shared_ptr<LoxObject> result;
+                                   if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
+                                       auto& items = toListNativeData(instance, klass)->items;
+                                       if (auto index = static_cast<size_t>(number->value); index < items.size()) {
+                                           items[index] = args[1];
+                                           return interpreter->toLoxBool(true);
+                                       }
+                                   }
+                                   return interpreter->toLoxBool(false);
+                               }));
 
     methods.emplace("length", interpreter->create<LoxNativeFunction>(
                                   interpreter, /*arity*/ 0, [klass](auto& instance, auto& /*args*/) {

@@ -3,10 +3,8 @@
 #include "Assert.hpp"
 #include "ErrorReporter.hpp"
 #include "Interpreter.hpp"
-#include "LoxBool.hpp"
 #include "LoxClass.hpp"
 #include "LoxFunction.hpp"
-#include "LoxList.hpp"
 #include "LoxNativeFunction.hpp"
 #include "LoxNil.hpp"
 #include "LoxNumber.hpp"
@@ -38,10 +36,6 @@ auto makeBuiltIns(Interpreter* interpreter)
                          auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
                          return toLoxNumber(millis / 1000.0);
                      }));
-
-    // buil-in classes
-    builtIns.emplace("Bool", createBoolClass(interpreter));
-    builtIns.emplace("List", createListClass(interpreter));
 
     return builtIns;
 }
