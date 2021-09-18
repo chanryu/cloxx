@@ -60,15 +60,6 @@ std::string LoxInstance::toString()
     return _class->toString() + " instance";
 }
 
-bool LoxInstance::isTruthy()
-{
-    if (auto method = _class->findMethod("isTruthy"); method && method->arity() == 0) {
-        return method->bind(shared_from_this())->call({})->isTruthy();
-    }
-
-    return true;
-}
-
 bool LoxInstance::equals(std::shared_ptr<LoxObject> const& object)
 {
     if (auto method = _class->findMethod("equals"); method && method->arity() == 1) {

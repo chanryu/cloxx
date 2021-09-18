@@ -22,7 +22,6 @@ public:
     std::shared_ptr<Traceable> getInstanceData(LoxClass* klass) const;
 
     std::string toString() override;
-    bool isTruthy() override;
     bool equals(std::shared_ptr<LoxObject> const& object) override;
 
     // GC support
