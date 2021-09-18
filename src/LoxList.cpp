@@ -54,22 +54,22 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interprete
             return args[0];
         }));
 
-    methods.emplace(
-        "get", interpreter->create<LoxNativeFunction>(interpreter, /*arity*/ 1, [klass](auto& instance, auto& args) {
-            LOX_ASSERT(args.size() == 1);
+    methods.emplace("get", interpreter->create<LoxNativeFunction>(
+                               interpreter, /*arity*/ 1, [interpreter, klass](auto& instance, auto& args) {
+                                   LOX_ASSERT(args.size() == 1);
 
-            std::shared_ptr<LoxObject> result;
-            if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
-                auto& items = toListNativeData(instance, klass)->items;
-                if (auto index = static_cast<size_t>(number->value); index < items.size()) {
-                    result = items[index];
-                }
-            }
-            if (!result) {
-                result = makeLoxNil(); // FIXME: throw exception
-            }
-            return result;
-        }));
+                                   std::shared_ptr<LoxObject> result;
+                                   if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
+                                       auto& items = toListNativeData(instance, klass)->items;
+                                       if (auto index = static_cast<size_t>(number->value); index < items.size()) {
+                                           result = items[index];
+                                       }
+                                   }
+                                   if (!result) {
+                                       result = interpreter->makeLoxNil(); // FIXME: throw exception
+                                   }
+                                   return result;
+                               }));
 
     methods.emplace("set", interpreter->create<LoxNativeFunction>(
                                interpreter, /*arity*/ 2, [interpreter, klass](auto& instance, auto& args) {

@@ -79,6 +79,7 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
     }
 
     // buil-in classes
+    _globals->define("Nil", createNilClass(this));
     _globals->define("Bool", createBoolClass(this));
     _globals->define("List", createListClass(this));
 }
@@ -89,6 +90,14 @@ std::shared_ptr<LoxObject> Interpreter::toLoxBool(bool value)
     auto boolClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Bool"));
     LOX_ASSERT(boolClass);
     return createBoolInstance(this, boolClass, value);
+}
+
+std::shared_ptr<LoxObject> Interpreter::makeLoxNil()
+{
+    // FIXME: we need immutable global env for built-in classes
+    auto nilClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Nil"));
+    LOX_ASSERT(nilClass);
+    return createNilInstance(this, nilClass);
 }
 
 void Interpreter::interpret(Stmt const& stmt)
