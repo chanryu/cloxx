@@ -18,11 +18,20 @@ class ErrorReporter;
 class LoxObject;
 class LoxFunction;
 
-using GlobalObjectsProc = std::function<std::map<std::string, std::shared_ptr<LoxObject>>(GarbageCollector* gc)>;
+class Interpreter;
+using GlobalObjectsProc = std::function<std::map<std::string, std::shared_ptr<LoxObject>>(Interpreter*)>;
 
 class Interpreter : StmtVisitor, ExprVisitor {
 public:
     Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalObjectsProc);
+
+    template <typename T, typename... Args>
+    std::shared_ptr<T> create(Args&&... args)
+    {
+        return _gc.create<T>(std::forward<Args>(args)...);
+    }
+
+    std::shared_ptr<LoxObject> toLoxBool(bool value);
 
     void interpret(Stmt const& stmt);
 

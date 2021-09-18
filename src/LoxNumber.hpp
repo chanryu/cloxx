@@ -11,7 +11,7 @@ public:
     explicit LoxNumber(ValueType value);
 
     std::string toString() override;
-    bool equals(LoxObject const& object) const override;
+    bool equals(std::shared_ptr<LoxObject> const& object) override;
 
     ValueType const value;
 };

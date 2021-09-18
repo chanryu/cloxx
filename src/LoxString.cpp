@@ -10,13 +10,13 @@ std::string LoxString::toString()
     return value;
 }
 
-bool LoxString::equals(LoxObject const& object) const
+bool LoxString::equals(std::shared_ptr<LoxObject> const& object)
 {
     if (LoxObject::equals(object)) {
         return true;
     }
 
-    if (auto str = dynamic_cast<LoxString const*>(&object)) {
+    if (auto str = dynamic_cast<LoxString const*>(object.get())) {
         return value == str->value;
     }
 
