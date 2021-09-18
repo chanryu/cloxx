@@ -72,7 +72,7 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
     _globals = _gc.root();
     _environment = _globals;
 
-    for (auto& [name, value] : globalObjectsProc(&_gc)) {
+    for (auto& [name, value] : globalObjectsProc(this)) {
         _globals->define(name, value);
     }
 }
@@ -206,7 +206,7 @@ void Interpreter::visit(ClassStmt const& stmt)
         methods.emplace(method.name.lexeme, function);
     }
 
-    auto klass = _gc.create<LoxClass>(&_gc, stmt.name.lexeme, superclass, methods);
+    auto klass = create<LoxClass>(this, stmt.name.lexeme, superclass, methods);
 
     if (superclass) {
         _environment = enclosingEnvironment;
@@ -543,7 +543,7 @@ std::shared_ptr<LoxFunction> Interpreter::makeFunction(bool isInitializer, Token
         return makeLoxNil();
     };
 
-    return _gc.create<LoxUserFunction>(&_gc, _environment, isInitializer, name, params, body, executor);
+    return create<LoxUserFunction>(this, _environment, isInitializer, name, params, body, executor);
 }
 
 } // namespace cloxx

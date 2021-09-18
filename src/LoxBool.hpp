@@ -6,8 +6,8 @@ namespace cloxx {
 
 class LoxClass;
 class LoxInstance;
-class GarbageCollector;
+class Interpreter;
 
-std::shared_ptr<LoxClass> createBoolClass(GarbageCollector* gc);
+std::shared_ptr<LoxClass> createBoolClass(Interpreter* interpreter);
 
 } // namespace cloxx

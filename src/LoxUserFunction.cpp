@@ -2,17 +2,18 @@
 
 #include "Assert.hpp"
 #include "Environment.hpp"
+#include "Interpreter.hpp"
 #include "LoxInstance.hpp"
 
 #include "ast/Stmt.hpp"
 
 namespace cloxx {
 
-LoxUserFunction::LoxUserFunction(PrivateCreationTag tag, GarbageCollector* gc,
+LoxUserFunction::LoxUserFunction(PrivateCreationTag tag, Interpreter* interepreter,
                                  std::shared_ptr<Environment> const& closure, bool isInitializer, Token const& name,
                                  std::vector<Token> const& params, std::vector<Stmt> const& body,
                                  Executor const& executor)
-    : LoxFunction{tag}, _gc{gc}, _closure{closure},
+    : LoxFunction{tag}, _interpreter{interepreter}, _closure{closure},
       _isInitializer{isInitializer}, _name{name}, _params{params}, _body{body}, _executor{executor}
 {
     LOX_ASSERT(_closure);
@@ -22,9 +23,10 @@ std::shared_ptr<LoxFunction> LoxUserFunction::bind(std::shared_ptr<LoxInstance> 
 {
     LOX_ASSERT(instance);
 
-    auto closure = _gc->create<Environment>(_closure);
+    auto closure = _interpreter->create<Environment>(_closure);
     closure->define("this", instance);
-    return _gc->create<LoxUserFunction>(_gc, closure, _isInitializer, _name, _params, _body, _executor);
+    return _interpreter->create<LoxUserFunction>(_interpreter, closure, _isInitializer, _name, _params, _body,
+                                                 _executor);
 }
 
 std::string LoxUserFunction::toString()
@@ -41,7 +43,7 @@ std::shared_ptr<LoxObject> LoxUserFunction::call(std::vector<std::shared_ptr<Lox
 {
     LOX_ASSERT(args.size() == _params.size());
 
-    auto env = _gc->create<Environment>(_closure);
+    auto env = _interpreter->create<Environment>(_closure);
     for (size_t i = 0; i < _params.size(); i++) {
         env->define(_params[i].lexeme, args[i]);
     }

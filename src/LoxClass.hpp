@@ -13,15 +13,17 @@ class LoxClass;
 class LoxFunction;
 class LoxInstance;
 
+class Interpreter;
+
 using LoxNativeDataFactory = std::function<std::shared_ptr<Traceable>()>;
 using LoxNativeMethodFactory = std::function<std::map<std::string, std::shared_ptr<LoxFunction>>(LoxClass*)>;
 
 class LoxClass : public LoxObject, public Callable, public Traceable, public std::enable_shared_from_this<LoxClass> {
 public:
-    LoxClass(PrivateCreationTag tag, GarbageCollector* gc, std::string name,
+    LoxClass(PrivateCreationTag tag, Interpreter* interpreter, std::string name,
              std::shared_ptr<LoxClass> const& superclass, std::map<std::string, std::shared_ptr<LoxFunction>> methods);
 
-    LoxClass(PrivateCreationTag tag, GarbageCollector* gc, std::string name,
+    LoxClass(PrivateCreationTag tag, Interpreter* interpreter, std::string name,
              std::shared_ptr<LoxClass> const& superclass, LoxNativeMethodFactory methodFactory,
              LoxNativeDataFactory dataFactory);
 
@@ -41,7 +43,7 @@ public:
     std::shared_ptr<Traceable> createInstanceData();
 
 private:
-    GarbageCollector* _gc;
+    Interpreter* _interpreter;
     std::string _name;
     std::shared_ptr<LoxClass> _superclass;
     std::map<std::string, std::shared_ptr<LoxFunction>> _methods;

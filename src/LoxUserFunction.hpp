@@ -10,13 +10,14 @@ namespace cloxx {
 
 class Stmt;
 class Environment;
+class Interpreter;
 
 class LoxUserFunction : public LoxFunction {
 public:
     using Body = std::vector<Stmt>;
     using Executor = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<Environment> const&, Body const&)>;
 
-    LoxUserFunction(PrivateCreationTag tag, GarbageCollector* gc, std::shared_ptr<Environment> const& closure,
+    LoxUserFunction(PrivateCreationTag tag, Interpreter* interepreter, std::shared_ptr<Environment> const& closure,
                     bool isInitializer, Token const& name, std::vector<Token> const& params,
                     std::vector<Stmt> const& body, Executor const& executor);
 
@@ -32,7 +33,7 @@ public:
     std::shared_ptr<LoxFunction> bind(std::shared_ptr<LoxInstance> const& instance) const override;
 
 private:
-    GarbageCollector* const _gc;
+    Interpreter* const _interpreter;
 
     std::shared_ptr<Environment> _closure;
 
