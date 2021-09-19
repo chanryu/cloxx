@@ -5,10 +5,11 @@
 namespace cloxx {
 
 class LoxClass;
+class LoxObject;
 class LoxInstance;
 class Interpreter;
 
 std::shared_ptr<LoxClass> createBoolClass(Interpreter* interpreter);
-std::shared_ptr<LoxInstance> createBoolInstance(std::shared_ptr<LoxClass> const& boolClass, bool value);
+void setBoolValue(std::shared_ptr<LoxObject> const& object, bool value);
 
 } // namespace cloxx

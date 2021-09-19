@@ -45,7 +45,7 @@ public:
     }
 };
 
-auto toBoolInstance(std::shared_ptr<LoxInstance> const& instance)
+auto toBoolInstance(std::shared_ptr<LoxObject> const& instance)
 {
     LOX_ASSERT(std::dynamic_pointer_cast<LoxBoolInstance>(instance));
     return static_cast<LoxBoolInstance*>(instance.get());
@@ -66,11 +66,9 @@ std::shared_ptr<LoxClass> createBoolClass(Interpreter* interpreter)
                                              createBoolMethods(interpreter));
 }
 
-std::shared_ptr<LoxInstance> createBoolInstance(std::shared_ptr<LoxClass> const& klass, bool value)
+void setBoolValue(std::shared_ptr<LoxObject> const& object, bool value)
 {
-    auto instance = std::static_pointer_cast<LoxInstance>(klass->call({}));
-    toBoolInstance(instance)->value = value;
-    return instance;
+    toBoolInstance(object)->value = value;
 }
 
 } // namespace cloxx
