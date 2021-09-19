@@ -3,17 +3,17 @@
 #include <memory>
 #include <string>
 
+#include "GC.hpp"
+
 namespace cloxx {
 
-class LoxObject {
+class LoxObject : public Traceable {
 public:
-#ifdef CLOXX_GC_DEBUG
-    LoxObject();
+    LoxObject(PrivateCreationTag tag);
     virtual ~LoxObject();
 
+#ifdef CLOXX_GC_DEBUG
     static size_t instanceCount();
-#else
-    virtual ~LoxObject() = default;
 #endif
 
     virtual std::string toString() = 0;

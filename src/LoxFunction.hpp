@@ -10,7 +10,7 @@ namespace cloxx {
 
 class LoxInstance;
 
-class LoxFunction : public LoxObject, public Callable, public Traceable {
+class LoxFunction : public LoxObject, public Callable {
 public:
     LoxFunction(PrivateCreationTag tag);
 

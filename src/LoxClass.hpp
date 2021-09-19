@@ -15,7 +15,7 @@ class LoxInstance;
 
 class Interpreter;
 
-class LoxClass : public LoxObject, public Callable, public Traceable, public std::enable_shared_from_this<LoxClass> {
+class LoxClass : public LoxObject, public Callable, public std::enable_shared_from_this<LoxClass> {
 public:
     LoxClass(PrivateCreationTag tag, Interpreter* interpreter, std::string name,
              std::shared_ptr<LoxClass> const& superclass, std::map<std::string, std::shared_ptr<LoxFunction>> methods);

@@ -90,9 +90,7 @@ void Environment::enumerateTraceables(Traceable::Enumerator const& enumerator)
     }
 
     for (auto& [_, value] : _values) {
-        if (auto traceable = dynamic_cast<Traceable*>(value.get())) {
-            enumerator.enumerate(*traceable);
-        }
+        enumerator.enumerate(*value);
     }
 }
 

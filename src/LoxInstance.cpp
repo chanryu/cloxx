@@ -8,7 +8,7 @@
 
 namespace cloxx {
 
-LoxInstance::LoxInstance(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass) : Traceable{tag}, _class{klass}
+LoxInstance::LoxInstance(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass) : LoxObject{tag}, _class{klass}
 {
     LOX_ASSERT(_class);
 }
@@ -36,14 +36,6 @@ void LoxInstance::set(Token const& name, std::shared_ptr<LoxObject> const& value
     _fields[name.lexeme] = value;
 }
 
-std::shared_ptr<Traceable> LoxInstance::getInstanceData(LoxClass* klass) const
-{
-    if (auto it = _instanceDataMap.find(klass); it != _instanceDataMap.end()) {
-        return it->second;
-    }
-    return nullptr;
-}
-
 std::string LoxInstance::toString()
 {
     if (auto method = _class->findMethod("toString"); method && method->arity() == 0) {
@@ -67,13 +59,7 @@ void LoxInstance::enumerateTraceables(Enumerator const& enumerator)
     enumerator.enumerate(*_class);
 
     for (auto& [_, field] : _fields) {
-        if (auto traceable = dynamic_cast<Traceable*>(field.get())) {
-            enumerator.enumerate(*traceable);
-        }
-    }
-
-    for (auto& [_, nativeData] : _instanceDataMap) {
-        enumerator.enumerate(*nativeData);
+        enumerator.enumerate(*field);
     }
 }
 
@@ -81,7 +67,6 @@ void LoxInstance::reclaim()
 {
     _class.reset();
     _fields.clear();
-    _instanceDataMap.clear();
 }
 
 } // namespace cloxx

@@ -10,7 +10,7 @@ namespace cloxx {
 LoxClass::LoxClass(PrivateCreationTag tag, Interpreter* interpreter, std::string name,
                    std::shared_ptr<LoxClass> const& superclass,
                    std::map<std::string, std::shared_ptr<LoxFunction>> methods)
-    : Traceable{tag}, _interpreter{interpreter}, _name{std::move(name)}, _superclass{superclass}, _methods{std::move(
+    : LoxObject{tag}, _interpreter{interpreter}, _name{std::move(name)}, _superclass{superclass}, _methods{std::move(
                                                                                                       methods)}
 {}
 

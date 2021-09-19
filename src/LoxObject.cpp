@@ -7,7 +7,7 @@ namespace {
 size_t objectInstanceCount = 0;
 }
 
-LoxObject::LoxObject()
+LoxObject::LoxObject(PrivateCreationTag tag) : Traceable{tag}
 {
     objectInstanceCount += 1;
 }
@@ -21,6 +21,13 @@ size_t LoxObject::instanceCount()
 {
     return objectInstanceCount;
 }
+
+#else
+LoxObject::LoxObject(PrivateCreationTag tag) : Traceable{tag}
+{}
+
+LoxObject::~LoxObject()
+{}
 #endif
 
 bool LoxObject::isTruthy()
