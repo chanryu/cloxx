@@ -12,12 +12,14 @@
 namespace cloxx {
 
 namespace {
-struct ListData : Traceable {
-    ListData(PrivateCreationTag tag) : Traceable{tag}
-    {}
+class LoxListInstance : public LoxInstance {
+public:
+    using LoxInstance::LoxInstance;
 
     void enumerateTraceables(Enumerator const& enumerator) override
     {
+        LoxInstance::enumerateTraceables(enumerator);
+
         for (auto& item : items) {
             if (auto traceable = dynamic_cast<Traceable*>(item.get())) {
                 enumerator.enumerate(*traceable);
@@ -27,6 +29,8 @@ struct ListData : Traceable {
 
     void reclaim() override
     {
+        LoxInstance::reclaim();
+
         items.clear();
     }
 
@@ -34,33 +38,42 @@ struct ListData : Traceable {
     bool isStringifying = false;
 };
 
-auto toListNativeData(std::shared_ptr<LoxInstance> const& instance, LoxClass* klass)
+class LoxListClass : public LoxClass {
+public:
+    using LoxClass::LoxClass;
+
+    std::shared_ptr<LoxInstance> createInstance(LoxClass* klass) override
+    {
+        return _interpreter->create<LoxListInstance>(klass->shared_from_this());
+    }
+};
+
+auto toListInstance(std::shared_ptr<LoxInstance> const& instance)
 {
-    auto nativeData = instance->getInstanceData(klass);
-    LOX_ASSERT(std::dynamic_pointer_cast<ListData>(nativeData));
-    return static_cast<ListData*>(nativeData.get());
+    LOX_ASSERT(std::dynamic_pointer_cast<LoxListInstance>(instance));
+    return static_cast<LoxListInstance*>(instance.get());
 }
 
-std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interpreter* interpreter, LoxClass* klass)
+std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interpreter* interpreter)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
 
-    methods.emplace(
-        "append", interpreter->create<LoxNativeFunction>(interpreter, /*arity*/ 1, [klass](auto& instance, auto& args) {
-            LOX_ASSERT(args.size() == 1);
+    methods.emplace("append",
+                    interpreter->create<LoxNativeFunction>(interpreter, /*arity*/ 1, [](auto& instance, auto& args) {
+                        LOX_ASSERT(args.size() == 1);
 
-            auto& items = toListNativeData(instance, klass)->items;
-            items.push_back(args[0]);
-            return args[0];
-        }));
+                        auto& items = toListInstance(instance)->items;
+                        items.push_back(args[0]);
+                        return args[0];
+                    }));
 
     methods.emplace("get", interpreter->create<LoxNativeFunction>(
-                               interpreter, /*arity*/ 1, [interpreter, klass](auto& instance, auto& args) {
+                               interpreter, /*arity*/ 1, [interpreter](auto& instance, auto& args) {
                                    LOX_ASSERT(args.size() == 1);
 
                                    std::shared_ptr<LoxObject> result;
                                    if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
-                                       auto& items = toListNativeData(instance, klass)->items;
+                                       auto& items = toListInstance(instance)->items;
                                        if (auto index = static_cast<size_t>(number->value); index < items.size()) {
                                            result = items[index];
                                        }
@@ -72,12 +85,12 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interprete
                                }));
 
     methods.emplace("set", interpreter->create<LoxNativeFunction>(
-                               interpreter, /*arity*/ 2, [interpreter, klass](auto& instance, auto& args) {
+                               interpreter, /*arity*/ 2, [interpreter](auto& instance, auto& args) {
                                    LOX_ASSERT(args.size() == 2);
 
                                    std::shared_ptr<LoxObject> result;
                                    if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
-                                       auto& items = toListNativeData(instance, klass)->items;
+                                       auto& items = toListInstance(instance)->items;
                                        if (auto index = static_cast<size_t>(number->value); index < items.size()) {
                                            items[index] = args[1];
                                            return interpreter->toLoxBool(true);
@@ -86,37 +99,37 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interprete
                                    return interpreter->toLoxBool(false);
                                }));
 
-    methods.emplace("length", interpreter->create<LoxNativeFunction>(
-                                  interpreter, /*arity*/ 0, [klass](auto& instance, auto& /*args*/) {
-                                      auto& items = toListNativeData(instance, klass)->items;
-                                      return toLoxNumber(items.size());
-                                  }));
+    methods.emplace(
+        "length", interpreter->create<LoxNativeFunction>(interpreter, /*arity*/ 0, [](auto& instance, auto& /*args*/) {
+            auto& items = toListInstance(instance)->items;
+            return toLoxNumber(items.size());
+        }));
 
-    methods.emplace("toString", interpreter->create<LoxNativeFunction>(
-                                    interpreter, /*arity*/ 0, [klass](auto& instance, auto& /*args*/) {
-                                        auto listNativeData = toListNativeData(instance, klass);
+    methods.emplace("toString", interpreter->create<LoxNativeFunction>(interpreter, /*arity*/ 0,
+                                                                       [](auto& instance, auto& /*args*/) {
+                                                                           auto listInstance = toListInstance(instance);
 
-                                        if (listNativeData->isStringifying) {
-                                            return toLoxString("[...]");
-                                        }
+                                                                           if (listInstance->isStringifying) {
+                                                                               return toLoxString("[...]");
+                                                                           }
 
-                                        listNativeData->isStringifying = true;
+                                                                           listInstance->isStringifying = true;
 
-                                        auto const& items = listNativeData->items;
-                                        std::string str;
-                                        str.push_back('[');
-                                        for (size_t i = 0; i < items.size(); ++i) {
-                                            str.append(items[i]->toString());
-                                            if (i != items.size() - 1) {
-                                                str.append(", ");
-                                            }
-                                        }
-                                        str.push_back(']');
+                                                                           auto const& items = listInstance->items;
+                                                                           std::string str;
+                                                                           str.push_back('[');
+                                                                           for (size_t i = 0; i < items.size(); ++i) {
+                                                                               str.append(items[i]->toString());
+                                                                               if (i != items.size() - 1) {
+                                                                                   str.append(", ");
+                                                                               }
+                                                                           }
+                                                                           str.push_back(']');
 
-                                        listNativeData->isStringifying = false;
+                                                                           listInstance->isStringifying = false;
 
-                                        return toLoxString(str);
-                                    }));
+                                                                           return toLoxString(str);
+                                                                       }));
     return methods;
 }
 
@@ -124,16 +137,12 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interprete
 
 std::shared_ptr<LoxClass> createListClass(Interpreter* interpreter)
 {
-    auto methodFactory = [interpreter](LoxClass* klass) {
-        return createListMethods(interpreter, klass);
+    auto methodFactory = [interpreter](LoxClass*) {
+        return createListMethods(interpreter);
     };
 
-    auto dataFactory = [interpreter]() {
-        return interpreter->create<ListData>();
-    };
-
-    return interpreter->create<LoxClass>(interpreter, "List", /*superclass*/ nullptr, std::move(methodFactory),
-                                         std::move(dataFactory));
+    return interpreter->create<LoxListClass>(interpreter, "List", /*superclass*/ nullptr, std::move(methodFactory),
+                                             nullptr);
 }
 
 } // namespace cloxx

@@ -39,6 +39,15 @@ std::shared_ptr<LoxFunction> LoxClass::findMethod(std::string const& name) const
     return nullptr;
 }
 
+std::shared_ptr<LoxInstance> LoxClass::createInstance(LoxClass* klass)
+{
+    if (_superclass) {
+        return _superclass->createInstance(klass);
+    }
+
+    return _interpreter->create<LoxInstance>(klass->shared_from_this());
+}
+
 std::string LoxClass::toString()
 {
     return _name;
@@ -55,7 +64,7 @@ size_t LoxClass::arity() const
 
 std::shared_ptr<LoxObject> LoxClass::call(std::vector<std::shared_ptr<LoxObject>> const& args)
 {
-    auto instance = _interpreter->create<LoxInstance>(shared_from_this());
+    auto instance = createInstance(this);
 
     if (auto initializer = findMethod("init")) {
         initializer->bind(instance)->call(args);

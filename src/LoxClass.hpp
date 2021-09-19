@@ -28,8 +28,9 @@ public:
              LoxNativeDataFactory dataFactory);
 
     std::shared_ptr<LoxClass> superclass() const;
-
     std::shared_ptr<LoxFunction> findMethod(std::string const& name) const;
+
+    virtual std::shared_ptr<LoxInstance> createInstance(LoxClass* klass);
 
     std::string toString() override;
 
@@ -42,8 +43,10 @@ public:
 
     std::shared_ptr<Traceable> createInstanceData();
 
+protected:
+    Interpreter* const _interpreter;
+
 private:
-    Interpreter* _interpreter;
     std::string _name;
     std::shared_ptr<LoxClass> _superclass;
     std::map<std::string, std::shared_ptr<LoxFunction>> _methods;
