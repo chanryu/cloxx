@@ -25,7 +25,7 @@ template <typename T, size_t N>
 struct OperandErrorMessage {};
 
 template <>
-struct OperandErrorMessage<LoxNumber, 1> {
+struct OperandErrorMessage<LoxNumberInstance, 1> {
     static auto get()
     {
         return "Operand must be a number.";
@@ -33,7 +33,7 @@ struct OperandErrorMessage<LoxNumber, 1> {
 };
 
 template <size_t N>
-struct OperandErrorMessage<LoxNumber, N> {
+struct OperandErrorMessage<LoxNumberInstance, N> {
     static auto get()
     {
         return "Operands must be numbers.";
@@ -83,6 +83,7 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
     _globals->define("Nil", createNilClass(this));
     _globals->define("Bool", createBoolClass(this));
     _globals->define("List", createListClass(this));
+    _globals->define("Number", createNumberClass(this));
     _globals->define("String", createStringClass(this));
 }
 
@@ -100,7 +101,17 @@ std::shared_ptr<LoxObject> Interpreter::toLoxBool(bool value)
     auto boolClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Bool"));
     LOX_ASSERT(boolClass);
     auto instance = boolClass->call({});
-    setBoolValue(instance, value);
+    static_cast<LoxBoolInstance*>(instance.get())->value = value;
+    return instance;
+}
+
+std::shared_ptr<LoxObject> Interpreter::toLoxNumber(double value)
+{
+    // FIXME: we need immutable global env for built-in classes
+    auto numberClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Number"));
+    LOX_ASSERT(numberClass);
+    auto instance = numberClass->call({});
+    static_cast<LoxNumberInstance*>(instance.get())->value = value;
     return instance;
 }
 
@@ -276,32 +287,32 @@ void Interpreter::visit(BinaryExpr const& expr)
 
     switch (expr.op.type) {
     case Token::GREATER:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
+        ensureOperands<LoxNumberInstance>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxBool(left > right));
         });
         break;
     case Token::GREATER_EQUAL:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
+        ensureOperands<LoxNumberInstance>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxBool(left >= right));
         });
         break;
     case Token::LESS:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
+        ensureOperands<LoxNumberInstance>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxBool(left < right));
         });
         break;
     case Token::LESS_EQUAL:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
+        ensureOperands<LoxNumberInstance>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxBool(left <= right));
         });
         break;
     case Token::MINUS:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
+        ensureOperands<LoxNumberInstance>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxNumber(left - right));
         });
         break;
     case Token::PLUS:
-        if (matchOperands<LoxNumber>(left, right, [this](auto left, auto right) {
+        if (matchOperands<LoxNumberInstance>(left, right, [this](auto left, auto right) {
                 _evalResults.push_back(toLoxNumber(left + right));
             })) {
             break; // handled number + number
@@ -313,12 +324,12 @@ void Interpreter::visit(BinaryExpr const& expr)
         }
         throw RuntimeError(expr.op, "Operands must be two numbers or two strings.");
     case Token::SLASH:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
+        ensureOperands<LoxNumberInstance>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxNumber(left / right));
         });
         break;
     case Token::STAR:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
+        ensureOperands<LoxNumberInstance>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxNumber(left * right));
         });
         break;
@@ -475,7 +486,7 @@ void Interpreter::visit(UnaryExpr const& expr)
     }
     else {
         LOX_ASSERT(expr.op.type == Token::MINUS);
-        ensureOperand<LoxNumber>(expr.op, right, [this](double value) {
+        ensureOperand<LoxNumberInstance>(expr.op, right, [this](double value) {
             _evalResults.push_back(toLoxNumber(-value));
         });
     }

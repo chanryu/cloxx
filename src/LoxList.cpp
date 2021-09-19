@@ -72,7 +72,7 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interprete
                                    LOX_ASSERT(args.size() == 1);
 
                                    std::shared_ptr<LoxObject> result;
-                                   if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
+                                   if (auto number = dynamic_cast<LoxNumberInstance*>(args[0].get())) {
                                        auto& items = toListInstance(instance)->items;
                                        if (auto index = static_cast<size_t>(number->value); index < items.size()) {
                                            result = items[index];
@@ -89,7 +89,7 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interprete
                                    LOX_ASSERT(args.size() == 2);
 
                                    std::shared_ptr<LoxObject> result;
-                                   if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
+                                   if (auto number = dynamic_cast<LoxNumberInstance*>(args[0].get())) {
                                        auto& items = toListInstance(instance)->items;
                                        if (auto index = static_cast<size_t>(number->value); index < items.size()) {
                                            items[index] = args[1];
@@ -99,11 +99,11 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interprete
                                    return interpreter->toLoxBool(false);
                                }));
 
-    methods.emplace(
-        "length", interpreter->create<LoxNativeFunction>(interpreter, /*arity*/ 0, [](auto& instance, auto& /*args*/) {
-            auto& items = toListInstance(instance)->items;
-            return toLoxNumber(items.size());
-        }));
+    methods.emplace("length", interpreter->create<LoxNativeFunction>(interpreter, /*arity*/ 0,
+                                                                     [interpreter](auto& instance, auto& /*args*/) {
+                                                                         auto& items = toListInstance(instance)->items;
+                                                                         return interpreter->toLoxNumber(items.size());
+                                                                     }));
 
     methods.emplace("toString", interpreter->create<LoxNativeFunction>(interpreter, /*arity*/ 0,
                                                                        [interpreter](auto& instance, auto& /*args*/) {
