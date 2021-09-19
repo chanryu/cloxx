@@ -11,13 +11,6 @@ namespace cloxx {
 LoxInstance::LoxInstance(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass) : Traceable{tag}, _class{klass}
 {
     LOX_ASSERT(_class);
-
-    for (auto klass = _class; klass; klass = klass->superclass()) {
-        auto instanceData = klass->createInstanceData();
-        if (instanceData) {
-            _instanceDataMap.emplace(klass.get(), instanceData);
-        }
-    }
 }
 
 std::shared_ptr<LoxClass> const& LoxInstance::klass() const

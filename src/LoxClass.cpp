@@ -14,18 +14,6 @@ LoxClass::LoxClass(PrivateCreationTag tag, Interpreter* interpreter, std::string
                                                                                                       methods)}
 {}
 
-LoxClass::LoxClass(PrivateCreationTag tag, Interpreter* interpreter, std::string name,
-                   std::shared_ptr<LoxClass> const& superclass, LoxNativeMethodFactory methodFactory,
-                   LoxNativeDataFactory nativeDataFactory)
-    : Traceable{tag}, _interpreter{interpreter}, _name{std::move(name)},
-      _superclass{superclass}, _methods{methodFactory(this)}, _nativeDataFactory{nativeDataFactory}
-{}
-
-std::shared_ptr<LoxClass> LoxClass::superclass() const
-{
-    return _superclass;
-}
-
 std::shared_ptr<LoxFunction> LoxClass::findMethod(std::string const& name) const
 {
     if (auto it = _methods.find(name); it != _methods.end()) {
@@ -55,7 +43,7 @@ size_t LoxClass::arity() const
 
 std::shared_ptr<LoxObject> LoxClass::call(std::vector<std::shared_ptr<LoxObject>> const& args)
 {
-    auto instance = _interpreter->create<LoxInstance>(shared_from_this());
+    auto instance = createInstance(shared_from_this());
 
     if (auto initializer = findMethod("init")) {
         initializer->bind(instance)->call(args);
@@ -81,12 +69,13 @@ void LoxClass::reclaim()
     _methods.clear();
 }
 
-std::shared_ptr<Traceable> LoxClass::createInstanceData()
+std::shared_ptr<LoxInstance> LoxClass::createInstance(std::shared_ptr<LoxClass> const& klass)
 {
-    if (_nativeDataFactory) {
-        return _nativeDataFactory();
+    if (_superclass) {
+        return _superclass->createInstance(klass);
     }
-    return nullptr;
+
+    return _interpreter->create<LoxInstance>(klass->shared_from_this());
 }
 
 } // namespace cloxx

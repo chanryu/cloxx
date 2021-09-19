@@ -13,6 +13,7 @@
 #include "LoxList.hpp"
 #include "LoxNil.hpp"
 #include "LoxNumber.hpp"
+#include "LoxObject.hpp"
 #include "LoxString.hpp"
 #include "LoxUserFunction.hpp"
 
@@ -84,20 +85,22 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
     _globals->define("List", createListClass(this));
 }
 
-std::shared_ptr<LoxObject> Interpreter::toLoxBool(bool value)
-{
-    // FIXME: we need immutable global env for built-in classes
-    auto boolClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Bool"));
-    LOX_ASSERT(boolClass);
-    return createBoolInstance(this, boolClass, value);
-}
-
 std::shared_ptr<LoxObject> Interpreter::makeLoxNil()
 {
     // FIXME: we need immutable global env for built-in classes
     auto nilClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Nil"));
     LOX_ASSERT(nilClass);
-    return createNilInstance(this, nilClass);
+    return nilClass->call({});
+}
+
+std::shared_ptr<LoxObject> Interpreter::toLoxBool(bool value)
+{
+    // FIXME: we need immutable global env for built-in classes
+    auto boolClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Bool"));
+    LOX_ASSERT(boolClass);
+    auto instance = boolClass->call({});
+    setBoolValue(instance, value);
+    return instance;
 }
 
 void Interpreter::interpret(Stmt const& stmt)
