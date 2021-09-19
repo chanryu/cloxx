@@ -6,34 +6,10 @@
 #include "LoxInstance.hpp"
 #include "LoxNativeFunction.hpp"
 #include "LoxNil.hpp"
-#include "LoxString.hpp"
 
 namespace cloxx {
 
 namespace {
-
-class LoxBoolInstance : public LoxInstance {
-public:
-    using LoxInstance::LoxInstance;
-
-    bool isTruthy() override
-    {
-        return value;
-    }
-
-    std::string toString() override
-    {
-        return value ? "true" : "false";
-    }
-
-    bool equals(std::shared_ptr<LoxObject> const& object) override
-    {
-        auto other = std::dynamic_pointer_cast<LoxBoolInstance>(object);
-        return other && value == other->value;
-    }
-
-    bool value;
-};
 
 class LoxBoolClass : public LoxClass {
 public:
@@ -45,12 +21,6 @@ public:
     }
 };
 
-auto toBoolInstance(std::shared_ptr<LoxObject> const& instance)
-{
-    LOX_ASSERT(std::dynamic_pointer_cast<LoxBoolInstance>(instance));
-    return static_cast<LoxBoolInstance*>(instance.get());
-}
-
 std::map<std::string, std::shared_ptr<LoxFunction>> createBoolMethods(Interpreter* /*interpreter*/)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
@@ -60,15 +30,26 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createBoolMethods(Interprete
 
 } // namespace
 
+bool LoxBoolInstance::isTruthy()
+{
+    return value;
+}
+
+std::string LoxBoolInstance::toString()
+{
+    return value ? "true" : "false";
+}
+
+bool LoxBoolInstance::equals(std::shared_ptr<LoxObject> const& object)
+{
+    auto other = std::dynamic_pointer_cast<LoxBoolInstance>(object);
+    return other && value == other->value;
+}
+
 std::shared_ptr<LoxClass> createBoolClass(Interpreter* interpreter)
 {
     return interpreter->create<LoxBoolClass>(interpreter, "Bool", /*superclass*/ nullptr,
                                              createBoolMethods(interpreter));
-}
-
-void setBoolValue(std::shared_ptr<LoxObject> const& object, bool value)
-{
-    toBoolInstance(object)->value = value;
 }
 
 } // namespace cloxx

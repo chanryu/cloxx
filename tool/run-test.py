@@ -346,6 +346,10 @@ def _defineTestSuites():
         # now strings are instance of String
         { "test/field/set_on_string.lox": "skip" },
         { "test/field/get_on_string.lox": "skip" },
+
+        # now numbers are instance of Number
+        { "test/field/set_on_num.lox": "skip" },
+        { "test/field/get_on_num.lox": "skip" },
     )
 
     # cloxx behaves like jlox
