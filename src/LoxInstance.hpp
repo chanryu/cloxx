@@ -12,8 +12,7 @@ struct Token;
 class LoxInstance : public LoxObject, public std::enable_shared_from_this<LoxInstance> {
 public:
     LoxInstance(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass);
-
-    std::shared_ptr<LoxClass> const& klass() const;
+    LoxInstance(PrivateCreationTag tag, std::map<std::string, std::shared_ptr<LoxObject>> fields);
 
     std::shared_ptr<LoxObject> get(Token const& name);
     void set(Token const& name, std::shared_ptr<LoxObject> const& value);

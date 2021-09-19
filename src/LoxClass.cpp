@@ -1,17 +1,24 @@
 #include "LoxClass.hpp"
 
-#include "LoxFunction.hpp"
-#include "LoxInstance.hpp"
-
 #include "Interpreter.hpp"
+#include "LoxFunction.hpp"
 
 namespace cloxx {
+
+namespace {
+auto createClassFields(LoxClass* /*klass*/)
+{
+    std::map<std::string, std::shared_ptr<LoxObject>> fields;
+    // TODO: new()
+    return fields;
+}
+} // namespace
 
 LoxClass::LoxClass(PrivateCreationTag tag, Interpreter* interpreter, std::string name,
                    std::shared_ptr<LoxClass> const& superclass,
                    std::map<std::string, std::shared_ptr<LoxFunction>> methods)
-    : LoxObject{tag}, _interpreter{interpreter}, _name{std::move(name)}, _superclass{superclass}, _methods{std::move(
-                                                                                                      methods)}
+    : LoxInstance{tag, createClassFields(this)}, _interpreter{interpreter}, _name{std::move(name)},
+      _superclass{superclass}, _methods{std::move(methods)}
 {}
 
 std::shared_ptr<LoxFunction> LoxClass::findMethod(std::string const& name) const
@@ -43,7 +50,7 @@ size_t LoxClass::arity() const
 
 std::shared_ptr<LoxObject> LoxClass::call(std::vector<std::shared_ptr<LoxObject>> const& args)
 {
-    auto instance = createInstance(shared_from_this());
+    auto instance = createInstance(std::static_pointer_cast<LoxClass>(shared_from_this()));
 
     if (auto initializer = findMethod("init")) {
         initializer->bind(instance)->call(args);
@@ -75,7 +82,7 @@ std::shared_ptr<LoxInstance> LoxClass::createInstance(std::shared_ptr<LoxClass> 
         return _superclass->createInstance(klass);
     }
 
-    return _interpreter->create<LoxInstance>(klass->shared_from_this());
+    return _interpreter->create<LoxInstance>(klass);
 }
 
 } // namespace cloxx

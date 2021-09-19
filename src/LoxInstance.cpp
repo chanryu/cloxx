@@ -13,10 +13,9 @@ LoxInstance::LoxInstance(PrivateCreationTag tag, std::shared_ptr<LoxClass> const
     LOX_ASSERT(_class);
 }
 
-std::shared_ptr<LoxClass> const& LoxInstance::klass() const
-{
-    return _class;
-}
+LoxInstance::LoxInstance(PrivateCreationTag tag, std::map<std::string, std::shared_ptr<LoxObject>> fields)
+    : LoxObject{tag}, _fields{std::move(fields)}
+{}
 
 std::shared_ptr<LoxObject> LoxInstance::get(Token const& name)
 {
@@ -24,8 +23,13 @@ std::shared_ptr<LoxObject> LoxInstance::get(Token const& name)
         return it->second;
     }
 
-    if (auto method = _class->findMethod(name.lexeme)) {
-        return method->bind(shared_from_this());
+    if (_class) {
+        if (auto method = _class->findMethod(name.lexeme)) {
+            return method->bind(shared_from_this());
+        }
+    }
+    else {
+        // methods Class class, e.g., new()
     }
 
     throw RuntimeError(name, "Undefined property '" + name.lexeme + "'.");
@@ -42,13 +46,19 @@ std::string LoxInstance::toString()
         return method->bind(shared_from_this())->call({})->toString();
     }
 
+    if (!_class) {
+        return "Class";
+    }
+
     return _class->toString() + " instance";
 }
 
 bool LoxInstance::equals(std::shared_ptr<LoxObject> const& object)
 {
-    if (auto method = _class->findMethod("equals"); method && method->arity() == 1) {
-        return method->bind(shared_from_this())->call({object})->isTruthy();
+    if (_class) {
+        if (auto method = _class->findMethod("equals"); method && method->arity() == 1) {
+            return method->bind(shared_from_this())->call({object})->isTruthy();
+        }
     }
 
     return this == object.get();
@@ -56,7 +66,9 @@ bool LoxInstance::equals(std::shared_ptr<LoxObject> const& object)
 
 void LoxInstance::enumerateTraceables(Enumerator const& enumerator)
 {
-    enumerator.enumerate(*_class);
+    if (_class) {
+        enumerator.enumerate(*_class);
+    }
 
     for (auto& [_, field] : _fields) {
         enumerator.enumerate(*field);

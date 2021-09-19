@@ -4,17 +4,14 @@
 #include <map>
 
 #include "Callable.hpp"
-#include "LoxObject.hpp"
+#include "LoxInstance.hpp"
 
 namespace cloxx {
 
-class LoxClass;
 class LoxFunction;
-class LoxInstance;
-
 class Interpreter;
 
-class LoxClass : public LoxObject, public Callable, public std::enable_shared_from_this<LoxClass> {
+class LoxClass : public LoxInstance, public Callable {
 public:
     LoxClass(PrivateCreationTag tag, Interpreter* interpreter, std::string name,
              std::shared_ptr<LoxClass> const& superclass, std::map<std::string, std::shared_ptr<LoxFunction>> methods);
