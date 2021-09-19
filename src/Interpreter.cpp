@@ -41,7 +41,7 @@ struct OperandErrorMessage<LoxNumber, N> {
 };
 
 template <size_t N>
-struct OperandErrorMessage<LoxString, N> {
+struct OperandErrorMessage<LoxStringInstance, N> {
     static auto get()
     {
         return "Operands must be strings.";
@@ -83,6 +83,7 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
     _globals->define("Nil", createNilClass(this));
     _globals->define("Bool", createBoolClass(this));
     _globals->define("List", createListClass(this));
+    _globals->define("String", createStringClass(this));
 }
 
 std::shared_ptr<LoxObject> Interpreter::makeLoxNil()
@@ -100,6 +101,16 @@ std::shared_ptr<LoxObject> Interpreter::toLoxBool(bool value)
     LOX_ASSERT(boolClass);
     auto instance = boolClass->call({});
     setBoolValue(instance, value);
+    return instance;
+}
+
+std::shared_ptr<LoxObject> Interpreter::toLoxString(std::string value)
+{
+    // FIXME: we need immutable global env for built-in classes
+    auto stringClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "String"));
+    LOX_ASSERT(stringClass);
+    auto instance = stringClass->call({});
+    static_cast<LoxStringInstance*>(instance.get())->value = value;
     return instance;
 }
 
@@ -295,7 +306,7 @@ void Interpreter::visit(BinaryExpr const& expr)
             })) {
             break; // handled number + number
         }
-        if (matchOperands<LoxString>(left, right, [this](auto& left, auto& right) {
+        if (matchOperands<LoxStringInstance>(left, right, [this](auto& left, auto& right) {
                 _evalResults.push_back(toLoxString(left + right));
             })) {
             break; // handled string + string
@@ -369,14 +380,14 @@ void Interpreter::visit(LiteralExpr const& expr)
         value = toLoxBool(expr.literal.type == Token::TRUE);
     }
     else if (expr.literal.type == Token::NUMBER) {
-        value = std::make_shared<LoxNumber>(std::stod(expr.literal.lexeme));
+        value = toLoxNumber(std::stod(expr.literal.lexeme));
     }
     else if (expr.literal.type == Token::STRING) {
         // Trim the surrounding quotes.
         auto const& lexmem = expr.literal.lexeme;
         LOX_ASSERT(lexmem.length() >= 2);
         auto text = lexmem.substr(1, lexmem.size() - 2);
-        value = std::make_shared<LoxString>(std::move(text));
+        value = toLoxString(std::move(text));
     }
     else {
         LOX_ASSERT(expr.literal.type == Token::NIL);
