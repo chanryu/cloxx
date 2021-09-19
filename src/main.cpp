@@ -4,7 +4,6 @@
 
 #ifdef CLOXX_GC_DEBUG
 #include "Assert.hpp"
-#include "GC.hpp"
 #include "LoxObject.hpp"
 #endif
 

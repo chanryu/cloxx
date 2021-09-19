@@ -3,7 +3,6 @@
 #include "Assert.hpp"
 #include "Environment.hpp"
 #include "ErrorReporter.hpp"
-#include "GC.hpp"
 #include "Resolver.hpp"
 #include "RuntimeError.hpp"
 
