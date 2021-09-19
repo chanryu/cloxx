@@ -106,11 +106,11 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interprete
         }));
 
     methods.emplace("toString", interpreter->create<LoxNativeFunction>(interpreter, /*arity*/ 0,
-                                                                       [](auto& instance, auto& /*args*/) {
+                                                                       [interpreter](auto& instance, auto& /*args*/) {
                                                                            auto listInstance = toListInstance(instance);
 
                                                                            if (listInstance->isStringifying) {
-                                                                               return toLoxString("[...]");
+                                                                               return interpreter->toLoxString("[...]");
                                                                            }
 
                                                                            listInstance->isStringifying = true;
@@ -128,7 +128,7 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interprete
 
                                                                            listInstance->isStringifying = false;
 
-                                                                           return toLoxString(str);
+                                                                           return interpreter->toLoxString(str);
                                                                        }));
     return methods;
 }
