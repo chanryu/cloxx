@@ -12,37 +12,49 @@ namespace cloxx {
 
 namespace {
 
-class BoolInstance : public LoxInstance {
+class LoxBoolInstance : public LoxInstance {
 public:
-    BoolInstance(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass, bool value)
-        : LoxInstance{tag, klass}, _value{value}
-    {}
+    using LoxInstance::LoxInstance;
 
     bool isTruthy() override
     {
-        return _value;
+        return value;
     }
 
-private:
-    bool _value;
+    std::string toString() override
+    {
+        return value ? "true" : "false";
+    }
+
+    bool equals(std::shared_ptr<LoxObject> const& object) override
+    {
+        auto other = std::dynamic_pointer_cast<LoxBoolInstance>(object);
+        return other && value == other->value;
+    }
+
+    bool value;
 };
 
-std::map<std::string, std::shared_ptr<LoxFunction>> createBoolMethods(Interpreter* interpreter, LoxClass* klass)
+class LoxBoolClass : public LoxClass {
+public:
+    using LoxClass::LoxClass;
+
+    std::shared_ptr<LoxInstance> createInstance(std::shared_ptr<LoxClass> const& klass) override
+    {
+        return _interpreter->create<LoxBoolInstance>(klass);
+    }
+};
+
+auto toBoolInstance(std::shared_ptr<LoxInstance> const& instance)
+{
+    LOX_ASSERT(std::dynamic_pointer_cast<LoxBoolInstance>(instance));
+    return static_cast<LoxBoolInstance*>(instance.get());
+}
+
+std::map<std::string, std::shared_ptr<LoxFunction>> createBoolMethods(Interpreter* /*interpreter*/)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
-    methods.emplace("toString", interpreter->create<LoxNativeFunction>(
-                                    interpreter, /*arity*/ 0, [](auto& instance, auto& /*args*/) {
-                                        return toLoxString(instance->isTruthy() ? "true" : "false");
-                                    }));
-    methods.emplace("equals", interpreter->create<LoxNativeFunction>(
-                                  interpreter, /*arity*/ 1, [interpreter, klass](auto& instance, auto& args) {
-                                      LOX_ASSERT(args.size() == 1);
-                                      auto other = std::dynamic_pointer_cast<LoxInstance>(args[0]);
-                                      if (!other || other->klass().get() != klass) {
-                                          return interpreter->toLoxBool(false);
-                                      }
-                                      return interpreter->toLoxBool(instance->isTruthy() == other->isTruthy());
-                                  }));
+    // no methods yet
     return methods;
 }
 
@@ -50,18 +62,15 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createBoolMethods(Interprete
 
 std::shared_ptr<LoxClass> createBoolClass(Interpreter* interpreter)
 {
-    auto methodFactory = [interpreter](LoxClass* klass) {
-        return createBoolMethods(interpreter, klass);
-    };
-
-    return interpreter->create<LoxClass>(interpreter, "Bool", /*superclass*/ nullptr, std::move(methodFactory),
-                                         /*dataFactory*/ nullptr);
+    return interpreter->create<LoxBoolClass>(interpreter, "Bool", /*superclass*/ nullptr,
+                                             createBoolMethods(interpreter));
 }
 
-std::shared_ptr<LoxInstance> createBoolInstance(Interpreter* interpreter, std::shared_ptr<LoxClass> const& klass,
-                                                bool value)
+std::shared_ptr<LoxInstance> createBoolInstance(std::shared_ptr<LoxClass> const& klass, bool value)
 {
-    return interpreter->create<BoolInstance>(klass, value);
+    auto instance = std::static_pointer_cast<LoxInstance>(klass->call({}));
+    toBoolInstance(instance)->value = value;
+    return instance;
 }
 
 } // namespace cloxx

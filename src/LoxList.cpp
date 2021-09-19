@@ -42,9 +42,9 @@ class LoxListClass : public LoxClass {
 public:
     using LoxClass::LoxClass;
 
-    std::shared_ptr<LoxInstance> createInstance(LoxClass* klass) override
+    std::shared_ptr<LoxInstance> createInstance(std::shared_ptr<LoxClass> const& klass) override
     {
-        return _interpreter->create<LoxListInstance>(klass->shared_from_this());
+        return _interpreter->create<LoxListInstance>(klass);
     }
 };
 
@@ -137,12 +137,8 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interprete
 
 std::shared_ptr<LoxClass> createListClass(Interpreter* interpreter)
 {
-    auto methodFactory = [interpreter](LoxClass*) {
-        return createListMethods(interpreter);
-    };
-
-    return interpreter->create<LoxListClass>(interpreter, "List", /*superclass*/ nullptr, std::move(methodFactory),
-                                             nullptr);
+    return interpreter->create<LoxListClass>(interpreter, "List", /*superclass*/ nullptr,
+                                             createListMethods(interpreter));
 }
 
 } // namespace cloxx
