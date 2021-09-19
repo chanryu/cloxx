@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "Callable.hpp"
-#include "GC.hpp"
 #include "LoxObject.hpp"
 
 namespace cloxx {
