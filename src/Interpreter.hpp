@@ -37,6 +37,8 @@ public:
     std::shared_ptr<LoxObject> toLoxNumber(double value);
     std::shared_ptr<LoxObject> toLoxString(std::string value);
 
+    std::shared_ptr<LoxClass> functionClass();
+
     void interpret(Stmt const& stmt);
 
 private:

@@ -17,7 +17,7 @@ public:
     using Body = std::vector<Stmt>;
     using Executor = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<Environment> const&, Body const&)>;
 
-    LoxUserFunction(PrivateCreationTag tag, Interpreter* interepreter, std::shared_ptr<Environment> const& closure,
+    LoxUserFunction(PrivateCreationTag tag, Interpreter* interpreter, std::shared_ptr<Environment> const& closure,
                     bool isInitializer, Token const& name, std::vector<Token> const& params,
                     std::vector<Stmt> const& body, Executor const& executor);
 

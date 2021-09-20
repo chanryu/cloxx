@@ -74,11 +74,15 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
     _globals = _gc.root();
     _environment = _globals;
 
+    // Define `Function` class
+    // This should come earlier than most of the other classes as they are depending on it.
+    _globals->define("Function", createFunctionClass(this));
+
     for (auto& [name, value] : globalObjectsProc(this)) {
         _globals->define(name, value);
     }
 
-    // buil-in classes
+    // buil-in classes.
     _globals->define("Nil", createNilClass(this));
     _globals->define("Bool", createBoolClass(this));
     _globals->define("List", createListClass(this));
@@ -122,6 +126,14 @@ std::shared_ptr<LoxObject> Interpreter::toLoxString(std::string value)
     auto instance = stringClass->call({});
     static_cast<LoxStringInstance*>(instance.get())->value = value;
     return instance;
+}
+
+std::shared_ptr<LoxClass> Interpreter::functionClass()
+{
+    // FIXME: we need immutable global env for built-in classes
+    auto functionClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Function"));
+    LOX_ASSERT(functionClass);
+    return functionClass;
 }
 
 void Interpreter::interpret(Stmt const& stmt)

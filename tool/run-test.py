@@ -354,6 +354,10 @@ def _defineTestSuites():
         # now classes are instance of Class
         { "test/field/set_on_class.lox": "skip" },
         { "test/field/get_on_class.lox": "skip" },
+
+        # now classes are instance of Class
+        { "test/field/set_on_function.lox": "skip" },
+        { "test/field/get_on_function.lox": "skip" },
     )
 
     # cloxx behaves like jlox
