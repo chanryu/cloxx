@@ -5,18 +5,18 @@
 
 namespace cloxx {
 
-std::string LoxStringInstance::toString()
+std::string LoxString::toString()
 {
     return value;
 }
 
-bool LoxStringInstance::equals(std::shared_ptr<LoxObject> const& object)
+bool LoxString::equals(std::shared_ptr<LoxObject> const& object)
 {
-    if (LoxInstance::equals(object)) {
+    if (LoxObject::equals(object)) {
         return true;
     }
 
-    if (auto str = dynamic_cast<LoxStringInstance const*>(object.get())) {
+    if (auto str = dynamic_cast<LoxString const*>(object.get())) {
         return value == str->value;
     }
 
@@ -29,9 +29,9 @@ class LoxStringClass : public LoxClass {
 public:
     using LoxClass::LoxClass;
 
-    std::shared_ptr<LoxInstance> createInstance(std::shared_ptr<LoxClass> const& klass) override
+    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
     {
-        return _interpreter->create<LoxStringInstance>(klass);
+        return _interpreter->create<LoxString>(klass);
     }
 };
 
@@ -46,7 +46,7 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createStringMethods(Interpre
 
 std::shared_ptr<LoxClass> createStringClass(Interpreter* interpreter)
 {
-    return interpreter->create<LoxStringClass>(interpreter, "String", /*superclass*/ nullptr,
+    return interpreter->create<LoxStringClass>(interpreter, "String", interpreter->objectClass(),
                                                createStringMethods(interpreter));
 }
 

@@ -1,15 +1,15 @@
 #pragma once
 
-#include "LoxInstance.hpp"
+#include "LoxObject.hpp"
 
 namespace cloxx {
 
 class LoxClass;
 class Interpreter;
 
-class LoxStringInstance : public LoxInstance {
+class LoxString : public LoxObject {
 public:
-    using LoxInstance::LoxInstance;
+    using LoxObject::LoxObject;
 
     std::string toString() override;
     bool equals(std::shared_ptr<LoxObject> const& object) override;

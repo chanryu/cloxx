@@ -8,11 +8,9 @@
 
 #include "LoxBool.hpp"
 #include "LoxClass.hpp"
-#include "LoxInstance.hpp"
 #include "LoxList.hpp"
 #include "LoxNil.hpp"
 #include "LoxNumber.hpp"
-#include "LoxObject.hpp"
 #include "LoxString.hpp"
 #include "LoxUserFunction.hpp"
 
@@ -24,7 +22,7 @@ template <typename T, size_t N>
 struct OperandErrorMessage {};
 
 template <>
-struct OperandErrorMessage<LoxNumberInstance, 1> {
+struct OperandErrorMessage<LoxNumber, 1> {
     static auto get()
     {
         return "Operand must be a number.";
@@ -32,7 +30,7 @@ struct OperandErrorMessage<LoxNumberInstance, 1> {
 };
 
 template <size_t N>
-struct OperandErrorMessage<LoxNumberInstance, N> {
+struct OperandErrorMessage<LoxNumber, N> {
     static auto get()
     {
         return "Operands must be numbers.";
@@ -40,7 +38,7 @@ struct OperandErrorMessage<LoxNumberInstance, N> {
 };
 
 template <size_t N>
-struct OperandErrorMessage<LoxStringInstance, N> {
+struct OperandErrorMessage<LoxString, N> {
     static auto get()
     {
         return "Operands must be strings.";
@@ -70,19 +68,27 @@ private:
 
 Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalObjectsProc)
     : _errorReporter{errorReporter}
+
 {
     _globals = _gc.root();
     _environment = _globals;
 
-    // Built-in classes.
-    // NB - `Function` class should come earlier than
-    // the other classes as they are depending on it.
-    _globals->define("Function", createFunctionClass(this));
-    _globals->define("Nil", createNilClass(this));
-    _globals->define("Bool", createBoolClass(this));
-    _globals->define("List", createListClass(this));
-    _globals->define("Number", createNumberClass(this));
-    _globals->define("String", createStringClass(this));
+    _objectClass = createObjectClass(this);
+    _functionClass = createFunctionClass(this);
+    _nilClass = createNilClass(this);
+    _boolClass = createBoolClass(this);
+    _numberClass = createNumberClass(this);
+    _stringClass = createStringClass(this);
+    _listClass = createListClass(this);
+
+    // Built-in classes - Object, Class, Function, Nil
+    _globals->define("Object", _objectClass);
+    _globals->define("Function", _functionClass);
+    _globals->define("Nil", _nilClass);
+    _globals->define("Bool", _boolClass);
+    _globals->define("Number", _numberClass);
+    _globals->define("String", _stringClass);
+    _globals->define("List", _listClass);
 
     // System defined objects.
     for (auto& [name, value] : globalObjectsProc(this)) {
@@ -90,50 +96,46 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
     }
 }
 
+std::shared_ptr<LoxClass> Interpreter::objectClass()
+{
+    LOX_ASSERT(_objectClass);
+    return _objectClass;
+}
+
+std::shared_ptr<LoxClass> Interpreter::functionClass()
+{
+    LOX_ASSERT(_functionClass);
+    return _functionClass;
+}
+
 std::shared_ptr<LoxObject> Interpreter::makeLoxNil()
 {
-    // FIXME: we need immutable global env for built-in classes
-    auto nilClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Nil"));
-    LOX_ASSERT(nilClass);
-    return nilClass->call({});
+    LOX_ASSERT(_nilClass);
+    return _nilClass->call({});
 }
 
 std::shared_ptr<LoxObject> Interpreter::toLoxBool(bool value)
 {
-    // FIXME: we need immutable global env for built-in classes
-    auto boolClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Bool"));
-    LOX_ASSERT(boolClass);
-    auto instance = boolClass->call({});
-    static_cast<LoxBoolInstance*>(instance.get())->value = value;
+    LOX_ASSERT(_boolClass);
+    auto instance = _boolClass->call({});
+    static_cast<LoxBool*>(instance.get())->value = value;
     return instance;
 }
 
 std::shared_ptr<LoxObject> Interpreter::toLoxNumber(double value)
 {
-    // FIXME: we need immutable global env for built-in classes
-    auto numberClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Number"));
-    LOX_ASSERT(numberClass);
-    auto instance = numberClass->call({});
-    static_cast<LoxNumberInstance*>(instance.get())->value = value;
+    LOX_ASSERT(_numberClass);
+    auto instance = _numberClass->call({});
+    static_cast<LoxNumber*>(instance.get())->value = value;
     return instance;
 }
 
 std::shared_ptr<LoxObject> Interpreter::toLoxString(std::string value)
 {
-    // FIXME: we need immutable global env for built-in classes
-    auto stringClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "String"));
-    LOX_ASSERT(stringClass);
-    auto instance = stringClass->call({});
-    static_cast<LoxStringInstance*>(instance.get())->value = value;
+    LOX_ASSERT(_stringClass);
+    auto instance = _stringClass->call({});
+    static_cast<LoxString*>(instance.get())->value = value;
     return instance;
-}
-
-std::shared_ptr<LoxClass> Interpreter::functionClass()
-{
-    // FIXME: we need immutable global env for built-in classes
-    auto functionClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Function"));
-    LOX_ASSERT(functionClass);
-    return functionClass;
 }
 
 void Interpreter::interpret(Stmt const& stmt)
@@ -298,49 +300,49 @@ void Interpreter::visit(BinaryExpr const& expr)
 
     switch (expr.op.type) {
     case Token::GREATER:
-        ensureOperands<LoxNumberInstance>(expr.op, left, right, [this](auto left, auto right) {
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxBool(left > right));
         });
         break;
     case Token::GREATER_EQUAL:
-        ensureOperands<LoxNumberInstance>(expr.op, left, right, [this](auto left, auto right) {
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxBool(left >= right));
         });
         break;
     case Token::LESS:
-        ensureOperands<LoxNumberInstance>(expr.op, left, right, [this](auto left, auto right) {
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxBool(left < right));
         });
         break;
     case Token::LESS_EQUAL:
-        ensureOperands<LoxNumberInstance>(expr.op, left, right, [this](auto left, auto right) {
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxBool(left <= right));
         });
         break;
     case Token::MINUS:
-        ensureOperands<LoxNumberInstance>(expr.op, left, right, [this](auto left, auto right) {
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxNumber(left - right));
         });
         break;
     case Token::PLUS:
-        if (matchOperands<LoxNumberInstance>(left, right, [this](auto left, auto right) {
+        if (matchOperands<LoxNumber>(left, right, [this](auto left, auto right) {
                 _evalResults.push_back(toLoxNumber(left + right));
             })) {
             break; // handled number + number
         }
-        if (matchOperands<LoxStringInstance>(left, right, [this](auto& left, auto& right) {
+        if (matchOperands<LoxString>(left, right, [this](auto& left, auto& right) {
                 _evalResults.push_back(toLoxString(left + right));
             })) {
             break; // handled string + string
         }
         throw RuntimeError(expr.op, "Operands must be two numbers or two strings.");
     case Token::SLASH:
-        ensureOperands<LoxNumberInstance>(expr.op, left, right, [this](auto left, auto right) {
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxNumber(left / right));
         });
         break;
     case Token::STAR:
-        ensureOperands<LoxNumberInstance>(expr.op, left, right, [this](auto left, auto right) {
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
             _evalResults.push_back(toLoxNumber(left * right));
         });
         break;
@@ -381,13 +383,7 @@ void Interpreter::visit(CallExpr const& expr)
 void Interpreter::visit(GetExpr const& expr)
 {
     auto object = evaluate(expr.object);
-
-    if (auto instance = dynamic_cast<LoxInstance*>(object.get())) {
-        _evalResults.push_back(instance->get(expr.name));
-        return;
-    }
-
-    throw RuntimeError(expr.name, "Only instances have properties.");
+    _evalResults.push_back(object->get(expr.name));
 }
 
 void Interpreter::visit(GroupingExpr const& expr)
@@ -443,16 +439,11 @@ void Interpreter::visit(LogicalExpr const& expr)
 void Interpreter::visit(SetExpr const& expr)
 {
     auto object = evaluate(expr.object);
+    auto value = evaluate(expr.value);
 
-    if (auto instance = dynamic_cast<LoxInstance*>(object.get())) {
-        auto value = evaluate(expr.value);
-        instance->set(expr.name, value);
+    object->set(expr.name, value);
 
-        _evalResults.push_back(value);
-        return;
-    }
-
-    throw RuntimeError(expr.name, "Only instances have fields.");
+    _evalResults.push_back(value);
 }
 
 void Interpreter::visit(ThisExpr const& expr)
@@ -476,7 +467,7 @@ void Interpreter::visit(SuperExpr const& expr)
     LOX_ASSERT(distance >= 0);
 
     auto superclass = std::static_pointer_cast<LoxClass>(_environment->getAt(distance, "super"));
-    auto instance = std::static_pointer_cast<LoxInstance>(_environment->getAt(distance - 1, "this"));
+    auto instance = _environment->getAt(distance - 1, "this");
     LOX_ASSERT(superclass);
     LOX_ASSERT(instance);
 
@@ -497,7 +488,7 @@ void Interpreter::visit(UnaryExpr const& expr)
     }
     else {
         LOX_ASSERT(expr.op.type == Token::MINUS);
-        ensureOperand<LoxNumberInstance>(expr.op, right, [this](double value) {
+        ensureOperand<LoxNumber>(expr.op, right, [this](double value) {
             _evalResults.push_back(toLoxNumber(-value));
         });
     }

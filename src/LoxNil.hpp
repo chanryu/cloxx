@@ -5,7 +5,6 @@
 namespace cloxx {
 
 class LoxClass;
-class LoxInstance;
 class Interpreter;
 
 std::shared_ptr<LoxClass> createNilClass(Interpreter* interpreter);

@@ -3,7 +3,6 @@
 #include "Assert.hpp"
 #include "Interpreter.hpp"
 #include "LoxClass.hpp"
-#include "LoxInstance.hpp"
 #include "LoxNativeFunction.hpp"
 #include "LoxNil.hpp"
 #include "LoxNumber.hpp"
@@ -12,13 +11,13 @@
 namespace cloxx {
 
 namespace {
-class LoxListInstance : public LoxInstance {
+class LoxList : public LoxObject {
 public:
-    using LoxInstance::LoxInstance;
+    using LoxObject::LoxObject;
 
     void enumerateTraceables(Enumerator const& enumerator) override
     {
-        LoxInstance::enumerateTraceables(enumerator);
+        LoxObject::enumerateTraceables(enumerator);
 
         for (auto& item : items) {
             if (auto traceable = dynamic_cast<Traceable*>(item.get())) {
@@ -29,7 +28,7 @@ public:
 
     void reclaim() override
     {
-        LoxInstance::reclaim();
+        LoxObject::reclaim();
 
         items.clear();
     }
@@ -42,16 +41,16 @@ class LoxListClass : public LoxClass {
 public:
     using LoxClass::LoxClass;
 
-    std::shared_ptr<LoxInstance> createInstance(std::shared_ptr<LoxClass> const& klass) override
+    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
     {
-        return _interpreter->create<LoxListInstance>(klass);
+        return _interpreter->create<LoxList>(klass);
     }
 };
 
-auto toListInstance(std::shared_ptr<LoxInstance> const& instance)
+auto toListInstance(std::shared_ptr<LoxObject> const& instance)
 {
-    LOX_ASSERT(std::dynamic_pointer_cast<LoxListInstance>(instance));
-    return static_cast<LoxListInstance*>(instance.get());
+    LOX_ASSERT(std::dynamic_pointer_cast<LoxList>(instance));
+    return static_cast<LoxList*>(instance.get());
 }
 
 std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interpreter* interpreter)
@@ -72,7 +71,7 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interprete
                                    LOX_ASSERT(args.size() == 1);
 
                                    std::shared_ptr<LoxObject> result;
-                                   if (auto number = dynamic_cast<LoxNumberInstance*>(args[0].get())) {
+                                   if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
                                        auto& items = toListInstance(instance)->items;
                                        if (auto index = static_cast<size_t>(number->value); index < items.size()) {
                                            result = items[index];
@@ -89,7 +88,7 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interprete
                                    LOX_ASSERT(args.size() == 2);
 
                                    std::shared_ptr<LoxObject> result;
-                                   if (auto number = dynamic_cast<LoxNumberInstance*>(args[0].get())) {
+                                   if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
                                        auto& items = toListInstance(instance)->items;
                                        if (auto index = static_cast<size_t>(number->value); index < items.size()) {
                                            items[index] = args[1];
@@ -137,7 +136,7 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interprete
 
 std::shared_ptr<LoxClass> createListClass(Interpreter* interpreter)
 {
-    return interpreter->create<LoxListClass>(interpreter, "List", /*superclass*/ nullptr,
+    return interpreter->create<LoxListClass>(interpreter, "List", interpreter->objectClass(),
                                              createListMethods(interpreter));
 }
 

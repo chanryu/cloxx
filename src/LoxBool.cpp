@@ -3,7 +3,6 @@
 #include "Assert.hpp"
 #include "Interpreter.hpp"
 #include "LoxClass.hpp"
-#include "LoxInstance.hpp"
 #include "LoxNativeFunction.hpp"
 #include "LoxNil.hpp"
 
@@ -15,9 +14,9 @@ class LoxBoolClass : public LoxClass {
 public:
     using LoxClass::LoxClass;
 
-    std::shared_ptr<LoxInstance> createInstance(std::shared_ptr<LoxClass> const& klass) override
+    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
     {
-        return _interpreter->create<LoxBoolInstance>(klass);
+        return _interpreter->create<LoxBool>(klass);
     }
 };
 
@@ -30,25 +29,25 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createBoolMethods(Interprete
 
 } // namespace
 
-bool LoxBoolInstance::isTruthy()
+bool LoxBool::isTruthy()
 {
     return value;
 }
 
-std::string LoxBoolInstance::toString()
+std::string LoxBool::toString()
 {
     return value ? "true" : "false";
 }
 
-bool LoxBoolInstance::equals(std::shared_ptr<LoxObject> const& object)
+bool LoxBool::equals(std::shared_ptr<LoxObject> const& object)
 {
-    auto other = std::dynamic_pointer_cast<LoxBoolInstance>(object);
+    auto other = std::dynamic_pointer_cast<LoxBool>(object);
     return other && value == other->value;
 }
 
 std::shared_ptr<LoxClass> createBoolClass(Interpreter* interpreter)
 {
-    return interpreter->create<LoxBoolClass>(interpreter, "Bool", /*superclass*/ nullptr,
+    return interpreter->create<LoxBoolClass>(interpreter, "Bool", interpreter->objectClass(),
                                              createBoolMethods(interpreter));
 }
 

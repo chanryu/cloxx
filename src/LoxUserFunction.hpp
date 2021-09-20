@@ -30,7 +30,7 @@ public:
     void enumerateTraceables(Traceable::Enumerator const& enumerator) override;
     void reclaim() override;
 
-    std::shared_ptr<LoxFunction> bind(std::shared_ptr<LoxInstance> const& instance) const override;
+    std::shared_ptr<LoxFunction> bind(std::shared_ptr<LoxObject> const& instance) const override;
 
 private:
     Interpreter* const _interpreter;

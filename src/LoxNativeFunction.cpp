@@ -5,7 +5,7 @@
 namespace cloxx {
 
 LoxNativeFunction::LoxNativeFunction(PrivateCreationTag tag, Interpreter* interpreter, size_t arity, Body body,
-                                     std::shared_ptr<LoxInstance> const& instance)
+                                     std::shared_ptr<LoxObject> const& instance)
     : LoxFunction{tag, interpreter->functionClass()},
       _interpreter{interpreter}, _arity{arity}, _body{std::move(body)}, _instance{instance}
 {}
@@ -27,6 +27,8 @@ std::shared_ptr<LoxObject> LoxNativeFunction::call(std::vector<std::shared_ptr<L
 
 void LoxNativeFunction::enumerateTraceables(Traceable::Enumerator const& enumerator)
 {
+    LoxFunction::enumerateTraceables(enumerator);
+
     if (_instance) {
         enumerator.enumerate(*this);
     }
@@ -34,10 +36,12 @@ void LoxNativeFunction::enumerateTraceables(Traceable::Enumerator const& enumera
 
 void LoxNativeFunction::reclaim()
 {
+    LoxFunction::reclaim();
+
     _instance.reset();
 }
 
-std::shared_ptr<LoxFunction> LoxNativeFunction::bind(std::shared_ptr<LoxInstance> const& instance) const
+std::shared_ptr<LoxFunction> LoxNativeFunction::bind(std::shared_ptr<LoxObject> const& instance) const
 {
     return _interpreter->create<LoxNativeFunction>(_interpreter, _arity, _body, instance);
 }
