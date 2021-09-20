@@ -16,8 +16,13 @@ class Interpreter;
 struct Token;
 
 class LoxObject : public Traceable, public std::enable_shared_from_this<LoxObject> {
-public:
+private:
+    // A constructor for LoxClass where `klass` is missing.
+    // All other classes should use the other constructor.
+    friend class LoxClass;
     LoxObject(PrivateCreationTag tag);
+
+public:
     LoxObject(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass);
     virtual ~LoxObject();
 
