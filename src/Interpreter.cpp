@@ -7,10 +7,10 @@
 #include "RuntimeError.hpp"
 
 #include "LoxBool.hpp"
+#include "LoxClass.hpp"
 #include "LoxList.hpp"
 #include "LoxNil.hpp"
 #include "LoxNumber.hpp"
-#include "LoxObject.hpp"
 #include "LoxString.hpp"
 #include "LoxUserFunction.hpp"
 
@@ -74,7 +74,8 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
 
     // Built-in classes.
     // NB - `Function` class should come earlier than
-    // the other classes as they are depending on it.
+    // the most of the other classes as they are depending on it.
+    _globals->define("Object", createObjectClass(this));
     _globals->define("Function", createFunctionClass(this));
     _globals->define("Nil", createNilClass(this));
     _globals->define("Bool", createBoolClass(this));
@@ -88,10 +89,26 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
     }
 }
 
+std::shared_ptr<LoxClass> Interpreter::objectClass()
+{
+    // FIXME: we need immutable global env for built-in classes
+    auto objectClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Object"));
+    LOX_ASSERT(objectClass);
+    return objectClass;
+}
+
+std::shared_ptr<LoxClass> Interpreter::functionClass()
+{
+    // FIXME: we need immutable global env for built-in classes
+    auto functionClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Function"));
+    LOX_ASSERT(functionClass);
+    return functionClass;
+}
+
 std::shared_ptr<LoxObject> Interpreter::makeLoxNil()
 {
     // FIXME: we need immutable global env for built-in classes
-    auto nilClass = std::dynamic_pointer_cast<LoxObjectClass>(_globals->getAt(0, "Nil"));
+    auto nilClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Nil"));
     LOX_ASSERT(nilClass);
     return nilClass->call({});
 }
@@ -99,7 +116,7 @@ std::shared_ptr<LoxObject> Interpreter::makeLoxNil()
 std::shared_ptr<LoxObject> Interpreter::toLoxBool(bool value)
 {
     // FIXME: we need immutable global env for built-in classes
-    auto boolClass = std::dynamic_pointer_cast<LoxObjectClass>(_globals->getAt(0, "Bool"));
+    auto boolClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Bool"));
     LOX_ASSERT(boolClass);
     auto instance = boolClass->call({});
     static_cast<LoxBool*>(instance.get())->value = value;
@@ -109,7 +126,7 @@ std::shared_ptr<LoxObject> Interpreter::toLoxBool(bool value)
 std::shared_ptr<LoxObject> Interpreter::toLoxNumber(double value)
 {
     // FIXME: we need immutable global env for built-in classes
-    auto numberClass = std::dynamic_pointer_cast<LoxObjectClass>(_globals->getAt(0, "Number"));
+    auto numberClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Number"));
     LOX_ASSERT(numberClass);
     auto instance = numberClass->call({});
     static_cast<LoxNumber*>(instance.get())->value = value;
@@ -119,19 +136,11 @@ std::shared_ptr<LoxObject> Interpreter::toLoxNumber(double value)
 std::shared_ptr<LoxObject> Interpreter::toLoxString(std::string value)
 {
     // FIXME: we need immutable global env for built-in classes
-    auto stringClass = std::dynamic_pointer_cast<LoxObjectClass>(_globals->getAt(0, "String"));
+    auto stringClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "String"));
     LOX_ASSERT(stringClass);
     auto instance = stringClass->call({});
     static_cast<LoxString*>(instance.get())->value = value;
     return instance;
-}
-
-std::shared_ptr<LoxObjectClass> Interpreter::functionClass()
-{
-    // FIXME: we need immutable global env for built-in classes
-    auto functionClass = std::dynamic_pointer_cast<LoxObjectClass>(_globals->getAt(0, "Function"));
-    LOX_ASSERT(functionClass);
-    return functionClass;
 }
 
 void Interpreter::interpret(Stmt const& stmt)
@@ -239,10 +248,10 @@ void Interpreter::visit(FunStmt const& stmt)
 
 void Interpreter::visit(ClassStmt const& stmt)
 {
-    std::shared_ptr<LoxObjectClass> superclass;
+    std::shared_ptr<LoxClass> superclass;
     if (stmt.superclass) {
         auto object = evaluate(*stmt.superclass);
-        superclass = std::dynamic_pointer_cast<LoxObjectClass>(object);
+        superclass = std::dynamic_pointer_cast<LoxClass>(object);
         if (!superclass) {
             throw RuntimeError(stmt.superclass->name, "Superclass must be a class.");
         }
@@ -263,7 +272,7 @@ void Interpreter::visit(ClassStmt const& stmt)
         methods.emplace(method.name.lexeme, function);
     }
 
-    auto klass = create<LoxObjectClass>(this, stmt.name.lexeme, superclass, methods);
+    auto klass = create<LoxClass>(this, stmt.name.lexeme, superclass, methods);
 
     if (superclass) {
         _environment = enclosingEnvironment;
@@ -462,7 +471,7 @@ void Interpreter::visit(SuperExpr const& expr)
     auto distance = expr.depth();
     LOX_ASSERT(distance >= 0);
 
-    auto superclass = std::static_pointer_cast<LoxObjectClass>(_environment->getAt(distance, "super"));
+    auto superclass = std::static_pointer_cast<LoxClass>(_environment->getAt(distance, "super"));
     auto instance = _environment->getAt(distance - 1, "this");
     LOX_ASSERT(superclass);
     LOX_ASSERT(instance);

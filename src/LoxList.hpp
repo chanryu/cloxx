@@ -4,9 +4,9 @@
 
 namespace cloxx {
 
-class LoxObjectClass;
+class LoxClass;
 class Interpreter;
 
-std::shared_ptr<LoxObjectClass> createListClass(Interpreter* interpreter);
+std::shared_ptr<LoxClass> createListClass(Interpreter* interpreter);
 
 } // namespace cloxx

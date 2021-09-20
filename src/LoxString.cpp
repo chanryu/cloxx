@@ -1,7 +1,7 @@
 #include "LoxString.hpp"
 
 #include "Interpreter.hpp"
-#include "LoxObject.hpp"
+#include "LoxClass.hpp"
 
 namespace cloxx {
 
@@ -25,11 +25,11 @@ bool LoxString::equals(std::shared_ptr<LoxObject> const& object)
 
 namespace {
 
-class LoxStringClass : public LoxObjectClass {
+class LoxStringClass : public LoxClass {
 public:
-    using LoxObjectClass::LoxObjectClass;
+    using LoxClass::LoxClass;
 
-    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxObjectClass> const& klass) override
+    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
     {
         return _interpreter->create<LoxString>(klass);
     }
@@ -44,9 +44,9 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createStringMethods(Interpre
 
 } // namespace
 
-std::shared_ptr<LoxObjectClass> createStringClass(Interpreter* interpreter)
+std::shared_ptr<LoxClass> createStringClass(Interpreter* interpreter)
 {
-    return interpreter->create<LoxStringClass>(interpreter, "String", /*superclass*/ nullptr,
+    return interpreter->create<LoxStringClass>(interpreter, "String", interpreter->objectClass(),
                                                createStringMethods(interpreter));
 }
 

@@ -2,10 +2,10 @@
 
 #include "Assert.hpp"
 #include "Interpreter.hpp"
+#include "LoxClass.hpp"
 #include "LoxNativeFunction.hpp"
 #include "LoxNil.hpp"
 #include "LoxNumber.hpp"
-#include "LoxObject.hpp"
 #include "LoxString.hpp"
 
 namespace cloxx {
@@ -37,11 +37,11 @@ public:
     bool isStringifying = false;
 };
 
-class LoxListClass : public LoxObjectClass {
+class LoxListClass : public LoxClass {
 public:
-    using LoxObjectClass::LoxObjectClass;
+    using LoxClass::LoxClass;
 
-    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxObjectClass> const& klass) override
+    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
     {
         return _interpreter->create<LoxListInstance>(klass);
     }
@@ -134,9 +134,9 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interprete
 
 } // namespace
 
-std::shared_ptr<LoxObjectClass> createListClass(Interpreter* interpreter)
+std::shared_ptr<LoxClass> createListClass(Interpreter* interpreter)
 {
-    return interpreter->create<LoxListClass>(interpreter, "List", /*superclass*/ nullptr,
+    return interpreter->create<LoxListClass>(interpreter, "List", interpreter->objectClass(),
                                              createListMethods(interpreter));
 }
 

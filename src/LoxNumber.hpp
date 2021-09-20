@@ -4,7 +4,7 @@
 
 namespace cloxx {
 
-class LoxObjectClass;
+class LoxClass;
 class Interpreter;
 
 class LoxNumber : public LoxObject {
@@ -17,6 +17,6 @@ public:
     double value;
 };
 
-std::shared_ptr<LoxObjectClass> createNumberClass(Interpreter* interpreter);
+std::shared_ptr<LoxClass> createNumberClass(Interpreter* interpreter);
 
 } // namespace cloxx

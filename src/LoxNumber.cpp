@@ -1,7 +1,7 @@
 #include "LoxNumber.hpp"
 
 #include "Interpreter.hpp"
-#include "LoxObject.hpp"
+#include "LoxClass.hpp"
 
 namespace cloxx {
 
@@ -46,14 +46,14 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createNumberMethods(Interpre
     return methods;
 }
 
-class LoxNumberClass : public LoxObjectClass {
+class LoxNumberClass : public LoxClass {
 public:
     LoxNumberClass(PrivateCreationTag tag, Interpreter* interpreter, std::string name,
-                   std::shared_ptr<LoxObjectClass> const& superclass)
-        : LoxObjectClass{tag, interpreter, std::move(name), superclass, createNumberMethods(interpreter)}
+                   std::shared_ptr<LoxClass> const& superclass)
+        : LoxClass{tag, interpreter, std::move(name), superclass, createNumberMethods(interpreter)}
     {}
 
-    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxObjectClass> const& klass) override
+    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
     {
         return _interpreter->create<LoxNumber>(klass);
     }
@@ -61,9 +61,9 @@ public:
 
 } // namespace
 
-std::shared_ptr<LoxObjectClass> createNumberClass(Interpreter* interpreter)
+std::shared_ptr<LoxClass> createNumberClass(Interpreter* interpreter)
 {
-    return interpreter->create<LoxNumberClass>(interpreter, "Number", /*superclass*/ nullptr);
+    return interpreter->create<LoxNumberClass>(interpreter, "Number", interpreter->objectClass());
 }
 
 } // namespace cloxx
