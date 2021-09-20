@@ -84,7 +84,7 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
     _globals->define("Number", createNumberClass(this));
     _globals->define("String", createStringClass(this));
 
-    //
+    // System defined objects.
     for (auto& [name, value] : globalObjectsProc(this)) {
         _globals->define(name, value);
     }

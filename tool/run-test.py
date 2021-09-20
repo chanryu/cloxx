@@ -355,7 +355,7 @@ def _defineTestSuites():
         { "test/field/set_on_class.lox": "skip" },
         { "test/field/get_on_class.lox": "skip" },
 
-        # now classes are instance of Class
+        # now functions are instance of Function
         { "test/field/set_on_function.lox": "skip" },
         { "test/field/get_on_function.lox": "skip" },
     )
