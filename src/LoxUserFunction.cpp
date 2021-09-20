@@ -3,7 +3,7 @@
 #include "Assert.hpp"
 #include "Environment.hpp"
 #include "Interpreter.hpp"
-#include "LoxInstance.hpp"
+#include "LoxObject.hpp"
 
 #include "ast/Stmt.hpp"
 
@@ -19,7 +19,7 @@ LoxUserFunction::LoxUserFunction(PrivateCreationTag tag, Interpreter* interprete
     LOX_ASSERT(_closure);
 }
 
-std::shared_ptr<LoxFunction> LoxUserFunction::bind(std::shared_ptr<LoxInstance> const& instance) const
+std::shared_ptr<LoxFunction> LoxUserFunction::bind(std::shared_ptr<LoxObject> const& instance) const
 {
     LOX_ASSERT(instance);
 

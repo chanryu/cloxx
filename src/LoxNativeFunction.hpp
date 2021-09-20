@@ -11,11 +11,11 @@ class Interpreter;
 
 class LoxNativeFunction : public LoxFunction {
 public:
-    using Body = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<LoxInstance> const& instance,
+    using Body = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<LoxObject> const& instance,
                                                           std::vector<std::shared_ptr<LoxObject>> const&)>;
 
     LoxNativeFunction(PrivateCreationTag tag, Interpreter* interpreter, size_t arity, Body body,
-                      std::shared_ptr<LoxInstance> const& instance = nullptr);
+                      std::shared_ptr<LoxObject> const& instance = nullptr);
 
     std::string toString() override;
 
@@ -26,14 +26,14 @@ public:
     void enumerateTraceables(Traceable::Enumerator const& enumerator) override;
     void reclaim() override;
 
-    std::shared_ptr<LoxFunction> bind(std::shared_ptr<LoxInstance> const& instance) const override;
+    std::shared_ptr<LoxFunction> bind(std::shared_ptr<LoxObject> const& instance) const override;
 
 private:
     Interpreter* const _interpreter;
     size_t const _arity;
     Body const _body;
 
-    std::shared_ptr<LoxInstance> _instance;
+    std::shared_ptr<LoxObject> _instance;
 };
 
 } // namespace cloxx

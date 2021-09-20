@@ -15,7 +15,7 @@ namespace cloxx {
 class Environment;
 class ErrorReporter;
 
-class LoxClass;
+class LoxObjectClass;
 class LoxObject;
 class LoxFunction;
 
@@ -32,7 +32,7 @@ public:
         return _gc.create<T>(std::forward<Args>(args)...);
     }
 
-    std::shared_ptr<LoxClass> functionClass();
+    std::shared_ptr<LoxObjectClass> functionClass();
 
     std::shared_ptr<LoxObject> makeLoxNil();
     std::shared_ptr<LoxObject> toLoxBool(bool value);

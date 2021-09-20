@@ -3,20 +3,20 @@
 #include <memory>
 
 #include "Callable.hpp"
-#include "LoxInstance.hpp"
+#include "LoxObject.hpp"
 
 namespace cloxx {
 
 class Interpreter;
-class LoxClass;
+class LoxObjectClass;
 
-class LoxFunction : public LoxInstance, public Callable {
+class LoxFunction : public LoxObject, public Callable {
 public:
-    LoxFunction(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass);
+    LoxFunction(PrivateCreationTag tag, std::shared_ptr<LoxObjectClass> const& klass);
 
-    virtual std::shared_ptr<LoxFunction> bind(std::shared_ptr<LoxInstance> const& instance) const = 0;
+    virtual std::shared_ptr<LoxFunction> bind(std::shared_ptr<LoxObject> const& instance) const = 0;
 };
 
-std::shared_ptr<LoxClass> createFunctionClass(Interpreter* interpreter);
+std::shared_ptr<LoxObjectClass> createFunctionClass(Interpreter* interpreter);
 
 } // namespace cloxx

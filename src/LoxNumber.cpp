@@ -1,11 +1,11 @@
 #include "LoxNumber.hpp"
 
 #include "Interpreter.hpp"
-#include "LoxClass.hpp"
+#include "LoxObject.hpp"
 
 namespace cloxx {
 
-std::string LoxNumberInstance::toString()
+std::string LoxNumber::toString()
 {
     auto str = std::to_string(value);
 
@@ -24,13 +24,13 @@ std::string LoxNumberInstance::toString()
     return str;
 }
 
-bool LoxNumberInstance::equals(std::shared_ptr<LoxObject> const& object)
+bool LoxNumber::equals(std::shared_ptr<LoxObject> const& object)
 {
-    if (LoxInstance::equals(object)) {
+    if (LoxObject::equals(object)) {
         return true;
     }
 
-    if (auto num = dynamic_cast<LoxNumberInstance const*>(object.get())) {
+    if (auto num = dynamic_cast<LoxNumber const*>(object.get())) {
         return value == num->value;
     }
 
@@ -46,22 +46,22 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createNumberMethods(Interpre
     return methods;
 }
 
-class LoxNumberClass : public LoxClass {
+class LoxNumberClass : public LoxObjectClass {
 public:
     LoxNumberClass(PrivateCreationTag tag, Interpreter* interpreter, std::string name,
-                   std::shared_ptr<LoxClass> const& superclass)
-        : LoxClass{tag, interpreter, std::move(name), superclass, createNumberMethods(interpreter)}
+                   std::shared_ptr<LoxObjectClass> const& superclass)
+        : LoxObjectClass{tag, interpreter, std::move(name), superclass, createNumberMethods(interpreter)}
     {}
 
-    std::shared_ptr<LoxInstance> createInstance(std::shared_ptr<LoxClass> const& klass) override
+    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxObjectClass> const& klass) override
     {
-        return _interpreter->create<LoxNumberInstance>(klass);
+        return _interpreter->create<LoxNumber>(klass);
     }
 };
 
 } // namespace
 
-std::shared_ptr<LoxClass> createNumberClass(Interpreter* interpreter)
+std::shared_ptr<LoxObjectClass> createNumberClass(Interpreter* interpreter)
 {
     return interpreter->create<LoxNumberClass>(interpreter, "Number", /*superclass*/ nullptr);
 }
