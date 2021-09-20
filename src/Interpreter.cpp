@@ -74,20 +74,20 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
     _globals = _gc.root();
     _environment = _globals;
 
-    // Define `Function` class
-    // This should come earlier than most of the other classes as they are depending on it.
+    // Built-in classes.
+    // NB - `Function` class should come earlier than
+    // the other classes as they are depending on it.
     _globals->define("Function", createFunctionClass(this));
-
-    for (auto& [name, value] : globalObjectsProc(this)) {
-        _globals->define(name, value);
-    }
-
-    // buil-in classes.
     _globals->define("Nil", createNilClass(this));
     _globals->define("Bool", createBoolClass(this));
     _globals->define("List", createListClass(this));
     _globals->define("Number", createNumberClass(this));
     _globals->define("String", createStringClass(this));
+
+    //
+    for (auto& [name, value] : globalObjectsProc(this)) {
+        _globals->define(name, value);
+    }
 }
 
 std::shared_ptr<LoxObject> Interpreter::makeLoxNil()
