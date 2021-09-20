@@ -76,6 +76,7 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
     // NB - `Function` class should come earlier than
     // the most of the other classes as they are depending on it.
     _globals->define("Object", createObjectClass(this));
+    _globals->define("Class", createClassClass(this));
     _globals->define("Function", createFunctionClass(this));
     _globals->define("Nil", createNilClass(this));
     _globals->define("Bool", createBoolClass(this));

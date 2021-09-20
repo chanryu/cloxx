@@ -58,12 +58,15 @@ std::shared_ptr<LoxObject> LoxUserFunction::call(std::vector<std::shared_ptr<Lox
 
 void LoxUserFunction::enumerateTraceables(Traceable::Enumerator const& enumerator)
 {
+    LoxFunction::enumerateTraceables(enumerator);
+
     LOX_ASSERT(_closure);
     enumerator.enumerate(*_closure);
 }
 
 void LoxUserFunction::reclaim()
 {
+    LoxFunction::reclaim();
     _closure.reset();
 }
 

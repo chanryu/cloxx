@@ -11,7 +11,7 @@
 namespace cloxx {
 
 namespace {
-class LoxListInstance : public LoxObject {
+class LoxList : public LoxObject {
 public:
     using LoxObject::LoxObject;
 
@@ -43,14 +43,14 @@ public:
 
     std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
     {
-        return _interpreter->create<LoxListInstance>(klass);
+        return _interpreter->create<LoxList>(klass);
     }
 };
 
 auto toListInstance(std::shared_ptr<LoxObject> const& instance)
 {
-    LOX_ASSERT(std::dynamic_pointer_cast<LoxListInstance>(instance));
-    return static_cast<LoxListInstance*>(instance.get());
+    LOX_ASSERT(std::dynamic_pointer_cast<LoxList>(instance));
+    return static_cast<LoxList*>(instance.get());
 }
 
 std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Interpreter* interpreter)

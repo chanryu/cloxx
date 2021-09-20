@@ -27,6 +27,8 @@ std::shared_ptr<LoxObject> LoxNativeFunction::call(std::vector<std::shared_ptr<L
 
 void LoxNativeFunction::enumerateTraceables(Traceable::Enumerator const& enumerator)
 {
+    LoxFunction::enumerateTraceables(enumerator);
+
     if (_instance) {
         enumerator.enumerate(*this);
     }
@@ -34,6 +36,8 @@ void LoxNativeFunction::enumerateTraceables(Traceable::Enumerator const& enumera
 
 void LoxNativeFunction::reclaim()
 {
+    LoxFunction::reclaim();
+
     _instance.reset();
 }
 
