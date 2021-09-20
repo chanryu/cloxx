@@ -2,7 +2,7 @@
 
 namespace cloxx {
 
-LoxFunction::LoxFunction(PrivateCreationTag tag) : Traceable{tag}
+LoxFunction::LoxFunction(PrivateCreationTag tag) : LoxObject{tag}
 {}
 
 } // namespace cloxx

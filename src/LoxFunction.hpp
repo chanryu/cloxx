@@ -3,14 +3,13 @@
 #include <memory>
 
 #include "Callable.hpp"
-#include "GC.hpp"
 #include "LoxObject.hpp"
 
 namespace cloxx {
 
 class LoxInstance;
 
-class LoxFunction : public LoxObject, public Callable, public Traceable {
+class LoxFunction : public LoxObject, public Callable {
 public:
     LoxFunction(PrivateCreationTag tag);
 

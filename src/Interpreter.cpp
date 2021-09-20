@@ -3,7 +3,6 @@
 #include "Assert.hpp"
 #include "Environment.hpp"
 #include "ErrorReporter.hpp"
-#include "GC.hpp"
 #include "Resolver.hpp"
 #include "RuntimeError.hpp"
 
@@ -224,7 +223,7 @@ void Interpreter::visit(VarStmt const& stmt)
 
 void Interpreter::visit(FunStmt const& stmt)
 {
-    auto function = makeFunction(false, stmt.name, stmt.params, stmt.body);
+    auto function = makeFunction(/*isInitializer*/ false, stmt.name, stmt.params, stmt.body);
     _environment->define(stmt.name.lexeme, function);
 }
 

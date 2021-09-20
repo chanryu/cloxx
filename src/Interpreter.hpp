@@ -15,6 +15,7 @@ namespace cloxx {
 class Environment;
 class ErrorReporter;
 
+class LoxClass;
 class LoxObject;
 class LoxFunction;
 
