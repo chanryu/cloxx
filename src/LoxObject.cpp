@@ -24,8 +24,7 @@ LoxObject::LoxObject(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& kl
 #endif
 }
 
-LoxObject::LoxObject(PrivateCreationTag tag, std::map<std::string, std::shared_ptr<LoxObject>> fields)
-    : Traceable{tag}, _fields{std::move(fields)}
+LoxObject::LoxObject(PrivateCreationTag tag) : Traceable{tag}
 {
 #ifdef CLOXX_GC_DEBUG
     objectInstanceCount += 1;

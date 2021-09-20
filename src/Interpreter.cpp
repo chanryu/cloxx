@@ -68,21 +68,29 @@ private:
 
 Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalObjectsProc)
     : _errorReporter{errorReporter}
+
 {
     _globals = _gc.root();
     _environment = _globals;
 
-    // Built-in classes.
-    // NB - `Function` class should come earlier than
-    // the most of the other classes as they are depending on it.
-    _globals->define("Object", createObjectClass(this));
-    _globals->define("Class", createClassClass(this));
-    _globals->define("Function", createFunctionClass(this));
-    _globals->define("Nil", createNilClass(this));
-    _globals->define("Bool", createBoolClass(this));
-    _globals->define("List", createListClass(this));
-    _globals->define("Number", createNumberClass(this));
-    _globals->define("String", createStringClass(this));
+    _objectClass = createObjectClass(this);
+    _classClass = createClassClass(this);
+    _functionClass = createFunctionClass(this);
+    _nilClass = createNilClass(this);
+    _boolClass = createBoolClass(this);
+    _numberClass = createNumberClass(this);
+    _stringClass = createStringClass(this);
+    _listClass = createListClass(this);
+
+    // Built-in classes - Object, Class, Function, Nil
+    _globals->define("Object", _objectClass);
+    _globals->define("Class", _classClass);
+    _globals->define("Function", _functionClass);
+    _globals->define("Nil", _nilClass);
+    _globals->define("Bool", _boolClass);
+    _globals->define("Number", _numberClass);
+    _globals->define("String", _stringClass);
+    _globals->define("List", _listClass);
 
     // System defined objects.
     for (auto& [name, value] : globalObjectsProc(this)) {
@@ -92,54 +100,48 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
 
 std::shared_ptr<LoxClass> Interpreter::objectClass()
 {
-    // FIXME: we need immutable global env for built-in classes
-    auto objectClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Object"));
-    LOX_ASSERT(objectClass);
-    return objectClass;
+    LOX_ASSERT(_objectClass);
+    return _objectClass;
+}
+
+std::shared_ptr<LoxClass> Interpreter::classClass()
+{
+    LOX_ASSERT(_classClass);
+    return _classClass;
 }
 
 std::shared_ptr<LoxClass> Interpreter::functionClass()
 {
-    // FIXME: we need immutable global env for built-in classes
-    auto functionClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Function"));
-    LOX_ASSERT(functionClass);
-    return functionClass;
+    LOX_ASSERT(_functionClass);
+    return _functionClass;
 }
 
 std::shared_ptr<LoxObject> Interpreter::makeLoxNil()
 {
-    // FIXME: we need immutable global env for built-in classes
-    auto nilClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Nil"));
-    LOX_ASSERT(nilClass);
-    return nilClass->call({});
+    LOX_ASSERT(_nilClass);
+    return _nilClass->call({});
 }
 
 std::shared_ptr<LoxObject> Interpreter::toLoxBool(bool value)
 {
-    // FIXME: we need immutable global env for built-in classes
-    auto boolClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Bool"));
-    LOX_ASSERT(boolClass);
-    auto instance = boolClass->call({});
+    LOX_ASSERT(_boolClass);
+    auto instance = _boolClass->call({});
     static_cast<LoxBool*>(instance.get())->value = value;
     return instance;
 }
 
 std::shared_ptr<LoxObject> Interpreter::toLoxNumber(double value)
 {
-    // FIXME: we need immutable global env for built-in classes
-    auto numberClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "Number"));
-    LOX_ASSERT(numberClass);
-    auto instance = numberClass->call({});
+    LOX_ASSERT(_numberClass);
+    auto instance = _numberClass->call({});
     static_cast<LoxNumber*>(instance.get())->value = value;
     return instance;
 }
 
 std::shared_ptr<LoxObject> Interpreter::toLoxString(std::string value)
 {
-    // FIXME: we need immutable global env for built-in classes
-    auto stringClass = std::dynamic_pointer_cast<LoxClass>(_globals->getAt(0, "String"));
-    LOX_ASSERT(stringClass);
-    auto instance = stringClass->call({});
+    LOX_ASSERT(_stringClass);
+    auto instance = _stringClass->call({});
     static_cast<LoxString*>(instance.get())->value = value;
     return instance;
 }

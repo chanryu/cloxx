@@ -33,6 +33,7 @@ public:
     }
 
     std::shared_ptr<LoxClass> objectClass();
+    std::shared_ptr<LoxClass> classClass();
     std::shared_ptr<LoxClass> functionClass();
 
     std::shared_ptr<LoxObject> makeLoxNil();
@@ -106,6 +107,16 @@ private:
     std::shared_ptr<Environment> _environment;
 
     std::vector<std::shared_ptr<LoxObject>> _evalResults;
+
+    // Built-in classes
+    std::shared_ptr<LoxClass> _objectClass;
+    std::shared_ptr<LoxClass> _classClass;
+    std::shared_ptr<LoxClass> _functionClass;
+    std::shared_ptr<LoxClass> _nilClass;
+    std::shared_ptr<LoxClass> _boolClass;
+    std::shared_ptr<LoxClass> _numberClass;
+    std::shared_ptr<LoxClass> _stringClass;
+    std::shared_ptr<LoxClass> _listClass;
 };
 
 } // namespace cloxx

@@ -17,8 +17,8 @@ struct Token;
 
 class LoxObject : public Traceable, public std::enable_shared_from_this<LoxObject> {
 public:
+    LoxObject(PrivateCreationTag tag);
     LoxObject(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass);
-    LoxObject(PrivateCreationTag tag, std::map<std::string, std::shared_ptr<LoxObject>> fields);
     virtual ~LoxObject();
 
 #ifdef CLOXX_GC_DEBUG
