@@ -9,11 +9,11 @@
 
 namespace cloxx {
 
-LoxUserFunction::LoxUserFunction(PrivateCreationTag tag, Interpreter* interepreter,
+LoxUserFunction::LoxUserFunction(PrivateCreationTag tag, Interpreter* interpreter,
                                  std::shared_ptr<Environment> const& closure, bool isInitializer, Token const& name,
                                  std::vector<Token> const& params, std::vector<Stmt> const& body,
                                  Executor const& executor)
-    : LoxFunction{tag}, _interpreter{interepreter}, _closure{closure},
+    : LoxFunction{tag, interpreter->functionClass()}, _interpreter{interpreter}, _closure{closure},
       _isInitializer{isInitializer}, _name{name}, _params{params}, _body{body}, _executor{executor}
 {
     LOX_ASSERT(_closure);

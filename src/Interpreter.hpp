@@ -32,6 +32,8 @@ public:
         return _gc.create<T>(std::forward<Args>(args)...);
     }
 
+    std::shared_ptr<LoxClass> functionClass();
+
     std::shared_ptr<LoxObject> makeLoxNil();
     std::shared_ptr<LoxObject> toLoxBool(bool value);
     std::shared_ptr<LoxObject> toLoxNumber(double value);

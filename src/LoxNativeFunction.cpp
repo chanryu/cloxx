@@ -6,7 +6,8 @@ namespace cloxx {
 
 LoxNativeFunction::LoxNativeFunction(PrivateCreationTag tag, Interpreter* interpreter, size_t arity, Body body,
                                      std::shared_ptr<LoxInstance> const& instance)
-    : LoxFunction{tag}, _interpreter{interpreter}, _arity{arity}, _body{std::move(body)}, _instance{instance}
+    : LoxFunction{tag, interpreter->functionClass()},
+      _interpreter{interpreter}, _arity{arity}, _body{std::move(body)}, _instance{instance}
 {}
 
 std::string LoxNativeFunction::toString()
