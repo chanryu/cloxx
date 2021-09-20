@@ -33,7 +33,6 @@ public:
     }
 
     std::shared_ptr<LoxClass> objectClass();
-    std::shared_ptr<LoxClass> classClass();
     std::shared_ptr<LoxClass> functionClass();
 
     std::shared_ptr<LoxObject> makeLoxNil();
@@ -110,7 +109,6 @@ private:
 
     // Built-in classes
     std::shared_ptr<LoxClass> _objectClass;
-    std::shared_ptr<LoxClass> _classClass;
     std::shared_ptr<LoxClass> _functionClass;
     std::shared_ptr<LoxClass> _nilClass;
     std::shared_ptr<LoxClass> _boolClass;

@@ -74,7 +74,6 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
     _environment = _globals;
 
     _objectClass = createObjectClass(this);
-    _classClass = createClassClass(this);
     _functionClass = createFunctionClass(this);
     _nilClass = createNilClass(this);
     _boolClass = createBoolClass(this);
@@ -84,7 +83,6 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
 
     // Built-in classes - Object, Class, Function, Nil
     _globals->define("Object", _objectClass);
-    _globals->define("Class", _classClass);
     _globals->define("Function", _functionClass);
     _globals->define("Nil", _nilClass);
     _globals->define("Bool", _boolClass);
@@ -102,12 +100,6 @@ std::shared_ptr<LoxClass> Interpreter::objectClass()
 {
     LOX_ASSERT(_objectClass);
     return _objectClass;
-}
-
-std::shared_ptr<LoxClass> Interpreter::classClass()
-{
-    LOX_ASSERT(_classClass);
-    return _classClass;
 }
 
 std::shared_ptr<LoxClass> Interpreter::functionClass()
