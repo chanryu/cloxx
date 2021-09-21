@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace cloxx {
@@ -47,6 +48,7 @@ struct Token {
         FUN,
         FOR,
         IF,
+        IMPORT,
         NIL,
         OR,
         RETURN,
@@ -69,5 +71,7 @@ struct Token {
     std::string lexeme;
     size_t line;
 };
+
+std::optional<Token::Type> lookupKeyword(std::string const& identifier);
 
 } // namespace cloxx
