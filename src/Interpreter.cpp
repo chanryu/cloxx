@@ -93,7 +93,7 @@ void Interpreter::interpret(Stmt const& stmt)
 
 void Interpreter::visit(BlockStmt const& stmt)
 {
-    auto blockEnv = _runtime.create<Environment>(_environment);
+    auto blockEnv = _runtime.createEnvironment(_environment);
     executeBlock(stmt.stmts, blockEnv);
 }
 
@@ -104,7 +104,7 @@ void Interpreter::visit(ExprStmt const& stmt)
 
 void Interpreter::visit(ForStmt const& stmt)
 {
-    ScopeSwitcher _{this, _runtime.create<Environment>(_environment)};
+    ScopeSwitcher _{this, _runtime.createEnvironment(_environment)};
 
     if (stmt.initializer) {
         stmt.initializer->accept(*this);
@@ -197,7 +197,7 @@ void Interpreter::visit(ClassStmt const& stmt)
 
     auto enclosingEnvironment = _environment;
     if (superclass) {
-        _environment = _runtime.create<Environment>(_environment);
+        _environment = _runtime.createEnvironment(_environment);
         _environment->define("super", superclass);
     }
 
@@ -208,7 +208,7 @@ void Interpreter::visit(ClassStmt const& stmt)
         methods.emplace(method.name.lexeme, function);
     }
 
-    auto klass = _runtime.create<LoxClass>(&_runtime, stmt.name.lexeme, superclass, methods);
+    auto klass = _runtime.create<LoxClass>(stmt.name.lexeme, superclass, methods);
 
     if (superclass) {
         _environment = enclosingEnvironment;
@@ -534,7 +534,7 @@ std::shared_ptr<LoxFunction> Interpreter::makeFunction(bool isInitializer, Token
         return _runtime.getNil();
     };
 
-    return _runtime.create<LoxUserFunction>(&_runtime, _environment, isInitializer, name, params, body, executor);
+    return _runtime.create<LoxUserFunction>(_environment, isInitializer, name, params, body, executor);
 }
 
 } // namespace cloxx

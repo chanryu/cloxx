@@ -48,7 +48,7 @@ bool LoxBool::equals(std::shared_ptr<LoxObject> const& object)
 
 std::shared_ptr<LoxClass> createBoolClass(Runtime* runtime)
 {
-    return runtime->create<LoxBoolClass>(runtime, "Bool", runtime->objectClass(), createBoolMethods(runtime));
+    return runtime->create<LoxBoolClass>("Bool", runtime->objectClass(), createBoolMethods(runtime));
 }
 
 } // namespace cloxx

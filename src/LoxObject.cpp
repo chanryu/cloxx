@@ -10,7 +10,8 @@
 
 namespace cloxx {
 
-LoxObject::LoxObject(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass) : Traceable{tag}, _class{klass}
+LoxObject::LoxObject(PrivateCreationTag tag, Runtime* /*runtime*/, std::shared_ptr<LoxClass> const& klass)
+    : Traceable{tag}, _class{klass}
 {
     LOX_ASSERT(_class);
 }
@@ -99,7 +100,7 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createObjectMethods(Runtime*
 
 std::shared_ptr<LoxClass> createObjectClass(Runtime* runtime)
 {
-    return runtime->create<LoxClass>(runtime, "Object", /*superclass*/ nullptr, createObjectMethods(runtime));
+    return runtime->create<LoxClass>("Object", /*superclass*/ nullptr, createObjectMethods(runtime));
 }
 
 } // namespace cloxx

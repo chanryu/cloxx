@@ -63,7 +63,7 @@ public:
 
 std::shared_ptr<LoxClass> createNumberClass(Runtime* runtime)
 {
-    return runtime->create<LoxNumberClass>(runtime, "Number", runtime->objectClass());
+    return runtime->create<LoxNumberClass>("Number", runtime->objectClass());
 }
 
 } // namespace cloxx

@@ -46,13 +46,12 @@ public:
     std::shared_ptr<T> create(Args&&... args)
     {
         auto traceable = std::make_shared<T>(Traceable::PrivateCreationTag{}, std::forward<Args>(args)...);
-        trace(traceable);
+        _weakTraceables.push_back(traceable);
         return traceable;
     }
 
     std::shared_ptr<Environment> const& root();
 
-    void trace(std::shared_ptr<Traceable> const& traceable);
     size_t collect();
 
 private:

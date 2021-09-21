@@ -46,7 +46,7 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createStringMethods(Runtime*
 
 std::shared_ptr<LoxClass> createStringClass(Runtime* runtime)
 {
-    return runtime->create<LoxStringClass>(runtime, "String", runtime->objectClass(), createStringMethods(runtime));
+    return runtime->create<LoxStringClass>("String", runtime->objectClass(), createStringMethods(runtime));
 }
 
 } // namespace cloxx

@@ -53,7 +53,7 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createNilMethods(Runtime* /*
 
 std::shared_ptr<LoxClass> createNilClass(Runtime* runtime)
 {
-    return runtime->create<LoxNilClass>(runtime, "Nil", runtime->objectClass(), createNilMethods(runtime));
+    return runtime->create<LoxNilClass>("Nil", runtime->objectClass(), createNilMethods(runtime));
 }
 
 } // namespace cloxx

@@ -21,6 +21,11 @@ Runtime::Runtime()
     _gc.root()->define("List", _listClass);
 }
 
+std::shared_ptr<Environment> Runtime::createEnvironment(std::shared_ptr<Environment> const& closure)
+{
+    return _gc.create<Environment>(closure);
+}
+
 std::shared_ptr<Environment> const& Runtime::root()
 {
     return _gc.root();

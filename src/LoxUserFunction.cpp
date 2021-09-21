@@ -13,7 +13,7 @@ namespace cloxx {
 LoxUserFunction::LoxUserFunction(PrivateCreationTag tag, Runtime* runtime, std::shared_ptr<Environment> const& closure,
                                  bool isInitializer, Token const& name, std::vector<Token> const& params,
                                  std::vector<Stmt> const& body, Executor const& executor)
-    : LoxFunction{tag, runtime->functionClass()}, _runtime{runtime}, _closure{closure},
+    : LoxFunction{tag, runtime}, _runtime{runtime}, _closure{closure},
       _isInitializer{isInitializer}, _name{name}, _params{params}, _body{body}, _executor{executor}
 {
     LOX_ASSERT(_closure);
@@ -23,9 +23,9 @@ std::shared_ptr<LoxFunction> LoxUserFunction::bind(std::shared_ptr<LoxObject> co
 {
     LOX_ASSERT(instance);
 
-    auto closure = _runtime->create<Environment>(_closure);
+    auto closure = _runtime->createEnvironment(_closure);
     closure->define("this", instance);
-    return _runtime->create<LoxUserFunction>(_runtime, closure, _isInitializer, _name, _params, _body, _executor);
+    return _runtime->create<LoxUserFunction>(closure, _isInitializer, _name, _params, _body, _executor);
 }
 
 std::string LoxUserFunction::toString()
@@ -42,7 +42,7 @@ std::shared_ptr<LoxObject> LoxUserFunction::call(std::vector<std::shared_ptr<Lox
 {
     LOX_ASSERT(args.size() == _params.size());
 
-    auto env = _runtime->create<Environment>(_closure);
+    auto env = _runtime->createEnvironment(_closure);
     for (size_t i = 0; i < _params.size(); i++) {
         env->define(_params[i].lexeme, args[i]);
     }

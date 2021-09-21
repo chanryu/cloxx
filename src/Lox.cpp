@@ -25,16 +25,15 @@ auto makeBuiltIns(Runtime* runtime)
     std::map<std::string, std::shared_ptr<LoxObject>> builtIns;
 
     // global functions
-    builtIns.emplace("print", runtime->create<LoxNativeFunction>(runtime, 1, [runtime](auto& /*instance*/, auto& args) {
+    builtIns.emplace("print", runtime->create<LoxNativeFunction>(1, [runtime](auto& /*instance*/, auto& args) {
         std::cout << args[0]->toString() << '\n';
         return runtime->getNil();
     }));
-    builtIns.emplace("clock",
-                     runtime->create<LoxNativeFunction>(runtime, 0, [runtime](auto& /*instance*/, auto& /*args*/) {
-                         auto duration = std::chrono::steady_clock::now().time_since_epoch();
-                         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-                         return runtime->toLoxNumber(millis / 1000.0);
-                     }));
+    builtIns.emplace("clock", runtime->create<LoxNativeFunction>(0, [runtime](auto& /*instance*/, auto& /*args*/) {
+        auto duration = std::chrono::steady_clock::now().time_since_epoch();
+        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+        return runtime->toLoxNumber(millis / 1000.0);
+    }));
 
     return builtIns;
 }

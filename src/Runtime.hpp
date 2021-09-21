@@ -14,8 +14,10 @@ public:
     template <typename T, typename... Args>
     std::shared_ptr<T> create(Args&&... args)
     {
-        return _gc.create<T>(std::forward<Args>(args)...);
+        return _gc.create<T>(this, std::forward<Args>(args)...);
     }
+
+    std::shared_ptr<Environment> createEnvironment(std::shared_ptr<Environment> const& closure);
 
     std::shared_ptr<Environment> const& root();
     void collectGarbage();
