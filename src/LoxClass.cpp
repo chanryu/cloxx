@@ -9,8 +9,9 @@ namespace cloxx {
 
 LoxClass::LoxClass(PrivateCreationTag tag, Runtime* runtime, std::string name,
                    std::shared_ptr<LoxClass> const& superclass,
-                   std::map<std::string, std::shared_ptr<LoxFunction>> methods)
-    : LoxObject{tag}, _runtime{runtime}, _name{std::move(name)}, _superclass{superclass}, _methods{std::move(methods)}
+                   std::map<std::string, std::shared_ptr<LoxFunction>> methods, LoxObjectFactory objectFactory)
+    : LoxObject{tag}, _runtime{runtime}, _name{std::move(name)}, _superclass{superclass}, _methods{std::move(methods)},
+      _objectFactory{objectFactory}
 {}
 
 std::shared_ptr<LoxFunction> LoxClass::findMethod(std::string const& name) const
@@ -74,6 +75,10 @@ void LoxClass::reclaim()
 
 std::shared_ptr<LoxObject> LoxClass::createInstance(std::shared_ptr<LoxClass> const& klass)
 {
+    if (_objectFactory) {
+        return _objectFactory(klass);
+    }
+
     if (_superclass) {
         return _superclass->createInstance(klass);
     }

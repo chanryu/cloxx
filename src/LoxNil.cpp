@@ -32,16 +32,6 @@ public:
     }
 };
 
-class LoxNilClass : public LoxClass {
-public:
-    using LoxClass::LoxClass;
-
-    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
-    {
-        return _runtime->create<LoxNil>(klass);
-    }
-};
-
 std::map<std::string, std::shared_ptr<LoxFunction>> createNilMethods(Runtime* /*runtime*/)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
@@ -53,7 +43,10 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createNilMethods(Runtime* /*
 
 std::shared_ptr<LoxClass> createNilClass(Runtime* runtime)
 {
-    return runtime->create<LoxNilClass>("Nil", runtime->objectClass(), createNilMethods(runtime));
+    return runtime->create<LoxClass>("Nil", runtime->objectClass(), createNilMethods(runtime),
+                                     [runtime](auto const& klass) {
+                                         return runtime->create<LoxNil>(klass);
+                                     });
 }
 
 } // namespace cloxx

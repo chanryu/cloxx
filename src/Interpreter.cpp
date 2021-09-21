@@ -208,7 +208,7 @@ void Interpreter::visit(ClassStmt const& stmt)
         methods.emplace(method.name.lexeme, function);
     }
 
-    auto klass = _runtime.create<LoxClass>(stmt.name.lexeme, superclass, methods);
+    auto klass = _runtime.create<LoxClass>(stmt.name.lexeme, superclass, methods, /*objectFactory*/ nullptr);
 
     if (superclass) {
         _environment = enclosingEnvironment;

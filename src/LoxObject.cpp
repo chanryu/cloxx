@@ -100,7 +100,8 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createObjectMethods(Runtime*
 
 std::shared_ptr<LoxClass> createObjectClass(Runtime* runtime)
 {
-    return runtime->create<LoxClass>("Object", /*superclass*/ nullptr, createObjectMethods(runtime));
+    return runtime->create<LoxClass>("Object", /*superclass*/ nullptr, createObjectMethods(runtime),
+                                     /*objectFactory*/ nullptr);
 }
 
 } // namespace cloxx

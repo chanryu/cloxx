@@ -25,16 +25,6 @@ bool LoxString::equals(std::shared_ptr<LoxObject> const& object)
 
 namespace {
 
-class LoxStringClass : public LoxClass {
-public:
-    using LoxClass::LoxClass;
-
-    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
-    {
-        return _runtime->create<LoxString>(klass);
-    }
-};
-
 std::map<std::string, std::shared_ptr<LoxFunction>> createStringMethods(Runtime* /*runtime*/)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
@@ -46,7 +36,10 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createStringMethods(Runtime*
 
 std::shared_ptr<LoxClass> createStringClass(Runtime* runtime)
 {
-    return runtime->create<LoxStringClass>("String", runtime->objectClass(), createStringMethods(runtime));
+    return runtime->create<LoxClass>("String", runtime->objectClass(), createStringMethods(runtime),
+                                     [runtime](auto const& klass) {
+                                         return runtime->create<LoxString>(klass);
+                                     });
 }
 
 } // namespace cloxx

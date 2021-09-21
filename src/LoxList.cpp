@@ -38,16 +38,6 @@ public:
     bool isStringifying = false;
 };
 
-class LoxListClass : public LoxClass {
-public:
-    using LoxClass::LoxClass;
-
-    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
-    {
-        return _runtime->create<LoxList>(klass);
-    }
-};
-
 auto toListInstance(std::shared_ptr<LoxObject> const& instance)
 {
     LOX_ASSERT(std::dynamic_pointer_cast<LoxList>(instance));
@@ -134,7 +124,10 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Runtime* r
 
 std::shared_ptr<LoxClass> createListClass(Runtime* runtime)
 {
-    return runtime->create<LoxListClass>("List", runtime->objectClass(), createListMethods(runtime));
+    return runtime->create<LoxClass>("List", runtime->objectClass(), createListMethods(runtime),
+                                     [runtime](auto const& klass) {
+                                         return runtime->create<LoxList>(klass);
+                                     });
 }
 
 } // namespace cloxx
