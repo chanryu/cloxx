@@ -50,9 +50,12 @@ std::shared_ptr<LoxObject> Runtime::toLoxBool(bool value)
     if (!_boolClass) {
         _boolClass = createBoolClass(this);
     }
-    LOX_ASSERT(_boolClass);
-    auto instance = _boolClass->call({});
-    static_cast<LoxBool*>(instance.get())->value = value;
+
+    auto& instance = value ? _true : _false;
+    if (!instance) {
+        instance = _boolClass->call({});
+        static_cast<LoxBool*>(instance.get())->value = value;
+    }
     return instance;
 }
 
