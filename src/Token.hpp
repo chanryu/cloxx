@@ -38,6 +38,7 @@ struct Token {
 
         // Keywords.
         AND,
+        AS,
         BREAK,
         CLASS,
         CONTINUE,

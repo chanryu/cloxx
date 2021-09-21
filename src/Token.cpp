@@ -43,6 +43,7 @@ char const* getTokenName(Token::Type tokenType)
 
         // Keywords.
         LOX_TOKEN_NAME_CASE(AND);
+        LOX_TOKEN_NAME_CASE(AS);
         LOX_TOKEN_NAME_CASE(BREAK);
         LOX_TOKEN_NAME_CASE(CLASS);
         LOX_TOKEN_NAME_CASE(CONTINUE);

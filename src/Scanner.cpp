@@ -1,6 +1,7 @@
 #include "Scanner.hpp"
 
 #include <map>
+#include <optional>
 
 #include "Assert.hpp"
 #include "ErrorReporter.hpp"
@@ -22,22 +23,21 @@ bool isAlphaNumeric(char c)
     return isAlpha(c) || isDigit(c);
 }
 
-bool lookupKeyword(std::string const& identifier, Token::Type& type)
+std::optional<Token::Type> lookupKeyword(std::string const& identifier)
 {
     const std::map<std::string, Token::Type> keywords = {
-        {"and", Token::AND},     {"break", Token::BREAK}, {"class", Token::CLASS}, {"continue", Token::CONTINUE},
-        {"else", Token::ELSE},   {"false", Token::FALSE}, {"for", Token::FOR},     {"fun", Token::FUN},
-        {"if", Token::IF},       {"nil", Token::NIL},     {"or", Token::OR},       {"return", Token::RETURN},
-        {"super", Token::SUPER}, {"this", Token::THIS},   {"true", Token::TRUE},   {"var", Token::VAR},
-        {"while", Token::WHILE},
+        {"and", Token::AND},           {"as", Token::AS},       {"break", Token::BREAK}, {"class", Token::CLASS},
+        {"continue", Token::CONTINUE}, {"else", Token::ELSE},   {"false", Token::FALSE}, {"for", Token::FOR},
+        {"fun", Token::FUN},           {"if", Token::IF},       {"nil", Token::NIL},     {"or", Token::OR},
+        {"return", Token::RETURN},     {"super", Token::SUPER}, {"this", Token::THIS},   {"true", Token::TRUE},
+        {"var", Token::VAR},           {"while", Token::WHILE},
     };
 
     if (auto const i = keywords.find(identifier); i != keywords.end()) {
-        type = i->second;
-        return true;
+        return i->second;
     }
 
-    return false;
+    return std::nullopt;
 }
 } // namespace
 
@@ -218,8 +218,8 @@ Token Scanner::identifier()
         advance();
     }
 
-    if (Token::Type type; lookupKeyword(_lexeme, type)) {
-        return makeToken(type);
+    if (auto type = lookupKeyword(_lexeme)) {
+        return makeToken(*type);
     }
 
     return makeToken(Token::IDENTIFIER);
