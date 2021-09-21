@@ -11,7 +11,14 @@ namespace cloxx {
 
 namespace {
 
-std::map<std::string, std::shared_ptr<LoxFunction>> createBoolMethods(Runtime* /*runtime*/)
+auto createBoolFields(Runtime* /*runtime*/)
+{
+    std::map<std::string, std::shared_ptr<LoxObject>> fields;
+    // no fields yet
+    return fields;
+}
+
+auto createBoolMethods(Runtime* /*runtime*/)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
     // no methods yet
@@ -38,8 +45,8 @@ bool LoxBool::equals(std::shared_ptr<LoxObject> const& object)
 
 std::shared_ptr<LoxClass> createBoolClass(Runtime* runtime)
 {
-    return runtime->create<LoxClass>("Bool", runtime->objectClass(), createBoolMethods(runtime),
-                                     [runtime](auto const& klass) {
+    return runtime->create<LoxClass>("Bool", runtime->objectClass(), createBoolFields(runtime),
+                                     createBoolMethods(runtime), [runtime](auto const& klass) {
                                          return runtime->create<LoxBool>(klass);
                                      });
 }

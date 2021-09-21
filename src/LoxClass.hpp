@@ -16,6 +16,7 @@ using LoxObjectFactory = std::function<std::shared_ptr<LoxObject>(std::shared_pt
 class LoxClass : public LoxObject, public Callable {
 public:
     LoxClass(PrivateCreationTag tag, Runtime* runtime, std::string name, std::shared_ptr<LoxClass> const& superclass,
+             std::map<std::string, std::shared_ptr<LoxObject>> fields,
              std::map<std::string, std::shared_ptr<LoxFunction>> methods, LoxObjectFactory objectFactory);
 
     std::shared_ptr<LoxFunction> findMethod(std::string const& name) const;
@@ -31,10 +32,12 @@ public:
 
 private:
     std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass);
+    void collectFields(std::map<std::string, std::shared_ptr<LoxObject>>& fields);
 
     Runtime* const _runtime;
     std::string _name;
     std::shared_ptr<LoxClass> _superclass;
+    std::map<std::string, std::shared_ptr<LoxObject>> _fields;
     std::map<std::string, std::shared_ptr<LoxFunction>> _methods;
     LoxObjectFactory _objectFactory;
 };

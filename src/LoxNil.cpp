@@ -32,7 +32,14 @@ public:
     }
 };
 
-std::map<std::string, std::shared_ptr<LoxFunction>> createNilMethods(Runtime* /*runtime*/)
+auto createNilFields(Runtime* /*runtime*/)
+{
+    std::map<std::string, std::shared_ptr<LoxObject>> fields;
+    // no fields yet
+    return fields;
+}
+
+auto createNilMethods(Runtime* /*runtime*/)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
     // no methods yet
@@ -43,7 +50,7 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createNilMethods(Runtime* /*
 
 std::shared_ptr<LoxClass> createNilClass(Runtime* runtime)
 {
-    return runtime->create<LoxClass>("Nil", runtime->objectClass(), createNilMethods(runtime),
+    return runtime->create<LoxClass>("Nil", runtime->objectClass(), createNilFields(runtime), createNilMethods(runtime),
                                      [runtime](auto const& klass) {
                                          return runtime->create<LoxNil>(klass);
                                      });

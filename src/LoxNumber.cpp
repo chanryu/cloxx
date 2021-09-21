@@ -39,7 +39,14 @@ bool LoxNumber::equals(std::shared_ptr<LoxObject> const& object)
 
 namespace {
 
-std::map<std::string, std::shared_ptr<LoxFunction>> createNumberMethods(Runtime* /*runtime*/)
+auto createNumberFields(Runtime* /*runtime*/)
+{
+    std::map<std::string, std::shared_ptr<LoxObject>> fields;
+    // no fields yet
+    return fields;
+}
+
+auto createNumberMethods(Runtime* /*runtime*/)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
     // no methods yet
@@ -50,8 +57,8 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createNumberMethods(Runtime*
 
 std::shared_ptr<LoxClass> createNumberClass(Runtime* runtime)
 {
-    return runtime->create<LoxClass>("Number", runtime->objectClass(), createNumberMethods(runtime),
-                                     [runtime](auto const& klass) {
+    return runtime->create<LoxClass>("Number", runtime->objectClass(), createNumberFields(runtime),
+                                     createNumberMethods(runtime), [runtime](auto const& klass) {
                                          return runtime->create<LoxNumber>(klass);
                                      });
 }

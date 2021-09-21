@@ -25,7 +25,14 @@ bool LoxString::equals(std::shared_ptr<LoxObject> const& object)
 
 namespace {
 
-std::map<std::string, std::shared_ptr<LoxFunction>> createStringMethods(Runtime* /*runtime*/)
+auto createStringFields(Runtime* /*runtime*/)
+{
+    std::map<std::string, std::shared_ptr<LoxObject>> fields;
+    // no fields yet
+    return fields;
+}
+
+auto createStringMethods(Runtime* /*runtime*/)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
     // no methods yet
@@ -36,8 +43,8 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createStringMethods(Runtime*
 
 std::shared_ptr<LoxClass> createStringClass(Runtime* runtime)
 {
-    return runtime->create<LoxClass>("String", runtime->objectClass(), createStringMethods(runtime),
-                                     [runtime](auto const& klass) {
+    return runtime->create<LoxClass>("String", runtime->objectClass(), createStringFields(runtime),
+                                     createStringMethods(runtime), [runtime](auto const& klass) {
                                          return runtime->create<LoxString>(klass);
                                      });
 }
