@@ -11,16 +11,6 @@ namespace cloxx {
 
 namespace {
 
-class LoxBoolClass : public LoxClass {
-public:
-    using LoxClass::LoxClass;
-
-    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
-    {
-        return _runtime->create<LoxBool>(klass);
-    }
-};
-
 std::map<std::string, std::shared_ptr<LoxFunction>> createBoolMethods(Runtime* /*runtime*/)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
@@ -48,7 +38,10 @@ bool LoxBool::equals(std::shared_ptr<LoxObject> const& object)
 
 std::shared_ptr<LoxClass> createBoolClass(Runtime* runtime)
 {
-    return runtime->create<LoxBoolClass>(runtime, "Bool", runtime->objectClass(), createBoolMethods(runtime));
+    return runtime->create<LoxClass>("Bool", runtime->objectClass(), createBoolMethods(runtime),
+                                     [runtime](auto const& klass) {
+                                         return runtime->create<LoxBool>(klass);
+                                     });
 }
 
 } // namespace cloxx

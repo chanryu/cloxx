@@ -35,7 +35,7 @@ Traceable::Traceable(PrivateCreationTag)
 
 GarbageCollector::GarbageCollector()
 {
-    _root = create<Environment>();
+    _root = create<Environment>(/*closure*/ nullptr);
 }
 
 GarbageCollector::~GarbageCollector()

@@ -1,7 +1,7 @@
 #include "LoxNumber.hpp"
 
-#include "Interpreter.hpp"
 #include "LoxClass.hpp"
+#include "Runtime.hpp"
 
 namespace cloxx {
 
@@ -46,24 +46,14 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createNumberMethods(Runtime*
     return methods;
 }
 
-class LoxNumberClass : public LoxClass {
-public:
-    LoxNumberClass(PrivateCreationTag tag, Runtime* runtime, std::string name,
-                   std::shared_ptr<LoxClass> const& superclass)
-        : LoxClass{tag, runtime, std::move(name), superclass, createNumberMethods(runtime)}
-    {}
-
-    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
-    {
-        return _runtime->create<LoxNumber>(klass);
-    }
-};
-
 } // namespace
 
 std::shared_ptr<LoxClass> createNumberClass(Runtime* runtime)
 {
-    return runtime->create<LoxNumberClass>(runtime, "Number", runtime->objectClass());
+    return runtime->create<LoxClass>("Number", runtime->objectClass(), createNumberMethods(runtime),
+                                     [runtime](auto const& klass) {
+                                         return runtime->create<LoxNumber>(klass);
+                                     });
 }
 
 } // namespace cloxx

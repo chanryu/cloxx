@@ -38,16 +38,6 @@ public:
     bool isStringifying = false;
 };
 
-class LoxListClass : public LoxClass {
-public:
-    using LoxClass::LoxClass;
-
-    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
-    {
-        return _runtime->create<LoxList>(klass);
-    }
-};
-
 auto toListInstance(std::shared_ptr<LoxObject> const& instance)
 {
     LOX_ASSERT(std::dynamic_pointer_cast<LoxList>(instance));
@@ -58,7 +48,7 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Runtime* r
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
 
-    methods.emplace("append", runtime->create<LoxNativeFunction>(runtime, /*arity*/ 1, [](auto& instance, auto& args) {
+    methods.emplace("append", runtime->create<LoxNativeFunction>(/*arity*/ 1, [](auto& instance, auto& args) {
         LOX_ASSERT(args.size() == 1);
 
         auto& items = toListInstance(instance)->items;
@@ -66,46 +56,44 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Runtime* r
         return args[0];
     }));
 
-    methods.emplace("get",
-                    runtime->create<LoxNativeFunction>(runtime, /*arity*/ 1, [runtime](auto& instance, auto& args) {
-                        LOX_ASSERT(args.size() == 1);
+    methods.emplace("get", runtime->create<LoxNativeFunction>(/*arity*/ 1, [runtime](auto& instance, auto& args) {
+        LOX_ASSERT(args.size() == 1);
 
-                        std::shared_ptr<LoxObject> result;
-                        if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
-                            auto& items = toListInstance(instance)->items;
-                            if (auto index = static_cast<size_t>(number->value); index < items.size()) {
-                                result = items[index];
-                            }
-                        }
-                        if (!result) {
-                            result = runtime->getNil(); // FIXME: throw exception
-                        }
-                        return result;
-                    }));
+        std::shared_ptr<LoxObject> result;
+        if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
+            auto& items = toListInstance(instance)->items;
+            if (auto index = static_cast<size_t>(number->value); index < items.size()) {
+                result = items[index];
+            }
+        }
+        if (!result) {
+            result = runtime->getNil(); // FIXME: throw exception
+        }
+        return result;
+    }));
 
-    methods.emplace("set",
-                    runtime->create<LoxNativeFunction>(runtime, /*arity*/ 2, [runtime](auto& instance, auto& args) {
-                        LOX_ASSERT(args.size() == 2);
+    methods.emplace("set", runtime->create<LoxNativeFunction>(/*arity*/ 2, [runtime](auto& instance, auto& args) {
+        LOX_ASSERT(args.size() == 2);
 
-                        std::shared_ptr<LoxObject> result;
-                        if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
-                            auto& items = toListInstance(instance)->items;
-                            if (auto index = static_cast<size_t>(number->value); index < items.size()) {
-                                items[index] = args[1];
-                                return runtime->toLoxBool(true);
-                            }
-                        }
-                        return runtime->toLoxBool(false);
-                    }));
+        std::shared_ptr<LoxObject> result;
+        if (auto number = dynamic_cast<LoxNumber*>(args[0].get())) {
+            auto& items = toListInstance(instance)->items;
+            if (auto index = static_cast<size_t>(number->value); index < items.size()) {
+                items[index] = args[1];
+                return runtime->toLoxBool(true);
+            }
+        }
+        return runtime->toLoxBool(false);
+    }));
 
     methods.emplace("length",
-                    runtime->create<LoxNativeFunction>(runtime, /*arity*/ 0, [runtime](auto& instance, auto& /*args*/) {
+                    runtime->create<LoxNativeFunction>(/*arity*/ 0, [runtime](auto& instance, auto& /*args*/) {
                         auto& items = toListInstance(instance)->items;
                         return runtime->toLoxNumber(items.size());
                     }));
 
     methods.emplace("toString",
-                    runtime->create<LoxNativeFunction>(runtime, /*arity*/ 0, [runtime](auto& instance, auto& /*args*/) {
+                    runtime->create<LoxNativeFunction>(/*arity*/ 0, [runtime](auto& instance, auto& /*args*/) {
                         auto listInstance = toListInstance(instance);
 
                         if (listInstance->isStringifying) {
@@ -136,7 +124,10 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Runtime* r
 
 std::shared_ptr<LoxClass> createListClass(Runtime* runtime)
 {
-    return runtime->create<LoxListClass>(runtime, "List", runtime->objectClass(), createListMethods(runtime));
+    return runtime->create<LoxClass>("List", runtime->objectClass(), createListMethods(runtime),
+                                     [runtime](auto const& klass) {
+                                         return runtime->create<LoxList>(klass);
+                                     });
 }
 
 } // namespace cloxx

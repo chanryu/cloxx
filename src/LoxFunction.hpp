@@ -12,7 +12,7 @@ class LoxClass;
 
 class LoxFunction : public LoxObject, public Callable {
 public:
-    LoxFunction(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass);
+    LoxFunction(PrivateCreationTag tag, Runtime* runtime);
 
     virtual std::shared_ptr<LoxFunction> bind(std::shared_ptr<LoxObject> const& instance) const = 0;
 };

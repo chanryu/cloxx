@@ -9,7 +9,9 @@
 #include "LoxFunction.hpp"
 
 namespace cloxx {
-LoxObject::LoxObject(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass) : Traceable{tag}, _class{klass}
+
+LoxObject::LoxObject(PrivateCreationTag tag, Runtime* /*runtime*/, std::shared_ptr<LoxClass> const& klass)
+    : Traceable{tag}, _class{klass}
 {
     LOX_ASSERT(_class);
 }
@@ -43,14 +45,14 @@ void LoxObject::set(Token const& name, std::shared_ptr<LoxObject> const& value)
 
 std::string LoxObject::toString()
 {
-    if (auto method = _class->findMethod("toString"); method && method->arity() == 0) {
-        return method->bind(shared_from_this())->call({})->toString();
-    }
-
     if (!_class) {
+        // I'm an instance of Class class.
         return "Class";
     }
 
+    if (auto method = _class->findMethod("toString"); method && method->arity() == 0) {
+        return method->bind(shared_from_this())->call({})->toString();
+    }
     return _class->toString() + " instance";
 }
 
@@ -98,7 +100,8 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createObjectMethods(Runtime*
 
 std::shared_ptr<LoxClass> createObjectClass(Runtime* runtime)
 {
-    return runtime->create<LoxClass>(runtime, "Object", /*superclass*/ nullptr, createObjectMethods(runtime));
+    return runtime->create<LoxClass>("Object", /*superclass*/ nullptr, createObjectMethods(runtime),
+                                     /*objectFactory*/ nullptr);
 }
 
 } // namespace cloxx

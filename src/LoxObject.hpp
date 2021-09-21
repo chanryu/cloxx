@@ -23,7 +23,7 @@ private:
     LoxObject(PrivateCreationTag tag);
 
 public:
-    LoxObject(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass);
+    LoxObject(PrivateCreationTag tag, Runtime* runtime, std::shared_ptr<LoxClass> const& klass);
     virtual ~LoxObject() = default;
 
     std::shared_ptr<LoxObject> get(Token const& name);

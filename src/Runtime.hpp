@@ -14,8 +14,13 @@ public:
     template <typename T, typename... Args>
     std::shared_ptr<T> create(Args&&... args)
     {
-        return _gc.create<T>(std::forward<Args>(args)...);
+        return _gc.create<T>(this, std::forward<Args>(args)...);
     }
+
+    std::shared_ptr<Environment> createEnvironment(std::shared_ptr<Environment> const& closure);
+
+    std::shared_ptr<Environment> const& root();
+    void collectGarbage();
 
     std::shared_ptr<LoxClass> const& objectClass();
     std::shared_ptr<LoxClass> const& functionClass();
@@ -25,10 +30,9 @@ public:
     std::shared_ptr<LoxObject> toLoxNumber(double value);
     std::shared_ptr<LoxObject> toLoxString(std::string value);
 
-    std::shared_ptr<Environment> const& root();
-    void collectGarbage();
-
 private:
+    GarbageCollector _gc;
+
     // Built-in classes
     std::shared_ptr<LoxClass> _objectClass;
     std::shared_ptr<LoxClass> _functionClass;
@@ -41,8 +45,6 @@ private:
     std::shared_ptr<LoxObject> _nil;
     std::shared_ptr<LoxObject> _true;
     std::shared_ptr<LoxObject> _false;
-
-    GarbageCollector _gc;
 };
 
 } // namespace cloxx

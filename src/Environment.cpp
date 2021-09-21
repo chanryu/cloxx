@@ -7,9 +7,6 @@
 
 namespace cloxx {
 
-Environment::Environment(PrivateCreationTag tag) : Traceable{tag}
-{}
-
 Environment::Environment(PrivateCreationTag tag, std::shared_ptr<Environment> const& enclosing)
     : Traceable{tag}, _enclosing{enclosing}
 {}
