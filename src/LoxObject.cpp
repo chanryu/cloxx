@@ -40,7 +40,12 @@ std::shared_ptr<LoxObject> LoxObject::get(Token const& name)
 
 void LoxObject::set(Token const& name, std::shared_ptr<LoxObject> const& value)
 {
-    _fields[name.lexeme] = value;
+    if (auto it = _fields.find(name.lexeme); it != _fields.end()) {
+        it->second = value;
+    }
+    else {
+        throw RuntimeError(name, "Undefined property '" + name.lexeme + "'.");
+    }
 }
 
 std::string LoxObject::toString()
