@@ -1,0 +1,7 @@
+class Foo {
+    var name = "foo";
+}
+
+class Bar < Foo {}
+
+print(Bar().name); // expect: foo

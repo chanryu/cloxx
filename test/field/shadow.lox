@@ -1,0 +1,17 @@
+class Foo {
+  var name = "foo";
+}
+
+print(Foo().name); // expect: foo
+
+class Bar < Foo {
+  var name = "bar";
+}
+
+print(Bar().name); // expect: bar
+
+class Baz < Bar {
+  var name;
+}
+
+print(Baz().name); // expect: nil
