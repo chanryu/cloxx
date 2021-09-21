@@ -1,13 +1,13 @@
 #include "LoxNativeFunction.hpp"
 
-#include "Interpreter.hpp"
+#include "Runtime.hpp"
 
 namespace cloxx {
 
-LoxNativeFunction::LoxNativeFunction(PrivateCreationTag tag, Interpreter* interpreter, size_t arity, Body body,
+LoxNativeFunction::LoxNativeFunction(PrivateCreationTag tag, Runtime* runtime, size_t arity, Body body,
                                      std::shared_ptr<LoxObject> const& instance)
-    : LoxFunction{tag, interpreter->functionClass()},
-      _interpreter{interpreter}, _arity{arity}, _body{std::move(body)}, _instance{instance}
+    : LoxFunction{tag, runtime->functionClass()}, _runtime{runtime}, _arity{arity}, _body{std::move(body)},
+      _instance{instance}
 {}
 
 std::string LoxNativeFunction::toString()
@@ -43,7 +43,7 @@ void LoxNativeFunction::reclaim()
 
 std::shared_ptr<LoxFunction> LoxNativeFunction::bind(std::shared_ptr<LoxObject> const& instance) const
 {
-    return _interpreter->create<LoxNativeFunction>(_interpreter, _arity, _body, instance);
+    return _runtime->create<LoxNativeFunction>(_runtime, _arity, _body, instance);
 }
 
 } // namespace cloxx

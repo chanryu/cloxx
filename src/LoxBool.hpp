@@ -5,7 +5,7 @@
 namespace cloxx {
 
 class LoxClass;
-class Interpreter;
+class Runtime;
 
 class LoxBool : public LoxObject {
 public:
@@ -18,6 +18,6 @@ public:
     bool value;
 };
 
-std::shared_ptr<LoxClass> createBoolClass(Interpreter* interpreter);
+std::shared_ptr<LoxClass> createBoolClass(Runtime* runtime);
 
 } // namespace cloxx

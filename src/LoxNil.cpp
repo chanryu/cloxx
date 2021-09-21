@@ -1,7 +1,8 @@
 #include "LoxBool.hpp"
 
 #include "Assert.hpp"
-#include "Interpreter.hpp"
+#include "Runtime.hpp"
+
 #include "LoxClass.hpp"
 #include "LoxNativeFunction.hpp"
 #include "LoxNil.hpp"
@@ -37,11 +38,11 @@ public:
 
     std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
     {
-        return _interpreter->create<LoxNil>(klass);
+        return _runtime->create<LoxNil>(klass);
     }
 };
 
-std::map<std::string, std::shared_ptr<LoxFunction>> createNilMethods(Interpreter* /*interpreter*/)
+std::map<std::string, std::shared_ptr<LoxFunction>> createNilMethods(Runtime* /*runtime*/)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
     // no methods yet
@@ -50,10 +51,9 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createNilMethods(Interpreter
 
 } // namespace
 
-std::shared_ptr<LoxClass> createNilClass(Interpreter* interpreter)
+std::shared_ptr<LoxClass> createNilClass(Runtime* runtime)
 {
-    return interpreter->create<LoxNilClass>(interpreter, "Nil", interpreter->objectClass(),
-                                            createNilMethods(interpreter));
+    return runtime->create<LoxNilClass>(runtime, "Nil", runtime->objectClass(), createNilMethods(runtime));
 }
 
 } // namespace cloxx

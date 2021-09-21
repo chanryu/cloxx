@@ -11,7 +11,7 @@ namespace cloxx {
 
 class LoxClass;
 class LoxFunction;
-class Interpreter;
+class Runtime;
 
 struct Token;
 
@@ -46,6 +46,6 @@ private:
     std::map<std::string, std::shared_ptr<LoxObject>> _fields;
 };
 
-std::shared_ptr<LoxClass> createObjectClass(Interpreter* interpreter);
+std::shared_ptr<LoxClass> createObjectClass(Runtime* interpreter);
 
 } // namespace cloxx

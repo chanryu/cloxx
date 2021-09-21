@@ -1,7 +1,8 @@
 #include "LoxBool.hpp"
 
 #include "Assert.hpp"
-#include "Interpreter.hpp"
+#include "Runtime.hpp"
+
 #include "LoxClass.hpp"
 #include "LoxNativeFunction.hpp"
 #include "LoxNil.hpp"
@@ -16,11 +17,11 @@ public:
 
     std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
     {
-        return _interpreter->create<LoxBool>(klass);
+        return _runtime->create<LoxBool>(klass);
     }
 };
 
-std::map<std::string, std::shared_ptr<LoxFunction>> createBoolMethods(Interpreter* /*interpreter*/)
+std::map<std::string, std::shared_ptr<LoxFunction>> createBoolMethods(Runtime* /*runtime*/)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
     // no methods yet
@@ -45,10 +46,9 @@ bool LoxBool::equals(std::shared_ptr<LoxObject> const& object)
     return other && value == other->value;
 }
 
-std::shared_ptr<LoxClass> createBoolClass(Interpreter* interpreter)
+std::shared_ptr<LoxClass> createBoolClass(Runtime* runtime)
 {
-    return interpreter->create<LoxBoolClass>(interpreter, "Bool", interpreter->objectClass(),
-                                             createBoolMethods(interpreter));
+    return runtime->create<LoxBoolClass>(runtime, "Bool", runtime->objectClass(), createBoolMethods(runtime));
 }
 
 } // namespace cloxx

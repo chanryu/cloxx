@@ -4,9 +4,9 @@
 
 namespace cloxx {
 
+class Runtime;
 class LoxClass;
-class Interpreter;
 
-std::shared_ptr<LoxClass> createNilClass(Interpreter* interpreter);
+std::shared_ptr<LoxClass> createNilClass(Runtime* runtime);
 
 } // namespace cloxx

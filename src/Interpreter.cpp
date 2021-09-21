@@ -70,72 +70,43 @@ Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalO
     : _errorReporter{errorReporter}
 
 {
-    _globals = _gc.root();
+    _globals = _runtime._gc.root();
     _environment = _globals;
 
-    _objectClass = createObjectClass(this);
-    _functionClass = createFunctionClass(this);
-    _nilClass = createNilClass(this);
-    _boolClass = createBoolClass(this);
-    _numberClass = createNumberClass(this);
-    _stringClass = createStringClass(this);
-    _listClass = createListClass(this);
-
-    // Built-in classes - Object, Class, Function, Nil
-    _globals->define("Object", _objectClass);
-    _globals->define("Function", _functionClass);
-    _globals->define("Nil", _nilClass);
-    _globals->define("Bool", _boolClass);
-    _globals->define("Number", _numberClass);
-    _globals->define("String", _stringClass);
-    _globals->define("List", _listClass);
-
     // System defined objects.
-    for (auto& [name, value] : globalObjectsProc(this)) {
+    for (auto& [name, value] : globalObjectsProc(&_runtime)) {
         _globals->define(name, value);
     }
 }
 
 std::shared_ptr<LoxClass> Interpreter::objectClass()
 {
-    LOX_ASSERT(_objectClass);
-    return _objectClass;
+    return _runtime.objectClass();
 }
 
 std::shared_ptr<LoxClass> Interpreter::functionClass()
 {
-    LOX_ASSERT(_functionClass);
-    return _functionClass;
+    return _runtime.functionClass();
 }
 
 std::shared_ptr<LoxObject> Interpreter::makeLoxNil()
 {
-    LOX_ASSERT(_nilClass);
-    return _nilClass->call({});
+    return _runtime.makeLoxNil();
 }
 
 std::shared_ptr<LoxObject> Interpreter::toLoxBool(bool value)
 {
-    LOX_ASSERT(_boolClass);
-    auto instance = _boolClass->call({});
-    static_cast<LoxBool*>(instance.get())->value = value;
-    return instance;
+    return _runtime.toLoxBool(value);
 }
 
 std::shared_ptr<LoxObject> Interpreter::toLoxNumber(double value)
 {
-    LOX_ASSERT(_numberClass);
-    auto instance = _numberClass->call({});
-    static_cast<LoxNumber*>(instance.get())->value = value;
-    return instance;
+    return _runtime.toLoxNumber(value);
 }
 
 std::shared_ptr<LoxObject> Interpreter::toLoxString(std::string value)
 {
-    LOX_ASSERT(_stringClass);
-    auto instance = _stringClass->call({});
-    static_cast<LoxString*>(instance.get())->value = value;
-    return instance;
+    return _runtime.toLoxString(value);
 }
 
 void Interpreter::interpret(Stmt const& stmt)
@@ -147,12 +118,12 @@ void Interpreter::interpret(Stmt const& stmt)
         _errorReporter->runtimeError(error.token, error.what());
     }
 
-    _gc.collect();
+    _runtime._gc.collect();
 }
 
 void Interpreter::visit(BlockStmt const& stmt)
 {
-    auto blockEnv = _gc.create<Environment>(_environment);
+    auto blockEnv = _runtime.create<Environment>(_environment);
     executeBlock(stmt.stmts, blockEnv);
 }
 
@@ -163,7 +134,7 @@ void Interpreter::visit(ExprStmt const& stmt)
 
 void Interpreter::visit(ForStmt const& stmt)
 {
-    ScopeSwitcher _{this, _gc.create<Environment>(_environment)};
+    ScopeSwitcher _{this, _runtime.create<Environment>(_environment)};
 
     if (stmt.initializer) {
         stmt.initializer->accept(*this);
@@ -256,7 +227,7 @@ void Interpreter::visit(ClassStmt const& stmt)
 
     auto enclosingEnvironment = _environment;
     if (superclass) {
-        _environment = _gc.create<Environment>(_environment);
+        _environment = _runtime.create<Environment>(_environment);
         _environment->define("super", superclass);
     }
 
@@ -267,7 +238,7 @@ void Interpreter::visit(ClassStmt const& stmt)
         methods.emplace(method.name.lexeme, function);
     }
 
-    auto klass = create<LoxClass>(this, stmt.name.lexeme, superclass, methods);
+    auto klass = _runtime.create<LoxClass>(&_runtime, stmt.name.lexeme, superclass, methods);
 
     if (superclass) {
         _environment = enclosingEnvironment;
@@ -593,7 +564,7 @@ std::shared_ptr<LoxFunction> Interpreter::makeFunction(bool isInitializer, Token
         return makeLoxNil();
     };
 
-    return create<LoxUserFunction>(this, _environment, isInitializer, name, params, body, executor);
+    return create<LoxUserFunction>(&_runtime, _environment, isInitializer, name, params, body, executor);
 }
 
 } // namespace cloxx

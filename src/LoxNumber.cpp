@@ -39,7 +39,7 @@ bool LoxNumber::equals(std::shared_ptr<LoxObject> const& object)
 
 namespace {
 
-std::map<std::string, std::shared_ptr<LoxFunction>> createNumberMethods(Interpreter* /*interpreter*/)
+std::map<std::string, std::shared_ptr<LoxFunction>> createNumberMethods(Runtime* /*runtime*/)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
     // no methods yet
@@ -48,22 +48,22 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createNumberMethods(Interpre
 
 class LoxNumberClass : public LoxClass {
 public:
-    LoxNumberClass(PrivateCreationTag tag, Interpreter* interpreter, std::string name,
+    LoxNumberClass(PrivateCreationTag tag, Runtime* runtime, std::string name,
                    std::shared_ptr<LoxClass> const& superclass)
-        : LoxClass{tag, interpreter, std::move(name), superclass, createNumberMethods(interpreter)}
+        : LoxClass{tag, runtime, std::move(name), superclass, createNumberMethods(runtime)}
     {}
 
     std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass) override
     {
-        return _interpreter->create<LoxNumber>(klass);
+        return _runtime->create<LoxNumber>(klass);
     }
 };
 
 } // namespace
 
-std::shared_ptr<LoxClass> createNumberClass(Interpreter* interpreter)
+std::shared_ptr<LoxClass> createNumberClass(Runtime* runtime)
 {
-    return interpreter->create<LoxNumberClass>(interpreter, "Number", interpreter->objectClass());
+    return runtime->create<LoxNumberClass>(runtime, "Number", runtime->objectClass());
 }
 
 } // namespace cloxx

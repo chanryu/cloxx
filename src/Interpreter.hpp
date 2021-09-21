@@ -8,7 +8,7 @@
 #include "ast/Expr.hpp"
 #include "ast/Stmt.hpp"
 
-#include "GC.hpp"
+#include "Runtime.hpp"
 
 namespace cloxx {
 
@@ -19,8 +19,7 @@ class LoxClass;
 class LoxObject;
 class LoxFunction;
 
-class Interpreter;
-using GlobalObjectsProc = std::function<std::map<std::string, std::shared_ptr<LoxObject>>(Interpreter*)>;
+using GlobalObjectsProc = std::function<std::map<std::string, std::shared_ptr<LoxObject>>(Runtime*)>;
 
 class Interpreter : StmtVisitor, ExprVisitor {
 public:
@@ -29,7 +28,7 @@ public:
     template <typename T, typename... Args>
     std::shared_ptr<T> create(Args&&... args)
     {
-        return _gc.create<T>(std::forward<Args>(args)...);
+        return _runtime.create<T>(std::forward<Args>(args)...);
     }
 
     std::shared_ptr<LoxClass> objectClass();
@@ -98,7 +97,7 @@ private:
 
     class ScopeSwitcher;
 
-    GarbageCollector _gc;
+    Runtime _runtime;
 
     ErrorReporter* const _errorReporter;
 
@@ -106,15 +105,6 @@ private:
     std::shared_ptr<Environment> _environment;
 
     std::vector<std::shared_ptr<LoxObject>> _evalResults;
-
-    // Built-in classes
-    std::shared_ptr<LoxClass> _objectClass;
-    std::shared_ptr<LoxClass> _functionClass;
-    std::shared_ptr<LoxClass> _nilClass;
-    std::shared_ptr<LoxClass> _boolClass;
-    std::shared_ptr<LoxClass> _numberClass;
-    std::shared_ptr<LoxClass> _stringClass;
-    std::shared_ptr<LoxClass> _listClass;
 };
 
 } // namespace cloxx

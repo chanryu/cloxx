@@ -8,7 +8,6 @@
 namespace cloxx {
 
 class ErrorReporter;
-class Interpreter;
 
 class Resolver : StmtVisitor, ExprVisitor {
 public:

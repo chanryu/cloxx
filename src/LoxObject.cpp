@@ -1,7 +1,7 @@
 #include "LoxObject.hpp"
 
 #include "Assert.hpp"
-#include "Interpreter.hpp"
+#include "Runtime.hpp"
 #include "RuntimeError.hpp"
 #include "Token.hpp"
 
@@ -115,7 +115,7 @@ void LoxObject::reclaim()
 }
 
 namespace {
-std::map<std::string, std::shared_ptr<LoxFunction>> createObjectMethods(Interpreter* /*interpreter*/)
+std::map<std::string, std::shared_ptr<LoxFunction>> createObjectMethods(Runtime* /*runtime*/)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
     // no methods yet
@@ -123,10 +123,9 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createObjectMethods(Interpre
 }
 } // namespace
 
-std::shared_ptr<LoxClass> createObjectClass(Interpreter* interpreter)
+std::shared_ptr<LoxClass> createObjectClass(Runtime* runtime)
 {
-    return interpreter->create<LoxClass>(interpreter, "Object", /*superclass*/ nullptr,
-                                         createObjectMethods(interpreter));
+    return runtime->create<LoxClass>(runtime, "Object", /*superclass*/ nullptr, createObjectMethods(runtime));
 }
 
 } // namespace cloxx
