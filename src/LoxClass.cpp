@@ -83,7 +83,7 @@ std::shared_ptr<LoxObject> LoxClass::createInstance(std::shared_ptr<LoxClass> co
         return _superclass->createInstance(klass);
     }
 
-    return _runtime->create<LoxObject>(klass);
+    return _runtime->create<LoxObject>(klass)
 }
 
 } // namespace cloxx
