@@ -7,7 +7,7 @@
 
 namespace cloxx {
 
-class Interpreter;
+class Runtime;
 class LoxClass;
 
 class LoxFunction : public LoxObject, public Callable {
@@ -17,6 +17,6 @@ public:
     virtual std::shared_ptr<LoxFunction> bind(std::shared_ptr<LoxObject> const& instance) const = 0;
 };
 
-std::shared_ptr<LoxClass> createFunctionClass(Interpreter* interpreter);
+std::shared_ptr<LoxClass> createFunctionClass(Runtime* runtime);
 
 } // namespace cloxx

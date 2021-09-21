@@ -8,12 +8,12 @@
 namespace cloxx {
 
 class LoxFunction;
-class Interpreter;
+class Runtime;
 
 class LoxClass : public LoxObject, public Callable {
 public:
-    LoxClass(PrivateCreationTag tag, Interpreter* interpreter, std::string name,
-             std::shared_ptr<LoxClass> const& superclass, std::map<std::string, std::shared_ptr<LoxFunction>> methods);
+    LoxClass(PrivateCreationTag tag, Runtime* runtime, std::string name, std::shared_ptr<LoxClass> const& superclass,
+             std::map<std::string, std::shared_ptr<LoxFunction>> methods);
 
     std::shared_ptr<LoxFunction> findMethod(std::string const& name) const;
 
@@ -29,7 +29,7 @@ public:
     virtual std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass);
 
 protected:
-    Interpreter* const _interpreter;
+    Runtime* const _runtime;
 
 private:
     std::string _name;

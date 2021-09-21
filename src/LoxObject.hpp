@@ -11,7 +11,7 @@ namespace cloxx {
 
 class LoxClass;
 class LoxFunction;
-class Interpreter;
+class Runtime;
 
 struct Token;
 
@@ -24,11 +24,7 @@ private:
 
 public:
     LoxObject(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass);
-    virtual ~LoxObject();
-
-#ifdef CLOXX_GC_DEBUG
-    static size_t instanceCount();
-#endif
+    virtual ~LoxObject() = default;
 
     std::shared_ptr<LoxObject> get(Token const& name);
     void set(Token const& name, std::shared_ptr<LoxObject> const& value);
@@ -46,6 +42,6 @@ private:
     std::map<std::string, std::shared_ptr<LoxObject>> _fields;
 };
 
-std::shared_ptr<LoxClass> createObjectClass(Interpreter* interpreter);
+std::shared_ptr<LoxClass> createObjectClass(Runtime* interpreter);
 
 } // namespace cloxx

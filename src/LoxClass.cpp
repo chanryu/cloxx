@@ -1,17 +1,16 @@
 #include "LoxClass.hpp"
 
 #include "Assert.hpp"
-#include "Interpreter.hpp"
 #include "LoxFunction.hpp"
+#include "Runtime.hpp"
 #include "RuntimeError.hpp"
 
 namespace cloxx {
 
-LoxClass::LoxClass(PrivateCreationTag tag, Interpreter* interpreter, std::string name,
+LoxClass::LoxClass(PrivateCreationTag tag, Runtime* runtime, std::string name,
                    std::shared_ptr<LoxClass> const& superclass,
                    std::map<std::string, std::shared_ptr<LoxFunction>> methods)
-    : LoxObject{tag}, _interpreter{interpreter}, _name{std::move(name)}, _superclass{superclass}, _methods{std::move(
-                                                                                                      methods)}
+    : LoxObject{tag}, _runtime{runtime}, _name{std::move(name)}, _superclass{superclass}, _methods{std::move(methods)}
 {}
 
 std::shared_ptr<LoxFunction> LoxClass::findMethod(std::string const& name) const
@@ -79,7 +78,7 @@ std::shared_ptr<LoxObject> LoxClass::createInstance(std::shared_ptr<LoxClass> co
         return _superclass->createInstance(klass);
     }
 
-    return _interpreter->create<LoxObject>(klass);
+    return _runtime->create<LoxObject>(klass);
 }
 
 } // namespace cloxx
