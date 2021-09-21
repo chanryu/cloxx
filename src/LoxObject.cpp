@@ -9,41 +9,13 @@
 #include "LoxFunction.hpp"
 
 namespace cloxx {
-
-#ifdef CLOXX_GC_DEBUG
-namespace {
-size_t objectInstanceCount = 0;
-}
-#endif
-
 LoxObject::LoxObject(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass) : Traceable{tag}, _class{klass}
 {
     LOX_ASSERT(_class);
-#ifdef CLOXX_GC_DEBUG
-    objectInstanceCount += 1;
-#endif
 }
 
 LoxObject::LoxObject(PrivateCreationTag tag) : Traceable{tag}
-{
-#ifdef CLOXX_GC_DEBUG
-    objectInstanceCount += 1;
-#endif
-}
-
-LoxObject::~LoxObject()
-{
-#ifdef CLOXX_GC_DEBUG
-    objectInstanceCount -= 1;
-#endif
-}
-
-#ifdef CLOXX_GC_DEBUG
-size_t LoxObject::instanceCount()
-{
-    return objectInstanceCount;
-}
-#endif
+{}
 
 std::shared_ptr<LoxObject> LoxObject::get(Token const& name)
 {
@@ -57,6 +29,7 @@ std::shared_ptr<LoxObject> LoxObject::get(Token const& name)
         }
     }
     else {
+        LOX_ASSERT(toString() == "Class");
         // methods Class class, e.g., new()
     }
 

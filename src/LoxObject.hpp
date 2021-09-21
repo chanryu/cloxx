@@ -24,11 +24,7 @@ private:
 
 public:
     LoxObject(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass);
-    virtual ~LoxObject();
-
-#ifdef CLOXX_GC_DEBUG
-    static size_t instanceCount();
-#endif
+    virtual ~LoxObject() = default;
 
     std::shared_ptr<LoxObject> get(Token const& name);
     void set(Token const& name, std::shared_ptr<LoxObject> const& value);
