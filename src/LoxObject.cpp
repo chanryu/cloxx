@@ -45,14 +45,14 @@ void LoxObject::set(Token const& name, std::shared_ptr<LoxObject> const& value)
 
 std::string LoxObject::toString()
 {
-    if (auto method = _class->findMethod("toString"); method && method->arity() == 0) {
-        return method->bind(shared_from_this())->call({})->toString();
-    }
-
     if (!_class) {
+        // I'm an instance of Class class.
         return "Class";
     }
 
+    if (auto method = _class->findMethod("toString"); method && method->arity() == 0) {
+        return method->bind(shared_from_this())->call({})->toString();
+    }
     return _class->toString() + " instance";
 }
 
