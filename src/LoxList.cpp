@@ -78,7 +78,7 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Runtime* r
                             }
                         }
                         if (!result) {
-                            result = runtime->makeLoxNil(); // FIXME: throw exception
+                            result = runtime->getNil(); // FIXME: throw exception
                         }
                         return result;
                     }));

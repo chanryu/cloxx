@@ -16,43 +16,40 @@ namespace cloxx {
 Runtime::Runtime()
 {
     _objectClass = createObjectClass(this);
-    _functionClass = createFunctionClass(this);
-    _nilClass = createNilClass(this);
-    _boolClass = createBoolClass(this);
-    _numberClass = createNumberClass(this);
-    _stringClass = createStringClass(this);
     _listClass = createListClass(this);
 
     // Built-in classes - Object, Class, Function, Nil
-    _gc.root()->define("Object", _objectClass);
-    _gc.root()->define("Function", _functionClass);
-    _gc.root()->define("Nil", _nilClass);
-    _gc.root()->define("Bool", _boolClass);
-    _gc.root()->define("Number", _numberClass);
-    _gc.root()->define("String", _stringClass);
     _gc.root()->define("List", _listClass);
 }
 
-std::shared_ptr<LoxClass> Runtime::objectClass()
+std::shared_ptr<LoxClass> const& Runtime::objectClass()
 {
     LOX_ASSERT(_objectClass);
     return _objectClass;
 }
 
-std::shared_ptr<LoxClass> Runtime::functionClass()
+std::shared_ptr<LoxClass> const& Runtime::functionClass()
 {
-    LOX_ASSERT(_functionClass);
+    if (!_functionClass) {
+        _functionClass = createFunctionClass(this);
+    }
     return _functionClass;
 }
 
-std::shared_ptr<LoxObject> Runtime::makeLoxNil()
+std::shared_ptr<LoxObject> Runtime::getNil()
 {
-    LOX_ASSERT(_nilClass);
-    return _nilClass->call({});
+    if (!_nil) {
+        auto nilClass = createNilClass(this);
+        _nil = nilClass->call({});
+    }
+    return _nil;
 }
 
 std::shared_ptr<LoxObject> Runtime::toLoxBool(bool value)
 {
+    if (!_boolClass) {
+        _boolClass = createBoolClass(this);
+    }
     LOX_ASSERT(_boolClass);
     auto instance = _boolClass->call({});
     static_cast<LoxBool*>(instance.get())->value = value;
@@ -61,7 +58,9 @@ std::shared_ptr<LoxObject> Runtime::toLoxBool(bool value)
 
 std::shared_ptr<LoxObject> Runtime::toLoxNumber(double value)
 {
-    LOX_ASSERT(_numberClass);
+    if (!_numberClass) {
+        _numberClass = createNumberClass(this);
+    }
     auto instance = _numberClass->call({});
     static_cast<LoxNumber*>(instance.get())->value = value;
     return instance;
@@ -69,10 +68,22 @@ std::shared_ptr<LoxObject> Runtime::toLoxNumber(double value)
 
 std::shared_ptr<LoxObject> Runtime::toLoxString(std::string value)
 {
-    LOX_ASSERT(_stringClass);
+    if (!_stringClass) {
+        _stringClass = createStringClass(this);
+    }
     auto instance = _stringClass->call({});
     static_cast<LoxString*>(instance.get())->value = std::move(value);
     return instance;
+}
+
+std::shared_ptr<Environment> const& Runtime::root()
+{
+    return _gc.root();
+}
+
+void Runtime::collectGarbage()
+{
+    _gc.collect();
 }
 
 } // namespace cloxx

@@ -25,20 +25,6 @@ class Interpreter : StmtVisitor, ExprVisitor {
 public:
     Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalObjectsProc);
 
-    template <typename T, typename... Args>
-    std::shared_ptr<T> create(Args&&... args)
-    {
-        return _runtime.create<T>(std::forward<Args>(args)...);
-    }
-
-    std::shared_ptr<LoxClass> objectClass();
-    std::shared_ptr<LoxClass> functionClass();
-
-    std::shared_ptr<LoxObject> makeLoxNil();
-    std::shared_ptr<LoxObject> toLoxBool(bool value);
-    std::shared_ptr<LoxObject> toLoxNumber(double value);
-    std::shared_ptr<LoxObject> toLoxString(std::string value);
-
     void interpret(Stmt const& stmt);
 
 private:

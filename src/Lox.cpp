@@ -27,7 +27,7 @@ auto makeBuiltIns(Runtime* runtime)
     // global functions
     builtIns.emplace("print", runtime->create<LoxNativeFunction>(runtime, 1, [runtime](auto& /*instance*/, auto& args) {
         std::cout << args[0]->toString() << '\n';
-        return runtime->makeLoxNil();
+        return runtime->getNil();
     }));
     builtIns.emplace("clock",
                      runtime->create<LoxNativeFunction>(runtime, 0, [runtime](auto& /*instance*/, auto& /*args*/) {
