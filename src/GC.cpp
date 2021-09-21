@@ -49,6 +49,11 @@ std::shared_ptr<Environment> const& GarbageCollector::root()
     return _root;
 }
 
+void GarbageCollector::trace(std::shared_ptr<Traceable> const& traceable)
+{
+    _weakTraceables.push_back(traceable);
+}
+
 size_t GarbageCollector::collect()
 {
     size_t collectedCount = 0;
