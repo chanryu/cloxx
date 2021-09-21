@@ -110,7 +110,9 @@ Stmt Parser::classDeclaration()
         if (match(Token::VAR)) {
             fields.push_back(varDeclaration());
         }
-        methods.push_back(function("method"));
+        else {
+            methods.push_back(function("method"));
+        }
     }
 
     consume(Token::RIGHT_BRACE, "Expect '}' after class body.");
