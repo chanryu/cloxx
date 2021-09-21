@@ -141,6 +141,11 @@ void Interpreter::visit(IfStmt const& stmt)
     }
 }
 
+void Interpreter::visit(ImportStmt const& /*stmt*/)
+{
+    // TODO: load file from stmt.path
+}
+
 void Interpreter::visit(BreakStmt const&)
 {
     throw LoopBreak{};

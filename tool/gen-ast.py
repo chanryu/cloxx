@@ -298,6 +298,7 @@ if __name__ == '__main__':
         "For      : Stmt? initializer, Expr? condition, Stmt? increment, Stmt body",
         "Fun      : Token name, List<Token> params, List<Stmt> body",
         "If       : Expr cond, Stmt thenBranch, Stmt? elseBranch",
+        "Import   : Token path, Token? alias",
         "Return   : Token keyword, Expr? value",
         "Var      : Token name, Expr? initializer",
     ])

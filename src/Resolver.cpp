@@ -153,6 +153,17 @@ void Resolver::visit(IfStmt const& stmt)
     }
 }
 
+void Resolver::visit(ImportStmt const& stmt)
+{
+    if (stmt.alias) {
+        declare(*stmt.alias);
+        define(*stmt.alias);
+    }
+    else {
+        // TODO: parse module name from stmt.path and define
+    }
+}
+
 void Resolver::visit(BreakStmt const& stmt)
 {
     if (_currentLoop == LoopType::NONE) {
