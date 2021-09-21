@@ -358,6 +358,9 @@ def _defineTestSuites():
         # now functions are instance of Function
         { "test/field/set_on_function.lox": "skip" },
         { "test/field/get_on_function.lox": "skip" },
+
+        # cannot show method dynamically
+        { "test/field/get_and_set_method.lox": "skip" },
     )
 
     # cloxx behaves like jlox

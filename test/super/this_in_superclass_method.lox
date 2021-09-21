@@ -1,10 +1,13 @@
 class Base {
+  var a;
+
   init(a) {
     this.a = a;
   }
 }
 
 class Derived < Base {
+  var b;
   init(a, b) {
     super.init(a);
     this.b = b;

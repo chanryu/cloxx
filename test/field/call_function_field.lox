@@ -1,4 +1,6 @@
-class Foo {}
+class Foo {
+  var bar;
+}
 
 fun bar(a, b) {
   print("bar");
