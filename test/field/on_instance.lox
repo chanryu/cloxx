@@ -1,4 +1,7 @@
-class Foo {}
+class Foo {
+    var bar;
+    var baz;
+}
 
 var foo = Foo();
 

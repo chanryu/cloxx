@@ -47,7 +47,7 @@ std::optional<Stmt> Parser::declaration()
     }
 }
 
-Stmt Parser::varDeclaration()
+VarStmt Parser::varDeclaration()
 {
     // varDecl → "var" IDENTIFIER ( "=" expression )? ";" ;
 
@@ -92,7 +92,7 @@ Stmt Parser::classDeclaration()
     LOX_ASSERT_PREVIOUS(CLASS);
 
     // classDecl → "class" IDENTIFIER ( "<" IDENTIFIER )?
-    //             "{" function* "}" ;
+    //             "{" ( varDecl | function )* "}" ;
 
     auto name = consume(Token::IDENTIFIER, "Expect class name.");
 
@@ -104,14 +104,20 @@ Stmt Parser::classDeclaration()
 
     consume(Token::LEFT_BRACE, "Expect '{' before class body.");
 
+    std::vector<VarStmt> fields;
     std::vector<FunStmt> methods;
     while (!check(Token::RIGHT_BRACE) && !isAtEnd()) {
-        methods.push_back(function("method"));
+        if (match(Token::VAR)) {
+            fields.push_back(varDeclaration());
+        }
+        else {
+            methods.push_back(function("method"));
+        }
     }
 
     consume(Token::RIGHT_BRACE, "Expect '}' after class body.");
 
-    return makeClassStmt(name, superclass, methods);
+    return makeClassStmt(name, superclass, fields, methods);
 }
 
 Stmt Parser::statement()

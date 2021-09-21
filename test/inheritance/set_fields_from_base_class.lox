@@ -1,4 +1,6 @@
 class Foo {
+  var field1;
+  var field2;
   foo(a, b) {
     this.field1 = a;
     this.field2 = b;

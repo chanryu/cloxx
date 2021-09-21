@@ -44,7 +44,14 @@ auto toListInstance(std::shared_ptr<LoxObject> const& instance)
     return static_cast<LoxList*>(instance.get());
 }
 
-std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Runtime* runtime)
+auto createFunctionFields(Runtime* /*runtime*/)
+{
+    std::map<std::string, std::shared_ptr<LoxObject>> fields;
+    // no fields yet
+    return fields;
+}
+
+auto createListMethods(Runtime* runtime)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
 
@@ -124,8 +131,8 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createListMethods(Runtime* r
 
 std::shared_ptr<LoxClass> createListClass(Runtime* runtime)
 {
-    return runtime->create<LoxClass>("List", runtime->objectClass(), createListMethods(runtime),
-                                     [runtime](auto const& klass) {
+    return runtime->create<LoxClass>("List", runtime->objectClass(), createFunctionFields(runtime),
+                                     createListMethods(runtime), [runtime](auto const& klass) {
                                          return runtime->create<LoxList>(klass);
                                      });
 }

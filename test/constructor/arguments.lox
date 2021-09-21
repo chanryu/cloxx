@@ -1,4 +1,6 @@
 class Foo {
+  var a;
+  var b;
   init(a, b) {
     print("init"); // expect: init
     this.a = a;

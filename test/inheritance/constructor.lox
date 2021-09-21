@@ -1,4 +1,5 @@
 class A {
+  var field;
   init(param) {
     this.field = param;
   }

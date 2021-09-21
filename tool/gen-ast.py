@@ -292,7 +292,7 @@ if __name__ == '__main__':
     _generateAst(outputDir, ['Token.hpp', 'Expr.hpp'], 'Stmt', [
         "Block    : List<Stmt> stmts",
         "Break    : Token keyword",
-        "Class    : Token name, VariableExpr? superclass, List<FunStmt> methods",
+        "Class    : Token name, VariableExpr? superclass, List<VarStmt> fields, List<FunStmt> methods",
         "Continue : Token keyword",
         "Expr     : Expr expr",
         "For      : Stmt? initializer, Expr? condition, Stmt? increment, Stmt body",

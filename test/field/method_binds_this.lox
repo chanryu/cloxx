@@ -1,4 +1,6 @@
 class Foo {
+  var name;
+  var fn;
   sayName(a) {
     print(this.name);
     print(a);

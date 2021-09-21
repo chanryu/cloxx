@@ -23,7 +23,7 @@ public:
 
 private:
     std::optional<Stmt> declaration();
-    Stmt varDeclaration();
+    VarStmt varDeclaration();
     FunStmt function(std::string const& kind);
     Stmt classDeclaration();
     Stmt statement();

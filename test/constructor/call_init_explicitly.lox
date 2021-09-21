@@ -1,4 +1,5 @@
 class Foo {
+  var field;
   init(arg) {
     print("Foo.init(" + arg + ")");
     this.field = "init";

@@ -40,7 +40,12 @@ std::shared_ptr<LoxObject> LoxObject::get(Token const& name)
 
 void LoxObject::set(Token const& name, std::shared_ptr<LoxObject> const& value)
 {
-    _fields[name.lexeme] = value;
+    if (auto it = _fields.find(name.lexeme); it != _fields.end()) {
+        it->second = value;
+    }
+    else {
+        throw RuntimeError(name, "Undefined property '" + name.lexeme + "'.");
+    }
 }
 
 std::string LoxObject::toString()
@@ -90,7 +95,14 @@ void LoxObject::reclaim()
 }
 
 namespace {
-std::map<std::string, std::shared_ptr<LoxFunction>> createObjectMethods(Runtime* /*runtime*/)
+auto createObjectFields(Runtime* /*runtime*/)
+{
+    std::map<std::string, std::shared_ptr<LoxObject>> fields;
+    // no fields yet
+    return fields;
+}
+
+auto createObjectMethods(Runtime* /*runtime*/)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
     // no methods yet
@@ -100,7 +112,8 @@ std::map<std::string, std::shared_ptr<LoxFunction>> createObjectMethods(Runtime*
 
 std::shared_ptr<LoxClass> createObjectClass(Runtime* runtime)
 {
-    return runtime->create<LoxClass>("Object", /*superclass*/ nullptr, createObjectMethods(runtime),
+    return runtime->create<LoxClass>("Object", /*superclass*/ nullptr, createObjectFields(runtime),
+                                     createObjectMethods(runtime),
                                      /*objectFactory*/ nullptr);
 }
 

@@ -9,9 +9,10 @@ namespace cloxx {
 
 LoxClass::LoxClass(PrivateCreationTag tag, Runtime* runtime, std::string name,
                    std::shared_ptr<LoxClass> const& superclass,
+                   std::map<std::string, std::shared_ptr<LoxObject>> fields,
                    std::map<std::string, std::shared_ptr<LoxFunction>> methods, LoxObjectFactory objectFactory)
-    : LoxObject{tag}, _runtime{runtime}, _name{std::move(name)}, _superclass{superclass}, _methods{std::move(methods)},
-      _objectFactory{objectFactory}
+    : LoxObject{tag}, _runtime{runtime}, _name{std::move(name)},
+      _superclass{superclass}, _fields{std::move(fields)}, _methods{std::move(methods)}, _objectFactory{objectFactory}
 {}
 
 std::shared_ptr<LoxFunction> LoxClass::findMethod(std::string const& name) const
@@ -44,6 +45,8 @@ size_t LoxClass::arity() const
 std::shared_ptr<LoxObject> LoxClass::call(std::vector<std::shared_ptr<LoxObject>> const& args)
 {
     auto instance = createInstance(std::static_pointer_cast<LoxClass>(shared_from_this()));
+
+    collectFields(instance->_fields);
 
     if (auto initializer = findMethod("init")) {
         initializer->bind(instance)->call(args);
@@ -84,6 +87,17 @@ std::shared_ptr<LoxObject> LoxClass::createInstance(std::shared_ptr<LoxClass> co
     }
 
     return _runtime->create<LoxObject>(klass);
+}
+
+void LoxClass::collectFields(std::map<std::string, std::shared_ptr<LoxObject>>& fields)
+{
+    if (_superclass) {
+        _superclass->collectFields(fields);
+    }
+
+    for (auto const& [name, value] : _fields) {
+        fields[name] = value; // overwrite if already exist
+    }
 }
 
 } // namespace cloxx

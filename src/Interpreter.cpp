@@ -201,6 +201,18 @@ void Interpreter::visit(ClassStmt const& stmt)
         _environment->define("super", superclass);
     }
 
+    std::map<std::string, std::shared_ptr<LoxObject>> fields;
+    for (auto const& field : stmt.fields) {
+        std::shared_ptr<LoxObject> value;
+        if (field.initializer) {
+            value = evaluate(*field.initializer);
+        }
+        else {
+            value = _runtime.getNil();
+        }
+        fields.emplace(field.name.lexeme, value);
+    }
+
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
     for (auto const& method : stmt.methods) {
         bool isInitializer = method.name.lexeme == "init";
@@ -208,7 +220,8 @@ void Interpreter::visit(ClassStmt const& stmt)
         methods.emplace(method.name.lexeme, function);
     }
 
-    auto klass = _runtime.create<LoxClass>(stmt.name.lexeme, superclass, methods, /*objectFactory*/ nullptr);
+    auto klass = _runtime.create<LoxClass>(stmt.name.lexeme, superclass, std::move(fields), std::move(methods),
+                                           /*objectFactory*/ nullptr);
 
     if (superclass) {
         _environment = enclosingEnvironment;
