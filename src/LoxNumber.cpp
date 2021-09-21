@@ -1,7 +1,7 @@
 #include "LoxNumber.hpp"
 
-#include "Interpreter.hpp"
 #include "LoxClass.hpp"
+#include "Runtime.hpp"
 
 namespace cloxx {
 

@@ -9,6 +9,7 @@
 #include "LoxFunction.hpp"
 
 namespace cloxx {
+
 LoxObject::LoxObject(PrivateCreationTag tag, std::shared_ptr<LoxClass> const& klass) : Traceable{tag}, _class{klass}
 {
     LOX_ASSERT(_class);

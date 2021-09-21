@@ -15,16 +15,27 @@ namespace cloxx {
 
 Runtime::Runtime()
 {
-    _objectClass = createObjectClass(this);
     _listClass = createListClass(this);
 
     // Built-in classes - Object, Class, Function, Nil
     _gc.root()->define("List", _listClass);
 }
 
+std::shared_ptr<Environment> const& Runtime::root()
+{
+    return _gc.root();
+}
+
+void Runtime::collectGarbage()
+{
+    _gc.collect();
+}
+
 std::shared_ptr<LoxClass> const& Runtime::objectClass()
 {
-    LOX_ASSERT(_objectClass);
+    if (!_objectClass) {
+        _objectClass = createObjectClass(this);
+    }
     return _objectClass;
 }
 
@@ -77,16 +88,6 @@ std::shared_ptr<LoxObject> Runtime::toLoxString(std::string value)
     auto instance = _stringClass->call({});
     static_cast<LoxString*>(instance.get())->value = std::move(value);
     return instance;
-}
-
-std::shared_ptr<Environment> const& Runtime::root()
-{
-    return _gc.root();
-}
-
-void Runtime::collectGarbage()
-{
-    _gc.collect();
 }
 
 } // namespace cloxx
