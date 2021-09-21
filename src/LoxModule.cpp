@@ -9,7 +9,14 @@ namespace cloxx {
 
 namespace {
 
-std::map<std::string, std::shared_ptr<LoxFunction>> createModuleMethods(Runtime* /*runtime*/)
+auto createModuleFields(Runtime* /*runtime*/)
+{
+    std::map<std::string, std::shared_ptr<LoxObject>> fields;
+    // no fields yet
+    return fields;
+}
+
+auto createModuleMethods(Runtime* /*runtime*/)
 {
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
     // no methods yet
@@ -25,8 +32,8 @@ std::string LoxModule::toString()
 
 std::shared_ptr<LoxClass> createModuleClass(Runtime* runtime)
 {
-    return runtime->create<LoxClass>("Module", runtime->objectClass(), createModuleMethods(runtime),
-                                     [runtime](auto const& klass) {
+    return runtime->create<LoxClass>("Module", runtime->objectClass(), createModuleFields(runtime),
+                                     createModuleMethods(runtime), [runtime](auto const& klass) {
                                          return runtime->create<LoxModule>(klass);
                                      });
 }
