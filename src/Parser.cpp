@@ -128,6 +128,7 @@ Stmt Parser::statement()
     //           | returnStmt
     //           | printStmt
     //           | exprStmt
+    //           | importStmt
     //           | block ;
 
     if (match(Token::IF)) {
@@ -147,6 +148,9 @@ Stmt Parser::statement()
     }
     if (match(Token::RETURN)) {
         return returnStatement();
+    }
+    if (match(Token::IMPORT)) {
+        return importStatement();
     }
     if (match(Token::LEFT_BRACE)) {
         return makeBlockStmt(block());
@@ -254,6 +258,25 @@ Stmt Parser::returnStatement()
     }
 
     return makeReturnStmt(keyword, expr);
+}
+
+Stmt Parser::importStatement()
+{
+    // importStmt → "import" string ( "as" identifier ) ";" ;
+
+    LOX_ASSERT_PREVIOUS(IMPORT);
+
+    auto keyword = previous();
+    auto filePath = consume(Token::STRING, "Expect module path after import.");
+
+    std::optional<Token> alias;
+    if (match(Token::AS)) {
+        alias = consume(Token::IDENTIFIER, "Expect alias after as.");
+    }
+
+    consume(Token::SEMICOLON, "Expect ';' after import.");
+
+    return makeImportStmt(keyword, filePath, alias);
 }
 
 Stmt Parser::expressionStatement()

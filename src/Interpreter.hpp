@@ -75,6 +75,9 @@ private:
     std::shared_ptr<LoxFunction> makeFunction(bool isInitializer, Token const& name, std::vector<Token> const params,
                                               std::vector<Stmt> const& body);
 
+    double parseNumber(Token const& token);
+    std::string parseString(Token const& token);
+
     struct ReturnValue {
         std::shared_ptr<LoxObject> object;
     };

@@ -141,9 +141,11 @@ void Interpreter::visit(IfStmt const& stmt)
     }
 }
 
-void Interpreter::visit(ImportStmt const& /*stmt*/)
+void Interpreter::visit(ImportStmt const& stmt)
 {
     // TODO: load file from stmt.path
+    auto filePath = parseString(stmt.filePath);
+    _errorReporter->runtimeError(stmt.keyword, "Cannot load module from \"" + stmt.filePath.lexeme + "\"");
 }
 
 void Interpreter::visit(BreakStmt const&)
@@ -357,14 +359,10 @@ void Interpreter::visit(LiteralExpr const& expr)
         value = _runtime.toLoxBool(expr.literal.type == Token::TRUE);
     }
     else if (expr.literal.type == Token::NUMBER) {
-        value = _runtime.toLoxNumber(std::stod(expr.literal.lexeme));
+        value = _runtime.toLoxNumber(parseNumber(expr.literal));
     }
     else if (expr.literal.type == Token::STRING) {
-        // Trim the surrounding quotes.
-        auto const& lexmem = expr.literal.lexeme;
-        LOX_ASSERT(lexmem.length() >= 2);
-        auto text = lexmem.substr(1, lexmem.size() - 2);
-        value = _runtime.toLoxString(std::move(text));
+        value = _runtime.toLoxString(parseString(expr.literal));
     }
     else {
         LOX_ASSERT(expr.literal.type == Token::NIL);
@@ -553,6 +551,22 @@ std::shared_ptr<LoxFunction> Interpreter::makeFunction(bool isInitializer, Token
     };
 
     return _runtime.create<LoxUserFunction>(_environment, isInitializer, name, params, body, executor);
+}
+
+double Interpreter::parseNumber(Token const& token)
+{
+    LOX_ASSERT(token.type == Token::NUMBER);
+
+    return std::stod(token.lexeme);
+}
+
+std::string Interpreter::parseString(Token const& token)
+{
+    LOX_ASSERT(token.type == Token::STRING);
+    LOX_ASSERT(token.lexeme.length() >= 2);
+
+    auto const& lexeme = token.lexeme;
+    return lexeme.substr(1, lexeme.size() - 2);
 }
 
 } // namespace cloxx

@@ -33,6 +33,7 @@ private:
     Stmt breakStatement();
     Stmt continueStatement();
     Stmt returnStatement();
+    Stmt importStatement();
     Stmt expressionStatement();
     std::vector<Stmt> block();
     Expr expression();
