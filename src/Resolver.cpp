@@ -155,12 +155,9 @@ void Resolver::visit(IfStmt const& stmt)
 
 void Resolver::visit(ImportStmt const& stmt)
 {
-    if (stmt.alias) {
-        declare(*stmt.alias);
-        define(*stmt.alias);
-    }
-    else {
-        // TODO: parse module name from stmt.path and define
+    for (auto const& [name, _] : stmt.symbols) {
+        declare(name);
+        define(name);
     }
 }
 

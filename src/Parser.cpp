@@ -262,21 +262,34 @@ Stmt Parser::returnStatement()
 
 Stmt Parser::importStatement()
 {
-    // importStmt → "import" string ( "as" identifier ) ";" ;
+    // importStmt → "import" "{" ( identifier ( "as" identifier )? )+  "}" "from" string ";" ;
 
     LOX_ASSERT_PREVIOUS(IMPORT);
 
     auto keyword = previous();
-    auto filePath = consume(Token::STRING, "Expect module path after import.");
 
-    std::optional<Token> alias;
-    if (match(Token::AS)) {
-        alias = consume(Token::IDENTIFIER, "Expect alias after as.");
+    consume(Token::LEFT_BRACE, "Expect { after import.");
+
+    std::map<Token, std::optional<Token>> symbols;
+    while (match(Token::IDENTIFIER)) {
+        auto symbol = previous();
+        std::optional<Token> alias;
+        if (match(Token::AS)) {
+            alias = consume(Token::IDENTIFIER, "Expect identifier after as.");
+        }
+
+        // TODO: report error/warning if duplicated name found
+
+        symbols.emplace(symbol, alias);
     }
 
+    consume(Token::RIGHT_BRACE, "Expect } after import list.");
+    consume(Token::FROM, "Expect from after import list.");
+
+    auto filePath = consume(Token::STRING, "Expect module path after import.");
     consume(Token::SEMICOLON, "Expect ';' after import.");
 
-    return makeImportStmt(keyword, filePath, alias);
+    return makeImportStmt(keyword, symbols, filePath);
 }
 
 Stmt Parser::expressionStatement()

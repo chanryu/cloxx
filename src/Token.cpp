@@ -52,6 +52,7 @@ char const* getTokenName(Token::Type tokenType)
         LOX_TOKEN_NAME_CASE(FALSE);
         LOX_TOKEN_NAME_CASE(FUN);
         LOX_TOKEN_NAME_CASE(FOR);
+        LOX_TOKEN_NAME_CASE(FROM);
         LOX_TOKEN_NAME_CASE(IF);
         LOX_TOKEN_NAME_CASE(IMPORT);
         LOX_TOKEN_NAME_CASE(NIL);
@@ -86,25 +87,11 @@ std::string Token::toString() const
 std::optional<Token::Type> lookupKeyword(std::string const& identifier)
 {
     const std::map<std::string, Token::Type> keywords = {
-        {"and", Token::AND},
-        {"as", Token::AS},
-        {"break", Token::BREAK},
-        {"class", Token::CLASS},
-        {"continue", Token::CONTINUE},
-        {"else", Token::ELSE},
-        {"false", Token::FALSE},
-        {"for", Token::FOR},
-        {"fun", Token::FUN},
-        {"if", Token::IF},
-        {"import", Token::IMPORT},
-        {"nil", Token::NIL},
-        {"or", Token::OR},
-        {"return", Token::RETURN},
-        {"super", Token::SUPER},
-        {"this", Token::THIS},
-        {"true", Token::TRUE},
-        {"var", Token::VAR},
-        {"while", Token::WHILE},
+        {"and", Token::AND},           {"as", Token::AS},     {"break", Token::BREAK},   {"class", Token::CLASS},
+        {"continue", Token::CONTINUE}, {"else", Token::ELSE}, {"false", Token::FALSE},   {"for", Token::FOR},
+        {"fun", Token::FUN},           {"from", Token::FROM}, {"if", Token::IF},         {"import", Token::IMPORT},
+        {"nil", Token::NIL},           {"or", Token::OR},     {"return", Token::RETURN}, {"super", Token::SUPER},
+        {"this", Token::THIS},         {"true", Token::TRUE}, {"var", Token::VAR},       {"while", Token::WHILE},
     };
 
     if (auto const i = keywords.find(identifier); i != keywords.end()) {

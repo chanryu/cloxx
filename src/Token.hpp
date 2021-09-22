@@ -47,6 +47,7 @@ struct Token {
         FALSE,
         FUN,
         FOR,
+        FROM,
         IF,
         IMPORT,
         NIL,
@@ -62,6 +63,17 @@ struct Token {
     };
 
     Token(Type type, std::string lexeme, size_t line);
+
+    bool operator<(Token const& rhs) const
+    {
+        if (type != rhs.type) {
+            return type < rhs.type;
+        }
+        if (lexeme != rhs.lexeme) {
+            return lexeme < rhs.lexeme;
+        }
+        return line < rhs.line;
+    }
 
 #ifndef NDEBUG
     std::string toString() const;
