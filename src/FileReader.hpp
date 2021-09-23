@@ -3,10 +3,10 @@
 #include <fstream>
 #include <string>
 
-#include "SourceReader.hpp"
+#include "ScriptReader.hpp"
 
 namespace cloxx {
-class FileReader : public SourceReader {
+class FileReader : public ScriptReader {
 public:
     explicit FileReader(std::string const& filePath);
 

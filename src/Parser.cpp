@@ -7,7 +7,7 @@
 
 namespace cloxx {
 
-Parser::Parser(ErrorReporter* errorReporter, SourceReader* sourceReader)
+Parser::Parser(ErrorReporter* errorReporter, ScriptReader* sourceReader)
     : _errorReporter{errorReporter}, _scanner{errorReporter, sourceReader}
 {
     _current = _scanner.scanToken();

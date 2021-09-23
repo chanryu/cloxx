@@ -5,9 +5,9 @@
 
 namespace cloxx {
 
-class SourceReader {
+class ScriptReader {
 public:
-    virtual ~SourceReader() = default;
+    virtual ~ScriptReader() = default;
 
     virtual bool isAtEnd() = 0;
     virtual char readChar() = 0;

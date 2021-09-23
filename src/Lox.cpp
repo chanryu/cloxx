@@ -99,7 +99,7 @@ private:
     bool _hadRuntimeError = false;
 };
 
-int runScript(std::string const& scriptPath, SourceReader& sourceReader)
+int runScript(std::string const& scriptPath, ScriptReader& sourceReader)
 {
     ConsoleErrorReporter errorReporter;
 

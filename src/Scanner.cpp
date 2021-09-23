@@ -5,7 +5,7 @@
 
 #include "Assert.hpp"
 #include "ErrorReporter.hpp"
-#include "SourceReader.hpp"
+#include "ScriptReader.hpp"
 
 namespace cloxx {
 
@@ -24,7 +24,7 @@ bool isAlphaNumeric(char c)
 }
 } // namespace
 
-Scanner::Scanner(ErrorReporter* errorReporter, SourceReader* sourceReader)
+Scanner::Scanner(ErrorReporter* errorReporter, ScriptReader* sourceReader)
     : _errorReporter{errorReporter}, _sourceReader{sourceReader}
 {
     _currentChar = _sourceReader->readChar();

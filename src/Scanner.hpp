@@ -5,11 +5,11 @@
 namespace cloxx {
 
 class ErrorReporter;
-class SourceReader;
+class ScriptReader;
 
 class Scanner {
 public:
-    explicit Scanner(ErrorReporter* errorReporter, SourceReader* sourceReader);
+    explicit Scanner(ErrorReporter* errorReporter, ScriptReader* sourceReader);
 
     Token scanToken();
 
@@ -26,7 +26,7 @@ private:
     Token makeToken(Token::Type type);
 
     ErrorReporter* const _errorReporter;
-    SourceReader* const _sourceReader;
+    ScriptReader* const _sourceReader;
 
     char _currentChar = '\0';
     char _nextChar = '\0';

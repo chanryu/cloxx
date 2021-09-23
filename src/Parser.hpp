@@ -13,11 +13,11 @@
 namespace cloxx {
 
 class ErrorReporter;
-class SourceReader;
+class ScriptReader;
 
 class Parser {
 public:
-    explicit Parser(ErrorReporter* errorReporter, SourceReader* sourceReader);
+    explicit Parser(ErrorReporter* errorReporter, ScriptReader* sourceReader);
 
     std::optional<Stmt> parse();
 
