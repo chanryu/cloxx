@@ -9,7 +9,7 @@ class SourceReader {
 public:
     virtual ~SourceReader() = default;
 
-    virtual bool isEndOfSource() = 0;
+    virtual bool isAtEnd() = 0;
     virtual char readChar() = 0;
 };
 

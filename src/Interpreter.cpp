@@ -66,9 +66,9 @@ private:
     std::shared_ptr<Environment> _oldEnvironment;
 };
 
-Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalObjectsProc)
-    : _errorReporter{errorReporter}
-
+Interpreter::Interpreter(std::string const& scriptPath, ErrorReporter* errorReporter,
+                         GlobalObjectsProc globalObjectsProc)
+    : _scriptPath{scriptPath}, _errorReporter{errorReporter}
 {
     _globals = _runtime.root();
     _environment = _globals;

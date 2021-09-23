@@ -23,7 +23,7 @@ using GlobalObjectsProc = std::function<std::map<std::string, std::shared_ptr<Lo
 
 class Interpreter : StmtVisitor, ExprVisitor {
 public:
-    Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalObjectsProc);
+    Interpreter(std::string const& scriptPath, ErrorReporter* errorReporter, GlobalObjectsProc globalObjectsProc);
 
     void interpret(Stmt const& stmt);
 
@@ -87,9 +87,10 @@ private:
 
     class ScopeSwitcher;
 
-    Runtime _runtime;
-
+    std::string const _scriptPath;
     ErrorReporter* const _errorReporter;
+
+    Runtime _runtime;
 
     std::shared_ptr<Environment> _globals;
     std::shared_ptr<Environment> _environment;

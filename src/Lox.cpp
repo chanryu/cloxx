@@ -2,6 +2,7 @@
 
 #include "Assert.hpp"
 #include "ErrorReporter.hpp"
+#include "FileReader.hpp"
 #include "Interpreter.hpp"
 #include "LoxFunction.hpp"
 #include "LoxNativeFunction.hpp"
@@ -10,10 +11,9 @@
 #include "LoxObject.hpp"
 #include "Parser.hpp"
 #include "Resolver.hpp"
-#include "SourceReader.hpp"
 
 #include <chrono> // for clock() native function
-#include <fstream>
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 
@@ -37,36 +37,6 @@ auto makeBuiltIns(Runtime* runtime)
 
     return builtIns;
 }
-
-class IStreamSourceReader : public SourceReader {
-public:
-    IStreamSourceReader(std::istream& istream) : _istream{istream}
-    {
-        readNextChar();
-    }
-
-    bool isEndOfSource()
-    {
-        return _nextChar == '\0';
-    }
-
-    char readChar()
-    {
-        char c = _nextChar;
-        readNextChar();
-        return c;
-    }
-
-private:
-    void readNextChar()
-    {
-        if (!_istream.get(_nextChar)) {
-            _nextChar = '\0';
-        }
-    }
-    std::istream& _istream;
-    char _nextChar;
-};
 
 class ConsoleErrorReporter : public ErrorReporter {
 public:
@@ -129,32 +99,14 @@ private:
     bool _hadRuntimeError = false;
 };
 
-} // namespace
-
-Lox::Lox()
-{}
-
-int Lox::runFile(char const* filepath)
-{
-    std::ifstream ifs{filepath};
-    if (!ifs.is_open()) {
-        std::cerr << "Error: Cannot open file '" << filepath << "' to read!\n";
-        return 1;
-    }
-
-    IStreamSourceReader sourceReader{ifs};
-
-    return run(sourceReader);
-}
-
-int Lox::run(SourceReader& sourceReader)
+int runScript(std::string const& scriptPath, SourceReader& sourceReader)
 {
     ConsoleErrorReporter errorReporter;
 
     Parser parser{&errorReporter, &sourceReader};
 
     Resolver resolver{&errorReporter};
-    Interpreter interpreter{&errorReporter, makeBuiltIns};
+    Interpreter interpreter{scriptPath, &errorReporter, makeBuiltIns};
 
     while (true) {
         auto const prevSyntaxErrorCount = errorReporter.syntaxErrorCount();
@@ -196,6 +148,19 @@ int Lox::run(SourceReader& sourceReader)
     }
 
     return 0;
+}
+
+} // namespace
+
+int runFile(char const* filePath)
+{
+    FileReader reader{filePath};
+    if (!reader.isOpen()) {
+        std::cerr << "Error: Cannot open file '" << filePath << "' to read!\n";
+        return 1;
+    }
+
+    return runScript(filePath, reader);
 }
 
 } // namespace cloxx

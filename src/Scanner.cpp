@@ -150,7 +150,7 @@ char Scanner::peek()
 
 char Scanner::peekNext()
 {
-    if (_nextChar == '\0' && !_sourceReader->isEndOfSource()) {
+    if (_nextChar == '\0' && !_sourceReader->isAtEnd()) {
         _nextChar = _sourceReader->readChar();
     }
 
