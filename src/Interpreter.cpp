@@ -3,16 +3,21 @@
 #include "Assert.hpp"
 #include "Environment.hpp"
 #include "ErrorReporter.hpp"
+#include "FileReader.hpp"
+#include "Parser.hpp"
 #include "Resolver.hpp"
 #include "RuntimeError.hpp"
 
 #include "LoxBool.hpp"
 #include "LoxClass.hpp"
 #include "LoxList.hpp"
+#include "LoxModule.hpp"
 #include "LoxNil.hpp"
 #include "LoxNumber.hpp"
 #include "LoxString.hpp"
 #include "LoxUserFunction.hpp"
+
+#include <filesystem>
 
 namespace cloxx {
 
@@ -143,9 +148,50 @@ void Interpreter::visit(IfStmt const& stmt)
 
 void Interpreter::visit(ImportStmt const& stmt)
 {
+    namespace fs = std::filesystem;
+
     // TODO: load file from stmt.path
-    auto filePath = parseString(stmt.filePath);
-    _errorReporter->runtimeError(stmt.keyword, "Cannot load module from \"" + stmt.filePath.lexeme + "\"");
+    auto filePath = fs::path{parseString(stmt.filePath)};
+
+    if (!filePath.is_absolute()) {
+        auto scriptDirPath = fs::absolute(fs::path{_scriptPath}).remove_filename();
+        filePath = fs::absolute(scriptDirPath / filePath);
+    }
+
+    try {
+        filePath = fs::weakly_canonical(filePath);
+    }
+    catch (fs::filesystem_error&) {
+        // i.e., file does not exist
+        _errorReporter->runtimeError(stmt.keyword, "Cannot load module from " + filePath.string());
+        return;
+    }
+
+    // TODO: Check if the module at filePath is already loaded
+
+    if (auto moduleStmts = parseModule(filePath.string())) {
+        auto moduleBlock = makeBlockStmt(*moduleStmts);
+
+        Resolver resolver{_errorReporter};
+        if (!resolver.resolve(moduleBlock)) {
+            // resolve error
+            return;
+        }
+
+        auto moduleEnv = _runtime.createEnvironment(nullptr);
+
+        executeBlock(*moduleStmts, moduleEnv);
+
+        for (auto const& [symbol, alias] : stmt.symbols) {
+            // TODO: show better error message in get()
+            auto object = moduleEnv->get(symbol);
+            LOX_ASSERT(object); // if symbol was missing, error should have been thrown
+            _environment->define(alias ? alias->lexeme : symbol.lexeme, object);
+        }
+    }
+    else {
+        _errorReporter->runtimeError(stmt.keyword, "Cannot load module from " + filePath.string());
+    }
 }
 
 void Interpreter::visit(BreakStmt const&)
@@ -567,6 +613,41 @@ std::string Interpreter::parseString(Token const& token)
 
     auto const& lexeme = token.lexeme;
     return lexeme.substr(1, lexeme.size() - 2);
+}
+
+std::optional<std::vector<Stmt>> Interpreter::parseModule(std::string const& filePath)
+{
+    FileReader reader{filePath};
+    if (!reader.isOpen()) {
+        return std::nullopt;
+    }
+
+    std::vector<Stmt> stmts;
+
+    Parser parser{_errorReporter, &reader};
+
+    bool hasSyntaxError = false;
+    while (!reader.isAtEnd()) {
+        auto const stmt = parser.parse();
+        if (!stmt) {
+            if (!reader.isAtEnd()) {
+                // Scanning or parsing error(s) - continue on to report more errors
+                hasSyntaxError = true;
+                continue;
+            }
+
+            // We're done!
+            break;
+        }
+
+        stmts.push_back(*stmt);
+    }
+
+    if (hasSyntaxError) {
+        return std::nullopt;
+    }
+
+    return stmts;
 }
 
 } // namespace cloxx

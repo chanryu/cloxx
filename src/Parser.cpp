@@ -271,7 +271,9 @@ Stmt Parser::importStatement()
     consume(Token::LEFT_BRACE, "Expect { after import.");
 
     std::map<Token, std::optional<Token>> symbols;
-    while (match(Token::IDENTIFIER)) {
+    while (true) {
+        consume(Token::IDENTIFIER, "Expect identifier.");
+
         auto symbol = previous();
         std::optional<Token> alias;
         if (match(Token::AS)) {
@@ -279,8 +281,11 @@ Stmt Parser::importStatement()
         }
 
         // TODO: report error/warning if duplicated name found
-
         symbols.emplace(symbol, alias);
+
+        if (!match(Token::COMMA)) {
+            break;
+        }
     }
 
     consume(Token::RIGHT_BRACE, "Expect } after import list.");

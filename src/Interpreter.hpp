@@ -78,6 +78,8 @@ private:
     double parseNumber(Token const& token);
     std::string parseString(Token const& token);
 
+    std::optional<std::vector<Stmt>> parseModule(std::string const& filePath);
+
     struct ReturnValue {
         std::shared_ptr<LoxObject> object;
     };
