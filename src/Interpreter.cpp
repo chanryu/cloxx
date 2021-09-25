@@ -150,7 +150,6 @@ void Interpreter::visit(ImportStmt const& stmt)
 {
     namespace fs = std::filesystem;
 
-    // TODO: load file from stmt.path
     auto filePath = fs::path{parseString(stmt.filePath)};
 
     if (!filePath.is_absolute()) {
@@ -163,34 +162,26 @@ void Interpreter::visit(ImportStmt const& stmt)
     }
     catch (fs::filesystem_error&) {
         // i.e., file does not exist
-        _errorReporter->runtimeError(stmt.keyword, "Cannot load module from " + filePath.string());
-        return;
+        throw RuntimeError{stmt.keyword, "Cannot load module from " + filePath.string()};
     }
 
     // TODO: Check if the module at filePath is already loaded
-
-    if (auto moduleStmts = parseModule(filePath.string())) {
-        auto moduleBlock = makeBlockStmt(*moduleStmts);
-
-        Resolver resolver{_errorReporter};
-        if (!resolver.resolve(moduleBlock)) {
-            // resolve error
-            return;
-        }
-
-        auto moduleEnv = _runtime.createEnvironment(nullptr);
-
-        executeBlock(*moduleStmts, moduleEnv);
-
-        for (auto const& [symbol, alias] : stmt.symbols) {
-            // TODO: show better error message in get()
-            auto object = moduleEnv->get(symbol);
-            LOX_ASSERT(object); // if symbol was missing, error should have been thrown
-            _environment->define(alias ? alias->lexeme : symbol.lexeme, object);
-        }
+    FileReader reader{filePath.string()};
+    if (!reader.isOpen()) {
+        throw RuntimeError{stmt.filePath, "Cannot open module at: " + filePath.string()};
     }
-    else {
-        _errorReporter->runtimeError(stmt.keyword, "Cannot load module from " + filePath.string());
+
+    auto module = loadModule(reader);
+
+    for (auto const& [symbol, alias] : stmt.symbols) {
+        auto const& values = module->env->values();
+        if (auto it = values.find(symbol.lexeme); it != values.end()) {
+            auto const& name = alias ? alias->lexeme : symbol.lexeme;
+            _environment->define(name, it->second);
+        }
+        else {
+            throw RuntimeError{symbol, "Cannot find `" + symbol.lexeme + "` from the module at: " + filePath.string()};
+        }
     }
 }
 
@@ -615,13 +606,8 @@ std::string Interpreter::parseString(Token const& token)
     return lexeme.substr(1, lexeme.size() - 2);
 }
 
-std::optional<std::vector<Stmt>> Interpreter::parseModule(std::string const& filePath)
+std::shared_ptr<LoxModule> Interpreter::loadModule(ScriptReader& reader)
 {
-    FileReader reader{filePath};
-    if (!reader.isOpen()) {
-        return std::nullopt;
-    }
-
     std::vector<Stmt> stmts;
 
     Parser parser{_errorReporter, &reader};
@@ -644,10 +630,20 @@ std::optional<std::vector<Stmt>> Interpreter::parseModule(std::string const& fil
     }
 
     if (hasSyntaxError) {
-        return std::nullopt;
+        return nullptr;
     }
 
-    return stmts;
+    auto block = makeBlockStmt(stmts);
+    if (Resolver resolver{_errorReporter}; !resolver.resolve(block)) {
+        // resolve error
+        return nullptr;
+    }
+
+    auto moduleEnv = _runtime.createEnvironment(nullptr);
+
+    executeBlock(block.stmts, moduleEnv);
+
+    return _runtime.createModule(moduleEnv);
 }
 
 } // namespace cloxx

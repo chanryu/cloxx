@@ -7,6 +7,7 @@
 #include "LoxClass.hpp"
 #include "LoxFunction.hpp"
 #include "LoxList.hpp"
+#include "LoxModule.hpp"
 #include "LoxNil.hpp"
 #include "LoxNumber.hpp"
 #include "LoxString.hpp"
@@ -80,6 +81,7 @@ std::shared_ptr<LoxObject> Runtime::toLoxNumber(double value)
     if (!_numberClass) {
         _numberClass = createNumberClass(this);
     }
+
     auto instance = _numberClass->call({});
     static_cast<LoxNumber*>(instance.get())->value = value;
     return instance;
@@ -90,8 +92,20 @@ std::shared_ptr<LoxObject> Runtime::toLoxString(std::string value)
     if (!_stringClass) {
         _stringClass = createStringClass(this);
     }
+
     auto instance = _stringClass->call({});
     static_cast<LoxString*>(instance.get())->value = std::move(value);
+    return instance;
+}
+
+std::shared_ptr<LoxModule> Runtime::createModule(std::shared_ptr<Environment> const& env)
+{
+    if (!_moduleClass) {
+        _moduleClass = createModuleClass(this);
+    }
+
+    auto instance = std::static_pointer_cast<LoxModule>(_moduleClass->call({}));
+    instance->env = env;
     return instance;
 }
 

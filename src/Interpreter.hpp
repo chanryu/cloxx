@@ -14,10 +14,12 @@ namespace cloxx {
 
 class Environment;
 class ErrorReporter;
+class ScriptReader;
 
 class LoxClass;
-class LoxObject;
 class LoxFunction;
+class LoxModule;
+class LoxObject;
 
 using GlobalObjectsProc = std::function<std::map<std::string, std::shared_ptr<LoxObject>>(Runtime*)>;
 
@@ -78,7 +80,7 @@ private:
     double parseNumber(Token const& token);
     std::string parseString(Token const& token);
 
-    std::optional<std::vector<Stmt>> parseModule(std::string const& filePath);
+    std::shared_ptr<LoxModule> loadModule(ScriptReader& reader);
 
     struct ReturnValue {
         std::shared_ptr<LoxObject> object;

@@ -12,6 +12,11 @@ public:
     using LoxObject::LoxObject;
 
     std::string toString() override;
+
+    void enumerateTraceables(Enumerator const& enumerator) override;
+    void reclaim() override;
+
+    std::shared_ptr<Environment> env;
 };
 
 std::shared_ptr<LoxClass> createModuleClass(Runtime* runtime);

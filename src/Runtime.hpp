@@ -6,6 +6,7 @@ namespace cloxx {
 
 class LoxClass;
 class LoxObject;
+class LoxModule;
 
 class Runtime {
 public:
@@ -30,6 +31,8 @@ public:
     std::shared_ptr<LoxObject> toLoxNumber(double value);
     std::shared_ptr<LoxObject> toLoxString(std::string value);
 
+    std::shared_ptr<LoxModule> createModule(std::shared_ptr<Environment> const& env);
+
 private:
     GarbageCollector _gc;
 
@@ -40,6 +43,7 @@ private:
     std::shared_ptr<LoxClass> _numberClass;
     std::shared_ptr<LoxClass> _stringClass;
     std::shared_ptr<LoxClass> _listClass;
+    std::shared_ptr<LoxClass> _moduleClass;
 
     // Built-in instances
     std::shared_ptr<LoxObject> _nil;

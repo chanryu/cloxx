@@ -1,6 +1,7 @@
 #include "LoxModule.hpp"
 
 #include "Assert.hpp"
+#include "Environment.hpp"
 #include "Runtime.hpp"
 
 #include "LoxClass.hpp"
@@ -28,6 +29,21 @@ auto createModuleMethods(Runtime* /*runtime*/)
 std::string LoxModule::toString()
 {
     return "Module";
+}
+
+void LoxModule::enumerateTraceables(Enumerator const& enumerator)
+{
+    LoxObject::enumerateTraceables(enumerator);
+
+    LOX_ASSERT(env);
+    enumerator.enumerate(*env);
+}
+
+void LoxModule::reclaim()
+{
+    LoxObject::reclaim();
+
+    env.reset();
 }
 
 std::shared_ptr<LoxClass> createModuleClass(Runtime* runtime)
