@@ -100,6 +100,8 @@ private:
     std::shared_ptr<Environment> _environment;
 
     std::vector<std::shared_ptr<LoxObject>> _evalResults;
+
+    std::map<std::string /*filePath*/, std::shared_ptr<LoxModule>> _modules;
 };
 
 } // namespace cloxx

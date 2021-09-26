@@ -165,13 +165,17 @@ void Interpreter::visit(ImportStmt const& stmt)
         throw RuntimeError{stmt.keyword, "Cannot load module from " + filePath.string()};
     }
 
-    // TODO: Check if the module at filePath is already loaded
-    FileReader reader{filePath.string()};
-    if (!reader.isOpen()) {
-        throw RuntimeError{stmt.filePath, "Cannot open module at: " + filePath.string()};
+    std::shared_ptr<LoxModule> module;
+    if (auto it = _modules.find(filePath.string()); it != _modules.end()) {
+        module = it->second;
     }
-
-    auto module = loadModule(reader);
+    else {
+        FileReader reader{filePath.string()};
+        if (!reader.isOpen()) {
+            throw RuntimeError{stmt.filePath, "Cannot open module at: " + filePath.string()};
+        }
+        module = loadModule(reader);
+    }
 
     for (auto const& [symbol, alias] : stmt.symbols) {
         auto const& values = module->env->values();
@@ -633,15 +637,15 @@ std::shared_ptr<LoxModule> Interpreter::loadModule(ScriptReader& reader)
         return nullptr;
     }
 
-    auto block = makeBlockStmt(stmts);
-    if (Resolver resolver{_errorReporter}; !resolver.resolve(block)) {
+    auto moduleBlock = makeBlockStmt(stmts);
+    if (Resolver resolver{_errorReporter}; !resolver.resolve(moduleBlock)) {
         // resolve error
         return nullptr;
     }
 
     auto moduleEnv = _runtime.createEnvironment(nullptr);
 
-    executeBlock(block.stmts, moduleEnv);
+    executeBlock(moduleBlock.stmts, moduleEnv);
 
     return _runtime.createModule(moduleEnv);
 }
