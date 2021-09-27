@@ -4,6 +4,7 @@
 #include "Environment.hpp"
 #include "ErrorReporter.hpp"
 #include "FileReader.hpp"
+#include "Module.hpp"
 #include "Parser.hpp"
 #include "Resolver.hpp"
 #include "RuntimeError.hpp"
@@ -11,7 +12,6 @@
 #include "LoxBool.hpp"
 #include "LoxClass.hpp"
 #include "LoxList.hpp"
-#include "LoxModule.hpp"
 #include "LoxNil.hpp"
 #include "LoxNumber.hpp"
 #include "LoxString.hpp"
@@ -165,7 +165,7 @@ void Interpreter::visit(ImportStmt const& stmt)
         throw RuntimeError{stmt.keyword, "Cannot load module from " + filePath.string()};
     }
 
-    std::shared_ptr<LoxModule> module;
+    std::shared_ptr<Module> module;
     if (auto it = _modules.find(filePath.string()); it != _modules.end()) {
         module = it->second;
     }
@@ -175,13 +175,15 @@ void Interpreter::visit(ImportStmt const& stmt)
             throw RuntimeError{stmt.filePath, "Cannot open module at: " + filePath.string()};
         }
         module = loadModule(reader);
+
+        // If there was an error, RuntimeError has been thrown.
+        LOX_ASSERT(module);
     }
 
     for (auto const& [symbol, alias] : stmt.symbols) {
-        auto const& values = module->env->values();
-        if (auto it = values.find(symbol.lexeme); it != values.end()) {
+        if (auto object = module->get(symbol.lexeme)) {
             auto const& name = alias ? alias->lexeme : symbol.lexeme;
-            _environment->define(name, it->second);
+            _environment->define(name, object);
         }
         else {
             throw RuntimeError{symbol, "Cannot find `" + symbol.lexeme + "` from the module at: " + filePath.string()};
@@ -610,7 +612,7 @@ std::string Interpreter::parseString(Token const& token)
     return lexeme.substr(1, lexeme.size() - 2);
 }
 
-std::shared_ptr<LoxModule> Interpreter::loadModule(ScriptReader& reader)
+std::shared_ptr<Module> Interpreter::loadModule(ScriptReader& reader)
 {
     std::vector<Stmt> stmts;
 
@@ -647,7 +649,7 @@ std::shared_ptr<LoxModule> Interpreter::loadModule(ScriptReader& reader)
 
     executeBlock(moduleBlock.stmts, moduleEnv);
 
-    return _runtime.createModule(moduleEnv);
+    return _runtime.createModule(moduleEnv->values());
 }
 
 } // namespace cloxx

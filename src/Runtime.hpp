@@ -1,12 +1,15 @@
 #pragma once
 
+#include <map>
+
 #include "GC.hpp"
 
 namespace cloxx {
 
 class LoxClass;
 class LoxObject;
-class LoxModule;
+
+class Module;
 
 class Runtime {
 public:
@@ -19,6 +22,7 @@ public:
     }
 
     std::shared_ptr<Environment> createEnvironment(std::shared_ptr<Environment> const& closure);
+    std::shared_ptr<Module> createModule(std::map<std::string, std::shared_ptr<LoxObject>> const& values);
 
     std::shared_ptr<Environment> const& root();
     void collectGarbage();
@@ -30,8 +34,6 @@ public:
     std::shared_ptr<LoxObject> toLoxBool(bool value);
     std::shared_ptr<LoxObject> toLoxNumber(double value);
     std::shared_ptr<LoxObject> toLoxString(std::string value);
-
-    std::shared_ptr<LoxModule> createModule(std::shared_ptr<Environment> const& env);
 
 private:
     GarbageCollector _gc;

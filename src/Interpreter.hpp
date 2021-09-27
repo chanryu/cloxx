@@ -14,6 +14,7 @@ namespace cloxx {
 
 class Environment;
 class ErrorReporter;
+class Module;
 class ScriptReader;
 
 class LoxClass;
@@ -80,7 +81,7 @@ private:
     double parseNumber(Token const& token);
     std::string parseString(Token const& token);
 
-    std::shared_ptr<LoxModule> loadModule(ScriptReader& reader);
+    std::shared_ptr<Module> loadModule(ScriptReader& reader);
 
     struct ReturnValue {
         std::shared_ptr<LoxObject> object;
@@ -98,10 +99,9 @@ private:
 
     std::shared_ptr<Environment> _globals;
     std::shared_ptr<Environment> _environment;
+    std::map<std::string /*filePath*/, std::shared_ptr<Module>> _modules;
 
     std::vector<std::shared_ptr<LoxObject>> _evalResults;
-
-    std::map<std::string /*filePath*/, std::shared_ptr<LoxModule>> _modules;
 };
 
 } // namespace cloxx

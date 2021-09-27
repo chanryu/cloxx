@@ -2,12 +2,12 @@
 
 #include "Assert.hpp"
 #include "Environment.hpp"
+#include "Module.hpp"
 
 #include "LoxBool.hpp"
 #include "LoxClass.hpp"
 #include "LoxFunction.hpp"
 #include "LoxList.hpp"
-#include "LoxModule.hpp"
 #include "LoxNil.hpp"
 #include "LoxNumber.hpp"
 #include "LoxString.hpp"
@@ -25,6 +25,11 @@ Runtime::Runtime()
 std::shared_ptr<Environment> Runtime::createEnvironment(std::shared_ptr<Environment> const& closure)
 {
     return _gc.create<Environment>(closure);
+}
+
+std::shared_ptr<Module> Runtime::createModule(std::map<std::string, std::shared_ptr<LoxObject>> const& values)
+{
+    return _gc.create<Module>(values);
 }
 
 std::shared_ptr<Environment> const& Runtime::root()
@@ -95,17 +100,6 @@ std::shared_ptr<LoxObject> Runtime::toLoxString(std::string value)
 
     auto instance = _stringClass->call({});
     static_cast<LoxString*>(instance.get())->value = std::move(value);
-    return instance;
-}
-
-std::shared_ptr<LoxModule> Runtime::createModule(std::shared_ptr<Environment> const& env)
-{
-    if (!_moduleClass) {
-        _moduleClass = createModuleClass(this);
-    }
-
-    auto instance = std::static_pointer_cast<LoxModule>(_moduleClass->call({}));
-    instance->env = env;
     return instance;
 }
 
