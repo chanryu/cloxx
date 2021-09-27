@@ -1,9 +1,0 @@
-dist: trusty
-language: cpp
-compiler: clang
-
-script:
-  - ./scripts/configure.sh
-  - ./scripts/gen-ast.sh
-  - ./scripts/build.sh
-  - ./tool/run-test.py
