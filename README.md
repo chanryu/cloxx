@@ -1,4 +1,4 @@
-# cloxx ![Build Status](https://app.travis-ci.com/chanryu/cloxx.svg?branch=master)
+# cloxx ![Build Status](https://github.com/chanryu/cloxx/actions/workflows/cmake.yml/badge.svg)
 
 __cloxx__ is a C++ implementation of [Lox](http://www.craftinginterpreters.com/the-lox-language.html), the language featured in the book [Crafting Interpreters](http://www.craftinginterpreters.com/).
 
