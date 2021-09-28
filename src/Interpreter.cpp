@@ -616,10 +616,8 @@ std::shared_ptr<Module> Interpreter::loadModule(ScriptReader& reader)
 {
     std::vector<Stmt> stmts;
 
-    Parser parser{_errorReporter, &reader};
-
     bool hasSyntaxError = false;
-    while (!reader.isAtEnd()) {
+    for (Parser parser{_errorReporter, &reader}; !reader.isAtEnd();) {
         auto const stmt = parser.parse();
         if (!stmt) {
             if (!reader.isAtEnd()) {
@@ -631,10 +629,10 @@ std::shared_ptr<Module> Interpreter::loadModule(ScriptReader& reader)
             // We're done!
             break;
         }
-
-        stmts.push_back(*stmt);
+        if (!hasSyntaxError) {
+            stmts.push_back(*stmt);
+        }
     }
-
     if (hasSyntaxError) {
         return nullptr;
     }
@@ -646,9 +644,7 @@ std::shared_ptr<Module> Interpreter::loadModule(ScriptReader& reader)
     }
 
     auto moduleEnv = _runtime.createEnvironment(nullptr);
-
     executeBlock(moduleBlock.stmts, moduleEnv);
-
     return _runtime.createModule(moduleEnv->values());
 }
 
