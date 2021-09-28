@@ -153,6 +153,14 @@ void Resolver::visit(IfStmt const& stmt)
     }
 }
 
+void Resolver::visit(ImportStmt const& stmt)
+{
+    for (auto const& [name, _] : stmt.symbols) {
+        declare(name);
+        define(name);
+    }
+}
+
 void Resolver::visit(BreakStmt const& stmt)
 {
     if (_currentLoop == LoopType::NONE) {

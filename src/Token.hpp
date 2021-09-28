@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace cloxx {
@@ -38,6 +39,7 @@ struct Token {
 
         // Keywords.
         AND,
+        AS,
         BREAK,
         CLASS,
         CONTINUE,
@@ -45,7 +47,9 @@ struct Token {
         FALSE,
         FUN,
         FOR,
+        FROM,
         IF,
+        IMPORT,
         NIL,
         OR,
         RETURN,
@@ -58,7 +62,18 @@ struct Token {
         END_OF_FILE
     };
 
-    Token(Type type, std::string lexeme, size_t line);
+    Token(Type type, std::string lexeme, std::shared_ptr<std::string> const& filePath, size_t line);
+
+    bool operator<(Token const& rhs) const
+    {
+        if (type != rhs.type) {
+            return type < rhs.type;
+        }
+        if (lexeme != rhs.lexeme) {
+            return lexeme < rhs.lexeme;
+        }
+        return line < rhs.line;
+    }
 
 #ifndef NDEBUG
     std::string toString() const;
@@ -66,7 +81,11 @@ struct Token {
 
     Type type;
     std::string lexeme;
+
+    std::shared_ptr<std::string> filePath;
     size_t line;
 };
+
+std::optional<Token::Type> lookupKeyword(std::string const& identifier);
 
 } // namespace cloxx

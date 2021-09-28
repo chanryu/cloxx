@@ -3,6 +3,9 @@
 #include "Assert.hpp"
 #include "Environment.hpp"
 #include "ErrorReporter.hpp"
+#include "FileReader.hpp"
+#include "Module.hpp"
+#include "Parser.hpp"
 #include "Resolver.hpp"
 #include "RuntimeError.hpp"
 
@@ -13,6 +16,8 @@
 #include "LoxNumber.hpp"
 #include "LoxString.hpp"
 #include "LoxUserFunction.hpp"
+
+#include <filesystem>
 
 namespace cloxx {
 
@@ -66,9 +71,9 @@ private:
     std::shared_ptr<Environment> _oldEnvironment;
 };
 
-Interpreter::Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalObjectsProc)
-    : _errorReporter{errorReporter}
-
+Interpreter::Interpreter(std::string const& scriptPath, ErrorReporter* errorReporter,
+                         GlobalObjectsProc globalObjectsProc)
+    : _scriptPath{scriptPath}, _errorReporter{errorReporter}
 {
     _globals = _runtime.root();
     _environment = _globals;
@@ -138,6 +143,51 @@ void Interpreter::visit(IfStmt const& stmt)
     }
     else if (stmt.elseBranch) {
         execute(*stmt.elseBranch);
+    }
+}
+
+void Interpreter::visit(ImportStmt const& stmt)
+{
+    namespace fs = std::filesystem;
+
+    auto filePath = fs::path{parseString(stmt.filePath)};
+
+    if (!filePath.is_absolute()) {
+        auto scriptDirPath = fs::absolute(fs::path{_scriptPath}).remove_filename();
+        filePath = fs::absolute(scriptDirPath / filePath);
+    }
+
+    try {
+        filePath = fs::weakly_canonical(filePath);
+    }
+    catch (fs::filesystem_error&) {
+        // e.g., file does not exist
+        throw RuntimeError{stmt.keyword, "Cannot load module from " + filePath.string()};
+    }
+
+    std::shared_ptr<Module> module;
+    if (auto it = _modules.find(filePath.string()); it != _modules.end()) {
+        module = it->second;
+    }
+    else {
+        FileReader reader{filePath.string()};
+        if (!reader.isOpen()) {
+            throw RuntimeError{stmt.filePath, "Cannot open module at: " + filePath.string()};
+        }
+        module = loadModule(reader);
+
+        // If there was an error, RuntimeError has been thrown.
+        LOX_ASSERT(module);
+    }
+
+    for (auto const& [symbol, alias] : stmt.symbols) {
+        if (auto object = module->get(symbol.lexeme)) {
+            auto const& name = alias ? alias->lexeme : symbol.lexeme;
+            _environment->define(name, object);
+        }
+        else {
+            throw RuntimeError{symbol, "Cannot find `" + symbol.lexeme + "` from the module at: " + filePath.string()};
+        }
     }
 }
 
@@ -352,14 +402,10 @@ void Interpreter::visit(LiteralExpr const& expr)
         value = _runtime.toLoxBool(expr.literal.type == Token::TRUE);
     }
     else if (expr.literal.type == Token::NUMBER) {
-        value = _runtime.toLoxNumber(std::stod(expr.literal.lexeme));
+        value = _runtime.toLoxNumber(parseNumber(expr.literal));
     }
     else if (expr.literal.type == Token::STRING) {
-        // Trim the surrounding quotes.
-        auto const& lexmem = expr.literal.lexeme;
-        LOX_ASSERT(lexmem.length() >= 2);
-        auto text = lexmem.substr(1, lexmem.size() - 2);
-        value = _runtime.toLoxString(std::move(text));
+        value = _runtime.toLoxString(parseString(expr.literal));
     }
     else {
         LOX_ASSERT(expr.literal.type == Token::NIL);
@@ -548,6 +594,58 @@ std::shared_ptr<LoxFunction> Interpreter::makeFunction(bool isInitializer, Token
     };
 
     return _runtime.create<LoxUserFunction>(_environment, isInitializer, name, params, body, executor);
+}
+
+double Interpreter::parseNumber(Token const& token)
+{
+    LOX_ASSERT(token.type == Token::NUMBER);
+
+    return std::stod(token.lexeme);
+}
+
+std::string Interpreter::parseString(Token const& token)
+{
+    LOX_ASSERT(token.type == Token::STRING);
+    LOX_ASSERT(token.lexeme.length() >= 2);
+
+    auto const& lexeme = token.lexeme;
+    return lexeme.substr(1, lexeme.size() - 2);
+}
+
+std::shared_ptr<Module> Interpreter::loadModule(ScriptReader& reader)
+{
+    std::vector<Stmt> stmts;
+
+    bool hasSyntaxError = false;
+    for (Parser parser{_errorReporter, &reader}; !reader.isAtEnd();) {
+        auto const stmt = parser.parse();
+        if (!stmt) {
+            if (!reader.isAtEnd()) {
+                // Scanning or parsing error(s) - continue on to report more errors
+                hasSyntaxError = true;
+                continue;
+            }
+
+            // We're done!
+            break;
+        }
+        if (!hasSyntaxError) {
+            stmts.push_back(*stmt);
+        }
+    }
+    if (hasSyntaxError) {
+        return nullptr;
+    }
+
+    auto moduleBlock = makeBlockStmt(stmts);
+    if (Resolver resolver{_errorReporter}; !resolver.resolve(moduleBlock)) {
+        // resolve error
+        return nullptr;
+    }
+
+    auto moduleEnv = _runtime.createEnvironment(nullptr);
+    executeBlock(moduleBlock.stmts, moduleEnv);
+    return _runtime.createModule(moduleEnv->values());
 }
 
 } // namespace cloxx

@@ -13,11 +13,11 @@
 namespace cloxx {
 
 class ErrorReporter;
-class SourceReader;
+class ScriptReader;
 
 class Parser {
 public:
-    explicit Parser(ErrorReporter* errorReporter, SourceReader* sourceReader);
+    explicit Parser(ErrorReporter* errorReporter, ScriptReader* sourceReader);
 
     std::optional<Stmt> parse();
 
@@ -33,6 +33,7 @@ private:
     Stmt breakStatement();
     Stmt continueStatement();
     Stmt returnStatement();
+    Stmt importStatement();
     Stmt expressionStatement();
     std::vector<Stmt> block();
     Expr expression();

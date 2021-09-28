@@ -32,7 +32,7 @@ public:
 
 private:
     std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass);
-    void collectFields(std::map<std::string, std::shared_ptr<LoxObject>>& fields);
+    void populateInstanceFields(std::map<std::string, std::shared_ptr<LoxObject>>& fields);
 
     Runtime* const _runtime;
     std::string _name;

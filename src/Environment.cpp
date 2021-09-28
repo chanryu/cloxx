@@ -11,6 +11,11 @@ Environment::Environment(PrivateCreationTag tag, std::shared_ptr<Environment> co
     : Traceable{tag}, _enclosing{enclosing}
 {}
 
+std::map<std::string, std::shared_ptr<LoxObject>> const& Environment::values() const
+{
+    return _values;
+}
+
 void Environment::define(std::string const& name, std::shared_ptr<LoxObject> const& value)
 {
     LOX_ASSERT(value);

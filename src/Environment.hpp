@@ -15,6 +15,8 @@ class Environment : public Traceable {
 public:
     Environment(PrivateCreationTag, std::shared_ptr<Environment> const& enclosing);
 
+    std::map<std::string, std::shared_ptr<LoxObject>> const& values() const;
+
     void define(std::string const& name, std::shared_ptr<LoxObject> const& value);
 
     std::shared_ptr<LoxObject> get(Token const& name) const;
