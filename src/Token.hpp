@@ -62,7 +62,7 @@ struct Token {
         END_OF_FILE
     };
 
-    Token(Type type, std::string lexeme, size_t line);
+    Token(Type type, std::string lexeme, std::shared_ptr<std::string> const& filePath, size_t line);
 
     bool operator<(Token const& rhs) const
     {
@@ -81,6 +81,8 @@ struct Token {
 
     Type type;
     std::string lexeme;
+
+    std::shared_ptr<std::string> filePath;
     size_t line;
 };
 

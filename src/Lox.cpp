@@ -40,18 +40,18 @@ auto makeBuiltIns(Runtime* runtime)
 
 class ConsoleErrorReporter : public ErrorReporter {
 public:
-    void syntaxError(size_t line, std::string_view message) override
+    void syntaxError(std::string const& filePath, size_t line, std::string_view message) override
     {
         _syntaxErrorCount += 1;
 
-        std::cerr << "[line " << line << "] Error: " << message << '\n';
+        std::cerr << filePath << ":" << line << ": Error: " << message << '\n';
     }
 
     void syntaxError(Token const& token, std::string_view message) override
     {
         _syntaxErrorCount += 1;
 
-        std::cerr << "[line " << token.line << "] ";
+        std::cerr << *token.filePath << ":" << token.line << ": ";
         if (token.type == Token::END_OF_FILE) {
             std::cerr << "Error at end: ";
         }
@@ -65,7 +65,7 @@ public:
     {
         _resolveErrorCount += 1;
 
-        std::cerr << "[line " << token.line << "] ";
+        std::cerr << *token.filePath << ":" << token.line << ": ";
         std::cerr << "Error at '" << token.lexeme << "': ";
         std::cerr << message << '\n';
     }
@@ -74,7 +74,7 @@ public:
     {
         _hadRuntimeError = true;
 
-        std::cerr << "[line " << token.line << "] ";
+        std::cerr << *token.filePath << ":" << token.line << ": ";
         std::cerr << message << '\n';
     }
 

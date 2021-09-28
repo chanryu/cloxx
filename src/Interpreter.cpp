@@ -161,7 +161,7 @@ void Interpreter::visit(ImportStmt const& stmt)
         filePath = fs::weakly_canonical(filePath);
     }
     catch (fs::filesystem_error&) {
-        // i.e., file does not exist
+        // e.g., file does not exist
         throw RuntimeError{stmt.keyword, "Cannot load module from " + filePath.string()};
     }
 

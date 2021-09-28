@@ -72,7 +72,8 @@ char const* getTokenName(Token::Type tokenType)
 } // namespace
 #endif
 
-Token::Token(Type type, std::string lexeme, size_t line) : type{type}, lexeme{std::move(lexeme)}, line{line}
+Token::Token(Type type, std::string lexeme, std::shared_ptr<std::string> const& filePath, size_t line)
+    : type{type}, lexeme{std::move(lexeme)}, filePath{filePath}, line{line}
 {}
 
 #ifndef NDEBUG
