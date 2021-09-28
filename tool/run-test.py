@@ -15,7 +15,7 @@ _expectedOutputPattern = re.compile(r"// expect: ?(.*)")
 _expectedErrorPattern = re.compile(r"// (Error.*)")
 _errorLinePattern = re.compile(r"// \[((java|c) )?line (\d+)\] (Error.*)")
 _expectedRuntimeErrorPattern = re.compile(r"// expect runtime error: (.+)")
-_syntaxErrorPattern = re.compile(r"\[.*line (\d+)\] (Error.+)")
+_syntaxErrorPattern = re.compile(r".*:(\d+): (Error.+)")
 _nonTestPattern = re.compile(r"// nontest")
 
 _passed = 0
@@ -173,7 +173,7 @@ class Test:
 
             match = _expectedErrorPattern.search(line)
             if match is not None:
-                this._expectedErrors.add("[line {}] {}".format(lineNum, match[1]))
+                this._expectedErrors.add("{}:{}: {}".format(os.path.realpath(this._path), lineNum, match[1]))
 
                 # If we expect a compile error, it should exit with EX_DATAERR.
                 this._expectedExitCode = 65
@@ -188,7 +188,7 @@ class Test:
                     # if the error is intended for clox then let's skip it
                     continue
 
-                this._expectedErrors.add("[line {}] {}".format(match[3], match[4]))
+                this._expectedErrors.add("{}:{}: {}".format(os.path.realpath(this._path), match[3], match[4]))
 
                 # If we expect a compile error, it should exit with EX_DATAERR.
                 this._expectedExitCode = 65
@@ -197,7 +197,7 @@ class Test:
 
             match = _expectedRuntimeErrorPattern.search(line)
             if match is not None:
-                this._expectedRuntimeError = "[line {}] {}".format(lineNum, match[1])
+                this._expectedRuntimeError = "{}:{}: {}".format(os.path.realpath(this._path), lineNum, match[1])
                 # If we expect a runtime error, it should exit with EX_SOFTWARE.
                 this._expectedExitCode = 70
                 _expectations += 1
@@ -247,18 +247,16 @@ class Test:
         for line in errorLines:
             match = _syntaxErrorPattern.search(line)
             if match is not None:
-                error = "[line {}] {}".format(match[1], match[2])
+                error = "{}:{}: {}".format(os.path.realpath(this._path), match[1], match[2])
                 if error in this._expectedErrors:
                     foundErrors.add(error)
                 else:
                     if unexpectedCount < 10:
-                        this._fail("Unexpected error:")
-                        this._fail(line)
+                        this._fail("Unexpected error: " + line)
                     unexpectedCount += 1
             elif line != "":
                 if unexpectedCount < 10:
-                    this._fail("Unexpected output on stderr:")
-                    this._fail(line)
+                    this._fail("Unexpected output on stderr: " + line)
                 unexpectedCount += 1
         if unexpectedCount > 10:
             this._fail("(truncated {} more...)".format(unexpectedCount - 10))

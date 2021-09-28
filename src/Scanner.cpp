@@ -1,10 +1,11 @@
 #include "Scanner.hpp"
 
 #include <map>
+#include <optional>
 
 #include "Assert.hpp"
 #include "ErrorReporter.hpp"
-#include "SourceReader.hpp"
+#include "ScriptReader.hpp"
 
 namespace cloxx {
 
@@ -21,30 +22,13 @@ bool isAlphaNumeric(char c)
 {
     return isAlpha(c) || isDigit(c);
 }
-
-bool lookupKeyword(std::string const& identifier, Token::Type& type)
-{
-    const std::map<std::string, Token::Type> keywords = {
-        {"and", Token::AND},     {"break", Token::BREAK}, {"class", Token::CLASS}, {"continue", Token::CONTINUE},
-        {"else", Token::ELSE},   {"false", Token::FALSE}, {"for", Token::FOR},     {"fun", Token::FUN},
-        {"if", Token::IF},       {"nil", Token::NIL},     {"or", Token::OR},       {"return", Token::RETURN},
-        {"super", Token::SUPER}, {"this", Token::THIS},   {"true", Token::TRUE},   {"var", Token::VAR},
-        {"while", Token::WHILE},
-    };
-
-    if (auto const i = keywords.find(identifier); i != keywords.end()) {
-        type = i->second;
-        return true;
-    }
-
-    return false;
-}
 } // namespace
 
-Scanner::Scanner(ErrorReporter* errorReporter, SourceReader* sourceReader)
-    : _errorReporter{errorReporter}, _sourceReader{sourceReader}
+Scanner::Scanner(ErrorReporter* errorReporter, ScriptReader* scriptReader)
+    : _errorReporter{errorReporter}, _scriptReader{scriptReader}
 {
-    _currentChar = _sourceReader->readChar();
+    _filePath = std::make_shared<std::string>(_scriptReader->filePath());
+    _currentChar = _scriptReader->readChar();
 }
 
 bool Scanner::isAtEnd()
@@ -117,7 +101,7 @@ Token Scanner::scanToken()
             if (isAlpha(c)) {
                 return identifier();
             }
-            _errorReporter->syntaxError(_line, "Unexpected character.");
+            _errorReporter->syntaxError(*_filePath, _line, "Unexpected character.");
             break;
         }
 
@@ -145,7 +129,7 @@ Token Scanner::makeToken(Token::Type type)
 {
     std::string lexeme;
     lexeme.swap(_lexeme);
-    return {type, std::move(lexeme), _line};
+    return {type, std::move(lexeme), _filePath, _line};
 }
 
 bool Scanner::match(char expected)
@@ -167,8 +151,8 @@ char Scanner::peek()
 
 char Scanner::peekNext()
 {
-    if (_nextChar == '\0' && !_sourceReader->isEndOfSource()) {
-        _nextChar = _sourceReader->readChar();
+    if (_nextChar == '\0' && !_scriptReader->isAtEnd()) {
+        _nextChar = _scriptReader->readChar();
     }
 
     return _nextChar;
@@ -183,7 +167,7 @@ Token Scanner::string()
     }
 
     if (isAtEnd()) {
-        _errorReporter->syntaxError(_line, "Unterminated string.");
+        _errorReporter->syntaxError(*_filePath, _line, "Unterminated string.");
         return makeToken(Token::END_OF_FILE);
     }
 
@@ -218,8 +202,8 @@ Token Scanner::identifier()
         advance();
     }
 
-    if (Token::Type type; lookupKeyword(_lexeme, type)) {
-        return makeToken(type);
+    if (auto type = lookupKeyword(_lexeme)) {
+        return makeToken(*type);
     }
 
     return makeToken(Token::IDENTIFIER);

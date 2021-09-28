@@ -7,7 +7,7 @@
 
 namespace cloxx {
 
-Parser::Parser(ErrorReporter* errorReporter, SourceReader* sourceReader)
+Parser::Parser(ErrorReporter* errorReporter, ScriptReader* sourceReader)
     : _errorReporter{errorReporter}, _scanner{errorReporter, sourceReader}
 {
     _current = _scanner.scanToken();
@@ -128,6 +128,7 @@ Stmt Parser::statement()
     //           | returnStmt
     //           | printStmt
     //           | exprStmt
+    //           | importStmt
     //           | block ;
 
     if (match(Token::IF)) {
@@ -147,6 +148,9 @@ Stmt Parser::statement()
     }
     if (match(Token::RETURN)) {
         return returnStatement();
+    }
+    if (match(Token::IMPORT)) {
+        return importStatement();
     }
     if (match(Token::LEFT_BRACE)) {
         return makeBlockStmt(block());
@@ -254,6 +258,43 @@ Stmt Parser::returnStatement()
     }
 
     return makeReturnStmt(keyword, expr);
+}
+
+Stmt Parser::importStatement()
+{
+    // importStmt → "import" "{" ( identifier ( "as" identifier )? )+  "}" "from" string ";" ;
+
+    LOX_ASSERT_PREVIOUS(IMPORT);
+
+    auto keyword = previous();
+
+    consume(Token::LEFT_BRACE, "Expect { after import.");
+
+    std::map<Token, std::optional<Token>> symbols;
+    while (true) {
+        consume(Token::IDENTIFIER, "Expect identifier.");
+
+        auto symbol = previous();
+        std::optional<Token> alias;
+        if (match(Token::AS)) {
+            alias = consume(Token::IDENTIFIER, "Expect identifier after as.");
+        }
+
+        // TODO: report error/warning if duplicated name found
+        symbols.emplace(symbol, alias);
+
+        if (!match(Token::COMMA)) {
+            break;
+        }
+    }
+
+    consume(Token::RIGHT_BRACE, "Expect } after import list.");
+    consume(Token::FROM, "Expect from after import list.");
+
+    auto filePath = consume(Token::STRING, "Expect module path after import.");
+    consume(Token::SEMICOLON, "Expect ';' after import.");
+
+    return makeImportStmt(keyword, symbols, filePath);
 }
 
 Stmt Parser::expressionStatement()

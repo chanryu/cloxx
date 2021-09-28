@@ -16,10 +16,9 @@ int main(int argc, char const* argv[])
         return 1;
     }
 
-    int result = Lox{}.runFile(argv[1]);
+    int result = runFile(argv[1]);
 
 #ifdef CLOXX_GC_DEBUG
-    LOX_ASSERT(LoxObject::instanceCount() == 0);
     LOX_ASSERT(Traceable::instanceCount() == 0);
 #endif
 

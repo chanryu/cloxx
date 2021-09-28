@@ -46,7 +46,7 @@ std::shared_ptr<LoxObject> LoxClass::call(std::vector<std::shared_ptr<LoxObject>
 {
     auto instance = createInstance(std::static_pointer_cast<LoxClass>(shared_from_this()));
 
-    collectFields(instance->_fields);
+    populateInstanceFields(instance->_fields);
 
     if (auto initializer = findMethod("init")) {
         initializer->bind(instance)->call(args);
@@ -89,10 +89,10 @@ std::shared_ptr<LoxObject> LoxClass::createInstance(std::shared_ptr<LoxClass> co
     return _runtime->create<LoxObject>(klass);
 }
 
-void LoxClass::collectFields(std::map<std::string, std::shared_ptr<LoxObject>>& fields)
+void LoxClass::populateInstanceFields(std::map<std::string, std::shared_ptr<LoxObject>>& fields)
 {
     if (_superclass) {
-        _superclass->collectFields(fields);
+        _superclass->populateInstanceFields(fields);
     }
 
     for (auto const& [name, value] : _fields) {

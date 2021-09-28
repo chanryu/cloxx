@@ -14,16 +14,19 @@ namespace cloxx {
 
 class Environment;
 class ErrorReporter;
+class Module;
+class ScriptReader;
 
 class LoxClass;
-class LoxObject;
 class LoxFunction;
+class LoxModule;
+class LoxObject;
 
 using GlobalObjectsProc = std::function<std::map<std::string, std::shared_ptr<LoxObject>>(Runtime*)>;
 
 class Interpreter : StmtVisitor, ExprVisitor {
 public:
-    Interpreter(ErrorReporter* errorReporter, GlobalObjectsProc globalObjectsProc);
+    Interpreter(std::string const& scriptPath, ErrorReporter* errorReporter, GlobalObjectsProc globalObjectsProc);
 
     void interpret(Stmt const& stmt);
 
@@ -37,6 +40,7 @@ private:
     void visit(ForStmt const& stmt) override;
     void visit(FunStmt const& stmt) override;
     void visit(IfStmt const& stmt) override;
+    void visit(ImportStmt const& stmt) override;
     void visit(ReturnStmt const& stmt) override;
     void visit(VarStmt const& stmt) override;
 
@@ -74,6 +78,11 @@ private:
     std::shared_ptr<LoxFunction> makeFunction(bool isInitializer, Token const& name, std::vector<Token> const params,
                                               std::vector<Stmt> const& body);
 
+    double parseNumber(Token const& token);
+    std::string parseString(Token const& token);
+
+    std::shared_ptr<Module> loadModule(ScriptReader& reader);
+
     struct ReturnValue {
         std::shared_ptr<LoxObject> object;
     };
@@ -83,12 +92,14 @@ private:
 
     class ScopeSwitcher;
 
-    Runtime _runtime;
-
+    std::string const _scriptPath;
     ErrorReporter* const _errorReporter;
+
+    Runtime _runtime;
 
     std::shared_ptr<Environment> _globals;
     std::shared_ptr<Environment> _environment;
+    std::map<std::string /*filePath*/, std::shared_ptr<Module>> _modules;
 
     std::vector<std::shared_ptr<LoxObject>> _evalResults;
 };

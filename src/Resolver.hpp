@@ -58,6 +58,7 @@ private:
     void visit(ForStmt const& stmt) override;
     void visit(FunStmt const& stmt) override;
     void visit(IfStmt const& stmt) override;
+    void visit(ImportStmt const& stmt) override;
     void visit(ReturnStmt const& stmt) override;
     void visit(VarStmt const& stmt) override;
 

@@ -1,24 +1,26 @@
 #!/usr/bin/env python3
-#!/usr/bin/env python3
 
 import os.path
 import sys
 
-def _makeParamType(type):
-    if type[-1] == '?':
-        return 'std::optional<' + type[:-1] + '> const&'
-    if type.startswith('List<'):
-        itemType = type[5:-1]
-        return 'std::vector<' + itemType + '> const&'
-    return type + ' const&'
 
 def _makeMemVarType(type):
     if type[-1] == '?':
         return 'std::optional<' + type[:-1] + '>'
+    if type == "String":
+        return 'std::string'
+    if type.startswith('Map<'):
+        tokens = type[4:-1].split('|')
+        keyType = _makeMemVarType(tokens[0].strip())
+        itemType = _makeMemVarType(tokens[1].strip())
+        return 'std::map<' + keyType + ', ' + itemType + '>'
     if type.startswith('List<'):
         itemType = type[5:-1]
         return 'std::vector<' + itemType + '>'
     return type
+
+def _makeParamType(type):
+    return _makeMemVarType(type) + " const&"
 
 def _declareFactoryFunction(file, node):
     file.write('    friend ' + node.name + ' make' + node.name + '(')
@@ -138,6 +140,7 @@ def _defineAst(file, headers, baseName, nodes):
     file.write('#pragma once\n')
     file.write('\n')
     file.write('#include <optional>\n')
+    file.write('#include <map>\n')
     file.write('#include <memory>\n')
     file.write('#include <vector>\n')
     file.write('\n')
@@ -244,7 +247,7 @@ class Field:
 
 class Node:
     def __init__(self, baseName, spec):
-        tokens = spec.split(':')
+        tokens = spec.split(':', maxsplit=1)
         prefix = tokens[0].strip()
         if prefix[-1] == '^':
             prefix = prefix[:-1]
@@ -259,12 +262,11 @@ class Node:
     def __str__(self):
         return self.name + ': ' + ', '.join([str(field) for field in self.fields])
 
+
 def _generateAst(outputDir, headers, baseName, nodeSpecs):
     nodes = []
     for nodeSpec in nodeSpecs:
         nodes.append(Node(baseName, nodeSpec))
-    # for node in nodes:
-    #     print(node)
     with open(os.path.join(outputDir, baseName + '.hpp'), 'w') as file:
        _defineAst(file, headers, baseName, nodes)
 
@@ -298,6 +300,7 @@ if __name__ == '__main__':
         "For      : Stmt? initializer, Expr? condition, Stmt? increment, Stmt body",
         "Fun      : Token name, List<Token> params, List<Stmt> body",
         "If       : Expr cond, Stmt thenBranch, Stmt? elseBranch",
+        "Import   : Token keyword, Map<Token|Token?> symbols, Token filePath",
         "Return   : Token keyword, Expr? value",
         "Var      : Token name, Expr? initializer",
     ])
