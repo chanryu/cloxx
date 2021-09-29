@@ -19,5 +19,11 @@ import { a b c } from;
 // [line 20] Error at ';': Expect module path after 'from'.
 import { a, b, c } from;
 
+// [line 23] Error at '}': Expect identifier after 'as'.
+import { a as } from "abc.lox";
+
+// [line 26] Error at ',': Expect identifier after 'as'.
+import { a as, c } from "abc.lox";
+
 // no syntax error (runtime error will not be checked due to above syntax errors)
-import { a, b, c } from "abc.lox";
+import { a as b, c } from "abc.lox";
