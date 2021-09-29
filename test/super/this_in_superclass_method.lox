@@ -1,10 +1,13 @@
 class Base {
+  var a;
+
   init(a) {
     this.a = a;
   }
 }
 
 class Derived < Base {
+  var b;
   init(a, b) {
     super.init(a);
     this.b = b;
@@ -12,5 +15,5 @@ class Derived < Base {
 }
 
 var derived = Derived("a", "b");
-print derived.a; // expect: a
-print derived.b; // expect: b
+print(derived.a); // expect: a
+print(derived.b); // expect: b

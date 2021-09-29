@@ -1,5 +1,6 @@
 #include "Token.hpp"
 
+#include <map>
 #include <sstream>
 
 namespace cloxx {
@@ -43,15 +44,19 @@ char const* getTokenName(Token::Type tokenType)
 
         // Keywords.
         LOX_TOKEN_NAME_CASE(AND);
+        LOX_TOKEN_NAME_CASE(AS);
+        LOX_TOKEN_NAME_CASE(BREAK);
         LOX_TOKEN_NAME_CASE(CLASS);
+        LOX_TOKEN_NAME_CASE(CONTINUE);
         LOX_TOKEN_NAME_CASE(ELSE);
         LOX_TOKEN_NAME_CASE(FALSE);
         LOX_TOKEN_NAME_CASE(FUN);
         LOX_TOKEN_NAME_CASE(FOR);
+        LOX_TOKEN_NAME_CASE(FROM);
         LOX_TOKEN_NAME_CASE(IF);
+        LOX_TOKEN_NAME_CASE(IMPORT);
         LOX_TOKEN_NAME_CASE(NIL);
         LOX_TOKEN_NAME_CASE(OR);
-        LOX_TOKEN_NAME_CASE(PRINT);
         LOX_TOKEN_NAME_CASE(RETURN);
         LOX_TOKEN_NAME_CASE(SUPER);
         LOX_TOKEN_NAME_CASE(THIS);
@@ -67,23 +72,34 @@ char const* getTokenName(Token::Type tokenType)
 } // namespace
 #endif
 
-Token::Token(Type type, std::string lexeme, std::shared_ptr<LoxObject> const& literal, size_t line)
-    : type{type}, lexeme{std::move(lexeme)}, literal{literal}, line{line}
+Token::Token(Type type, std::string lexeme, std::shared_ptr<std::string> const& filePath, size_t line)
+    : type{type}, lexeme{std::move(lexeme)}, filePath{filePath}, line{line}
 {}
 
 #ifndef NDEBUG
 std::string Token::toString() const
 {
     std::ostringstream oss;
-
-    oss << getTokenName(type) << " ";
-    if (literal) {
-        oss << literal->toString() << " ";
-    }
-    oss << line;
-
+    oss << line << " " << getTokenName(type) << "[" << lexeme << "]";
     return oss.str();
 }
 #endif
+
+std::optional<Token::Type> lookupKeyword(std::string const& identifier)
+{
+    const std::map<std::string, Token::Type> keywords = {
+        {"and", Token::AND},           {"as", Token::AS},     {"break", Token::BREAK},   {"class", Token::CLASS},
+        {"continue", Token::CONTINUE}, {"else", Token::ELSE}, {"false", Token::FALSE},   {"for", Token::FOR},
+        {"fun", Token::FUN},           {"from", Token::FROM}, {"if", Token::IF},         {"import", Token::IMPORT},
+        {"nil", Token::NIL},           {"or", Token::OR},     {"return", Token::RETURN}, {"super", Token::SUPER},
+        {"this", Token::THIS},         {"true", Token::TRUE}, {"var", Token::VAR},       {"while", Token::WHILE},
+    };
+
+    if (auto const i = keywords.find(identifier); i != keywords.end()) {
+        return i->second;
+    }
+
+    return std::nullopt;
+}
 
 } // namespace cloxx

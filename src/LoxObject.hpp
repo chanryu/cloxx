@@ -1,84 +1,47 @@
 #pragma once
 
+#include <map>
 #include <memory>
 #include <string>
 
+#include "Callable.hpp"
+#include "GC.hpp"
+
 namespace cloxx {
 
-class LoxObject {
-public:
-#ifdef CLOXX_GC_DEBUG
-    LoxObject();
-    virtual ~LoxObject();
+class LoxClass;
+class LoxFunction;
+class Runtime;
 
-    static size_t instanceCount();
-#else
+struct Token;
+
+class LoxObject : public Traceable, public std::enable_shared_from_this<LoxObject> {
+private:
+    // A constructor for LoxClass where `klass` is missing.
+    // All other classes should use the other constructor.
+    friend class LoxClass;
+    LoxObject(PrivateCreationTag tag);
+
+public:
+    LoxObject(PrivateCreationTag tag, Runtime* runtime, std::shared_ptr<LoxClass> const& klass);
     virtual ~LoxObject() = default;
-#endif
 
-    virtual std::string toString() const = 0;
-    virtual bool isTruthy() const;
-    virtual bool equals(LoxObject const& object) const;
+    std::shared_ptr<LoxObject> get(Token const& name);
+    void set(Token const& name, std::shared_ptr<LoxObject> const& value);
+
+    virtual std::string toString();
+    virtual bool isTruthy();
+    virtual bool equals(std::shared_ptr<LoxObject> const& object);
+
+    // GC support
+    void enumerateTraceables(Enumerator const& enumerator) override;
+    void reclaim() override;
+
+private:
+    std::shared_ptr<LoxClass> _class;
+    std::map<std::string, std::shared_ptr<LoxObject>> _fields;
 };
 
-class LoxNil : public LoxObject {
-public:
-    std::string toString() const override;
-    bool isTruthy() const override;
-    bool equals(LoxObject const& object) const override;
-};
-
-class LoxNumber : public LoxObject {
-public:
-    explicit LoxNumber(double value);
-
-    std::string toString() const override;
-    bool equals(LoxObject const& object) const override;
-
-    double const value;
-};
-
-class LoxString : public LoxObject {
-public:
-    explicit LoxString(std::string value);
-
-    std::string toString() const override;
-    bool equals(LoxObject const& object) const override;
-
-    std::string const value;
-};
-
-class LoxBoolean : public LoxObject {
-public:
-    explicit LoxBoolean(bool value);
-
-    std::string toString() const override;
-    bool isTruthy() const override;
-    bool equals(LoxObject const& object) const override;
-
-    bool const value;
-};
-
-// Helper functions.
-
-inline auto makeLoxNil()
-{
-    return std::make_shared<LoxNil>();
-}
-
-inline auto toLoxNumber(double value)
-{
-    return std::make_shared<LoxNumber>(value);
-}
-
-inline auto toLoxString(std::string value)
-{
-    return std::make_shared<LoxString>(std::move(value));
-}
-
-inline auto toLoxBoolean(bool value)
-{
-    return std::make_shared<LoxBoolean>(value);
-}
+std::shared_ptr<LoxClass> createObjectClass(Runtime* interpreter);
 
 } // namespace cloxx

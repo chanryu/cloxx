@@ -1,42 +1,38 @@
 #pragma once
 
-#include <map>
-#include <vector>
-
 #include "Token.hpp"
 
 namespace cloxx {
 
-class Lox;
+class ErrorReporter;
+class ScriptReader;
 
 class Scanner {
 public:
-    explicit Scanner(Lox* lox, std::string source);
+    explicit Scanner(ErrorReporter* errorReporter, ScriptReader* sourceReader);
 
-    std::vector<Token> scanTokens();
+    Token scanToken();
 
 private:
-    bool isAtEnd() const;
-    void scanToken();
+    bool isAtEnd();
     char advance();
-    void addToken(Token::Type type);
-    void addToken(Token::Type type, std::shared_ptr<LoxObject> const& literal);
     bool match(char expected);
-    char peek() const;
-    char peekNext() const;
-    void string();
-    void number();
-    void identifier();
+    char peek();
+    char peekNext();
 
-    static std::map<std::string, Token::Type> const _keywords;
+    Token string();
+    Token number();
+    Token identifier();
+    Token makeToken(Token::Type type);
 
-    Lox* const _lox;
+    ErrorReporter* const _errorReporter;
+    ScriptReader* const _scriptReader;
 
-    std::string _source;
+    char _currentChar = '\0';
+    char _nextChar = '\0';
+    std::string _lexeme;
 
-    size_t _start = 0;
-    size_t _current = 0;
+    std::shared_ptr<std::string> _filePath;
     size_t _line = 1;
-    std::vector<Token> _tokens;
 };
 } // namespace cloxx

@@ -1,147 +1,120 @@
 #include "LoxObject.hpp"
 
+#include "Assert.hpp"
+#include "Runtime.hpp"
+#include "RuntimeError.hpp"
+#include "Token.hpp"
+
+#include "LoxClass.hpp"
+#include "LoxFunction.hpp"
+
 namespace cloxx {
 
-// LoxObject
-
-#ifdef CLOXX_GC_DEBUG
-namespace {
-size_t objectInstanceCount = 0;
-}
-
-LoxObject::LoxObject()
+LoxObject::LoxObject(PrivateCreationTag tag, Runtime* /*runtime*/, std::shared_ptr<LoxClass> const& klass)
+    : Traceable{tag}, _class{klass}
 {
-    objectInstanceCount += 1;
+    LOX_ASSERT(_class);
 }
 
-LoxObject::~LoxObject()
+LoxObject::LoxObject(PrivateCreationTag tag) : Traceable{tag}
+{}
+
+std::shared_ptr<LoxObject> LoxObject::get(Token const& name)
 {
-    objectInstanceCount -= 1;
+    if (auto it = _fields.find(name.lexeme); it != _fields.end()) {
+        return it->second;
+    }
+
+    if (_class) {
+        if (auto method = _class->findMethod(name.lexeme)) {
+            return method->bind(shared_from_this());
+        }
+    }
+    else {
+        LOX_ASSERT(toString() == "Class");
+        // methods Class class, e.g., new()
+    }
+
+    throw RuntimeError(name, "Undefined property '" + name.lexeme + "'.");
 }
 
-size_t LoxObject::instanceCount()
+void LoxObject::set(Token const& name, std::shared_ptr<LoxObject> const& value)
 {
-    return objectInstanceCount;
+    if (auto it = _fields.find(name.lexeme); it != _fields.end()) {
+        it->second = value;
+    }
+    else {
+        throw RuntimeError(name, "Undefined property '" + name.lexeme + "'.");
+    }
 }
-#endif
 
-bool LoxObject::isTruthy() const
+std::string LoxObject::toString()
+{
+    if (!_class) {
+        // I'm an instance of Class class.
+        return "Class";
+    }
+
+    if (auto method = _class->findMethod("toString"); method && method->arity() == 0) {
+        return method->bind(shared_from_this())->call({})->toString();
+    }
+    return _class->toString() + " instance";
+}
+
+bool LoxObject::isTruthy()
 {
     return true;
 }
 
-bool LoxObject::equals(LoxObject const& object) const
+bool LoxObject::equals(std::shared_ptr<LoxObject> const& object)
 {
-    return this == &object;
-}
-
-// LoxNil
-
-std::string LoxNil::toString() const
-{
-    return "nil";
-}
-
-bool LoxNil::isTruthy() const
-{
-    return false;
-}
-
-bool LoxNil::equals(LoxObject const& object) const
-{
-    if (LoxObject::equals(object)) {
-        return true;
-    }
-
-    return dynamic_cast<LoxNil const*>(&object) != nullptr;
-}
-
-// LoxNumber
-
-LoxNumber::LoxNumber(double value) : value{value}
-{}
-
-std::string LoxNumber::toString() const
-{
-    auto str = std::to_string(value);
-
-    // Remove trailing zeros.
-    while (str.size() > 1) {
-        char c = str.back();
-        if (c == '0') {
-            str.pop_back();
-        }
-        else {
-            if (c == '.')
-                str.pop_back();
-            break;
+    if (_class) {
+        if (auto method = _class->findMethod("equals"); method && method->arity() == 1) {
+            return method->bind(shared_from_this())->call({object})->isTruthy();
         }
     }
-    return str;
+
+    return this == object.get();
 }
 
-bool LoxNumber::equals(LoxObject const& object) const
+void LoxObject::enumerateTraceables(Enumerator const& enumerator)
 {
-    if (LoxObject::equals(object)) {
-        return true;
+    if (_class) {
+        enumerator.enumerate(*_class);
     }
 
-    if (auto num = dynamic_cast<LoxNumber const*>(&object)) {
-        return value == num->value;
+    for (auto& [_, field] : _fields) {
+        enumerator.enumerate(*field);
     }
-
-    return false;
 }
 
-// LoxString
-
-LoxString::LoxString(std::string value) : value{std::move(value)}
-{}
-
-std::string LoxString::toString() const
+void LoxObject::reclaim()
 {
-    return value;
+    _class.reset();
+    _fields.clear();
 }
 
-bool LoxString::equals(LoxObject const& object) const
+namespace {
+auto createObjectFields(Runtime* /*runtime*/)
 {
-    if (LoxObject::equals(object)) {
-        return true;
-    }
-
-    if (auto str = dynamic_cast<LoxString const*>(&object)) {
-        return value == str->value;
-    }
-
-    return false;
+    std::map<std::string, std::shared_ptr<LoxObject>> fields;
+    // no fields yet
+    return fields;
 }
 
-// LoxBoolean
-
-LoxBoolean::LoxBoolean(bool value) : value{value}
-{}
-
-std::string LoxBoolean::toString() const
+auto createObjectMethods(Runtime* /*runtime*/)
 {
-    return value ? "true" : "false";
+    std::map<std::string, std::shared_ptr<LoxFunction>> methods;
+    // no methods yet
+    return methods;
 }
+} // namespace
 
-bool LoxBoolean::isTruthy() const
+std::shared_ptr<LoxClass> createObjectClass(Runtime* runtime)
 {
-    return value;
-}
-
-bool LoxBoolean::equals(LoxObject const& object) const
-{
-    if (LoxObject::equals(object)) {
-        return true;
-    }
-
-    if (auto b = dynamic_cast<LoxBoolean const*>(&object)) {
-        return value == b->value;
-    }
-
-    return false;
+    return runtime->create<LoxClass>("Object", /*superclass*/ nullptr, createObjectFields(runtime),
+                                     createObjectMethods(runtime),
+                                     /*objectFactory*/ nullptr);
 }
 
 } // namespace cloxx

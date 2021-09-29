@@ -1,14 +1,23 @@
 #include "Interpreter.hpp"
 
-#include <iostream> // for print statement
-
 #include "Assert.hpp"
-#include "GC.hpp"
-#include "Lox.hpp"
-#include "LoxClass.hpp"
-#include "LoxFunction.hpp"
-#include "LoxInstance.hpp"
+#include "Environment.hpp"
+#include "ErrorReporter.hpp"
+#include "FileReader.hpp"
+#include "Module.hpp"
+#include "Parser.hpp"
+#include "Resolver.hpp"
 #include "RuntimeError.hpp"
+
+#include "LoxBool.hpp"
+#include "LoxClass.hpp"
+#include "LoxList.hpp"
+#include "LoxNil.hpp"
+#include "LoxNumber.hpp"
+#include "LoxString.hpp"
+#include "LoxUserFunction.hpp"
+
+#include <filesystem>
 
 namespace cloxx {
 
@@ -43,31 +52,88 @@ struct OperandErrorMessage<LoxString, N> {
 
 } // namespace
 
-Interpreter::Interpreter(Lox* lox, GarbageCollector* gc)
-    : _lox{lox}, _gc{gc}, _globals{gc->root()}, _environment{_globals}
-{}
+class Interpreter::ScopeSwitcher {
+public:
+    ScopeSwitcher(Interpreter* interpreter, std::shared_ptr<Environment> const& newEnvironment)
+        : _interpreter{interpreter}
+    {
+        _oldEnvironment = _interpreter->_environment;
+        _interpreter->_environment = newEnvironment;
+    }
 
-void Interpreter::interpret(std::vector<Stmt> const& stmts)
+    ~ScopeSwitcher()
+    {
+        _interpreter->_environment = _oldEnvironment;
+    }
+
+private:
+    Interpreter* _interpreter;
+    std::shared_ptr<Environment> _oldEnvironment;
+};
+
+Interpreter::Interpreter(std::string const& scriptPath, ErrorReporter* errorReporter,
+                         GlobalObjectsProc globalObjectsProc)
+    : _scriptPath{scriptPath}, _errorReporter{errorReporter}
+{
+    _globals = _runtime.root();
+    _environment = _globals;
+
+    // System defined objects.
+    for (auto& [name, value] : globalObjectsProc(&_runtime)) {
+        _globals->define(name, value);
+    }
+}
+
+void Interpreter::interpret(Stmt const& stmt)
 {
     try {
-        for (auto const& stmt : stmts) {
-            execute(stmt);
-        }
+        execute(stmt);
     }
     catch (RuntimeError& error) {
-        _lox->runtimeError(error);
+        _errorReporter->runtimeError(error.token, error.what());
     }
+
+    _runtime.collectGarbage();
 }
 
 void Interpreter::visit(BlockStmt const& stmt)
 {
-    auto blockEnv = _gc->create<Environment>(_environment);
+    auto blockEnv = _runtime.createEnvironment(_environment);
     executeBlock(stmt.stmts, blockEnv);
 }
 
 void Interpreter::visit(ExprStmt const& stmt)
 {
     evaluate(stmt.expr);
+}
+
+void Interpreter::visit(ForStmt const& stmt)
+{
+    ScopeSwitcher _{this, _runtime.createEnvironment(_environment)};
+
+    if (stmt.initializer) {
+        stmt.initializer->accept(*this);
+    }
+
+    while (true) {
+        if (stmt.condition && !evaluate(*stmt.condition)->isTruthy()) {
+            break;
+        }
+
+        try {
+            execute(stmt.body);
+        }
+        catch (LoopBreak&) {
+            break;
+        }
+        catch (LoopContinue&) {
+            // fall through to increment
+        }
+
+        if (stmt.increment) {
+            stmt.increment->accept(*this);
+        }
+    }
 }
 
 void Interpreter::visit(IfStmt const& stmt)
@@ -80,11 +146,59 @@ void Interpreter::visit(IfStmt const& stmt)
     }
 }
 
-void Interpreter::visit(WhileStmt const& stmt)
+void Interpreter::visit(ImportStmt const& stmt)
 {
-    while (evaluate(stmt.cond)->isTruthy()) {
-        execute(stmt.body);
+    namespace fs = std::filesystem;
+
+    auto filePath = fs::path{parseString(stmt.filePath)};
+
+    if (!filePath.is_absolute()) {
+        auto scriptDirPath = fs::absolute(fs::path{_scriptPath}).remove_filename();
+        filePath = fs::absolute(scriptDirPath / filePath);
     }
+
+    try {
+        filePath = fs::weakly_canonical(filePath);
+    }
+    catch (fs::filesystem_error&) {
+        // e.g., file does not exist
+        throw RuntimeError{stmt.keyword, "Cannot load module from " + filePath.string()};
+    }
+
+    std::shared_ptr<Module> module;
+    if (auto it = _modules.find(filePath.string()); it != _modules.end()) {
+        module = it->second;
+    }
+    else {
+        FileReader reader{filePath.string()};
+        if (!reader.isOpen()) {
+            throw RuntimeError{stmt.filePath, "Cannot open module at: " + filePath.string()};
+        }
+        module = loadModule(reader);
+
+        // If there was an error, RuntimeError has been thrown.
+        LOX_ASSERT(module);
+    }
+
+    for (auto const& [symbol, alias] : stmt.symbols) {
+        if (auto object = module->get(symbol.lexeme)) {
+            auto const& name = alias ? alias->lexeme : symbol.lexeme;
+            _environment->define(name, object);
+        }
+        else {
+            throw RuntimeError{symbol, "Cannot find `" + symbol.lexeme + "` from the module at: " + filePath.string()};
+        }
+    }
+}
+
+void Interpreter::visit(BreakStmt const&)
+{
+    throw LoopBreak{};
+}
+
+void Interpreter::visit(ContinueStmt const&)
+{
+    throw LoopContinue{};
 }
 
 void Interpreter::visit(ReturnStmt const& stmt)
@@ -94,17 +208,10 @@ void Interpreter::visit(ReturnStmt const& stmt)
         returnValue.object = evaluate(*stmt.value);
     }
     else {
-        returnValue.object = makeLoxNil();
+        returnValue.object = _runtime.getNil();
     }
 
     throw returnValue;
-}
-
-void Interpreter::visit(PrintStmt const& stmt)
-{
-    auto value = evaluate(stmt.expr);
-    LOX_ASSERT(value);
-    std::cout << value->toString() << '\n';
 }
 
 void Interpreter::visit(VarStmt const& stmt)
@@ -114,14 +221,14 @@ void Interpreter::visit(VarStmt const& stmt)
         value = evaluate(*stmt.initializer);
     }
     else {
-        value = makeLoxNil();
+        value = _runtime.getNil();
     }
     _environment->define(stmt.name.lexeme, value);
 }
 
 void Interpreter::visit(FunStmt const& stmt)
 {
-    auto function = makeFunction(false, stmt.name, stmt.params, stmt.body);
+    auto function = makeFunction(/*isInitializer*/ false, stmt.name, stmt.params, stmt.body);
     _environment->define(stmt.name.lexeme, function);
 }
 
@@ -136,12 +243,24 @@ void Interpreter::visit(ClassStmt const& stmt)
         }
     }
 
-    _environment->define(stmt.name.lexeme, makeLoxNil());
+    _environment->define(stmt.name.lexeme, _runtime.getNil());
 
     auto enclosingEnvironment = _environment;
     if (superclass) {
-        _environment = _gc->create<Environment>(_environment);
+        _environment = _runtime.createEnvironment(_environment);
         _environment->define("super", superclass);
+    }
+
+    std::map<std::string, std::shared_ptr<LoxObject>> fields;
+    for (auto const& field : stmt.fields) {
+        std::shared_ptr<LoxObject> value;
+        if (field.initializer) {
+            value = evaluate(*field.initializer);
+        }
+        else {
+            value = _runtime.getNil();
+        }
+        fields.emplace(field.name.lexeme, value);
     }
 
     std::map<std::string, std::shared_ptr<LoxFunction>> methods;
@@ -151,7 +270,8 @@ void Interpreter::visit(ClassStmt const& stmt)
         methods.emplace(method.name.lexeme, function);
     }
 
-    auto klass = _gc->create<LoxClass>(_gc, stmt.name.lexeme, superclass, methods);
+    auto klass = _runtime.create<LoxClass>(stmt.name.lexeme, superclass, std::move(fields), std::move(methods),
+                                           /*objectFactory*/ nullptr);
 
     if (superclass) {
         _environment = enclosingEnvironment;
@@ -184,57 +304,57 @@ void Interpreter::visit(BinaryExpr const& expr)
 
     switch (expr.op.type) {
     case Token::GREATER:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
-            _evalResults.push_back(toLoxBoolean(left > right));
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
+            _evalResults.push_back(_runtime.toLoxBool(left > right));
         });
         break;
     case Token::GREATER_EQUAL:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
-            _evalResults.push_back(toLoxBoolean(left >= right));
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
+            _evalResults.push_back(_runtime.toLoxBool(left >= right));
         });
         break;
     case Token::LESS:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
-            _evalResults.push_back(toLoxBoolean(left < right));
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
+            _evalResults.push_back(_runtime.toLoxBool(left < right));
         });
         break;
     case Token::LESS_EQUAL:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
-            _evalResults.push_back(toLoxBoolean(left <= right));
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
+            _evalResults.push_back(_runtime.toLoxBool(left <= right));
         });
         break;
     case Token::MINUS:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
-            _evalResults.push_back(toLoxNumber(left - right));
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
+            _evalResults.push_back(_runtime.toLoxNumber(left - right));
         });
         break;
     case Token::PLUS:
-        if (matchOperands<LoxNumber>(left, right, [this](double left, double right) {
-                _evalResults.push_back(toLoxNumber(left + right));
+        if (matchOperands<LoxNumber>(left, right, [this](auto left, auto right) {
+                _evalResults.push_back(_runtime.toLoxNumber(left + right));
             })) {
             break; // handled number + number
         }
         if (matchOperands<LoxString>(left, right, [this](auto& left, auto& right) {
-                _evalResults.push_back(toLoxString(left + right));
+                _evalResults.push_back(_runtime.toLoxString(left + right));
             })) {
             break; // handled string + string
         }
         throw RuntimeError(expr.op, "Operands must be two numbers or two strings.");
     case Token::SLASH:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
-            _evalResults.push_back(toLoxNumber(left / right));
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
+            _evalResults.push_back(_runtime.toLoxNumber(left / right));
         });
         break;
     case Token::STAR:
-        ensureOperands<LoxNumber>(expr.op, left, right, [this](double left, double right) {
-            _evalResults.push_back(toLoxNumber(left * right));
+        ensureOperands<LoxNumber>(expr.op, left, right, [this](auto left, auto right) {
+            _evalResults.push_back(_runtime.toLoxNumber(left * right));
         });
         break;
     case Token::BANG_EQUAL:
-        _evalResults.push_back(toLoxBoolean(!left->equals(*right)));
+        _evalResults.push_back(_runtime.toLoxBool(!left->equals(right)));
         break;
     case Token::EQUAL_EQUAL:
-        _evalResults.push_back(toLoxBoolean(left->equals(*right)));
+        _evalResults.push_back(_runtime.toLoxBool(left->equals(right)));
         break;
     default:
         // Unreachable.
@@ -251,7 +371,7 @@ void Interpreter::visit(CallExpr const& expr)
         args.push_back(evaluate(arg));
     }
 
-    auto callable = dynamic_cast<LoxCallable*>(callee.get());
+    auto callable = dynamic_cast<Callable*>(callee.get());
     if (!callable) {
         throw RuntimeError(expr.paren, "Can only call functions and classes.");
     }
@@ -267,13 +387,7 @@ void Interpreter::visit(CallExpr const& expr)
 void Interpreter::visit(GetExpr const& expr)
 {
     auto object = evaluate(expr.object);
-
-    if (auto instance = dynamic_cast<LoxInstance*>(object.get())) {
-        _evalResults.push_back(instance->get(expr.name));
-        return;
-    }
-
-    throw RuntimeError(expr.name, "Only instances have properties.");
+    _evalResults.push_back(object->get(expr.name));
 }
 
 void Interpreter::visit(GroupingExpr const& expr)
@@ -283,7 +397,21 @@ void Interpreter::visit(GroupingExpr const& expr)
 
 void Interpreter::visit(LiteralExpr const& expr)
 {
-    _evalResults.push_back(expr.value);
+    std::shared_ptr<LoxObject> value;
+    if (expr.literal.type == Token::FALSE || expr.literal.type == Token::TRUE) {
+        value = _runtime.toLoxBool(expr.literal.type == Token::TRUE);
+    }
+    else if (expr.literal.type == Token::NUMBER) {
+        value = _runtime.toLoxNumber(parseNumber(expr.literal));
+    }
+    else if (expr.literal.type == Token::STRING) {
+        value = _runtime.toLoxString(parseString(expr.literal));
+    }
+    else {
+        LOX_ASSERT(expr.literal.type == Token::NIL);
+        value = _runtime.getNil();
+    }
+    _evalResults.push_back(value);
 }
 
 void Interpreter::visit(LogicalExpr const& expr)
@@ -311,16 +439,11 @@ void Interpreter::visit(LogicalExpr const& expr)
 void Interpreter::visit(SetExpr const& expr)
 {
     auto object = evaluate(expr.object);
+    auto value = evaluate(expr.value);
 
-    if (auto instance = dynamic_cast<LoxInstance*>(object.get())) {
-        auto value = evaluate(expr.value);
-        instance->set(expr.name, value);
+    object->set(expr.name, value);
 
-        _evalResults.push_back(value);
-        return;
-    }
-
-    throw RuntimeError(expr.name, "Only instances have fields.");
+    _evalResults.push_back(value);
 }
 
 void Interpreter::visit(ThisExpr const& expr)
@@ -340,21 +463,19 @@ void Interpreter::visit(SuperExpr const& expr)
 {
     LOX_ASSERT(expr.keyword.lexeme == "super");
 
-    if (expr.depth() >= 0) {
-        auto distance = expr.depth();
-        auto superclass = std::dynamic_pointer_cast<LoxClass>(_environment->getAt(distance, "super"));
-        auto instance = std::dynamic_pointer_cast<LoxInstance>(_environment->getAt(distance - 1, "this"));
-        if (superclass && instance) {
-            auto method = superclass->findMethod(expr.method.lexeme);
-            if (!method) {
-                throw RuntimeError(expr.method, "Undefined property '" + expr.method.lexeme + "'.");
-            }
-            _evalResults.push_back(method->bind(instance));
-            return;
-        }
-    }
+    auto distance = expr.depth();
+    LOX_ASSERT(distance >= 0);
 
-    LOX_ASSERT(false); // If we have reached here, we have a scope resolve bug.
+    auto superclass = std::static_pointer_cast<LoxClass>(_environment->getAt(distance, "super"));
+    auto instance = _environment->getAt(distance - 1, "this");
+    LOX_ASSERT(superclass);
+    LOX_ASSERT(instance);
+
+    auto method = superclass->findMethod(expr.method.lexeme);
+    if (!method) {
+        throw RuntimeError(expr.method, "Undefined property '" + expr.method.lexeme + "'.");
+    }
+    _evalResults.push_back(method->bind(instance));
 }
 
 void Interpreter::visit(UnaryExpr const& expr)
@@ -363,12 +484,12 @@ void Interpreter::visit(UnaryExpr const& expr)
     LOX_ASSERT(right);
 
     if (expr.op.type == Token::BANG) {
-        _evalResults.push_back(toLoxBoolean(!right->isTruthy()));
+        _evalResults.push_back(_runtime.toLoxBool(!right->isTruthy()));
     }
     else {
         LOX_ASSERT(expr.op.type == Token::MINUS);
         ensureOperand<LoxNumber>(expr.op, right, [this](double value) {
-            _evalResults.push_back(toLoxNumber(-value));
+            _evalResults.push_back(_runtime.toLoxNumber(-value));
         });
     }
 }
@@ -392,17 +513,10 @@ void Interpreter::execute(Stmt const& stmt)
 
 void Interpreter::executeBlock(std::vector<Stmt> const& stmts, std::shared_ptr<Environment> const& environment)
 {
-    auto previous = _environment;
-    try {
-        _environment = environment;
-        for (auto const& stmt : stmts) {
-            execute(stmt);
-        }
-        _environment = previous;
-    }
-    catch (...) {
-        _environment = previous;
-        throw;
+    ScopeSwitcher _{this, environment};
+
+    for (auto const& stmt : stmts) {
+        execute(stmt);
     }
 }
 
@@ -476,10 +590,62 @@ std::shared_ptr<LoxFunction> Interpreter::makeFunction(bool isInitializer, Token
         catch (ReturnValue& retVal) {
             return retVal.object;
         }
-        return makeLoxNil();
+        return _runtime.getNil();
     };
 
-    return _gc->create<LoxFunction>(_gc, _environment, isInitializer, name, params, body, executor);
+    return _runtime.create<LoxUserFunction>(_environment, isInitializer, name, params, body, executor);
+}
+
+double Interpreter::parseNumber(Token const& token)
+{
+    LOX_ASSERT(token.type == Token::NUMBER);
+
+    return std::stod(token.lexeme);
+}
+
+std::string Interpreter::parseString(Token const& token)
+{
+    LOX_ASSERT(token.type == Token::STRING);
+    LOX_ASSERT(token.lexeme.length() >= 2);
+
+    auto const& lexeme = token.lexeme;
+    return lexeme.substr(1, lexeme.size() - 2);
+}
+
+std::shared_ptr<Module> Interpreter::loadModule(ScriptReader& reader)
+{
+    std::vector<Stmt> stmts;
+
+    bool hasSyntaxError = false;
+    for (Parser parser{_errorReporter, &reader}; !reader.isAtEnd();) {
+        auto const stmt = parser.parse();
+        if (!stmt) {
+            if (!reader.isAtEnd()) {
+                // Scanning or parsing error(s) - continue on to report more errors
+                hasSyntaxError = true;
+                continue;
+            }
+
+            // We're done!
+            break;
+        }
+        if (!hasSyntaxError) {
+            stmts.push_back(*stmt);
+        }
+    }
+    if (hasSyntaxError) {
+        return nullptr;
+    }
+
+    auto moduleBlock = makeBlockStmt(stmts);
+    if (Resolver resolver{_errorReporter}; !resolver.resolve(moduleBlock)) {
+        // resolve error
+        return nullptr;
+    }
+
+    auto moduleEnv = _runtime.createEnvironment(nullptr);
+    executeBlock(moduleBlock.stmts, moduleEnv);
+    return _runtime.createModule(moduleEnv->values());
 }
 
 } // namespace cloxx

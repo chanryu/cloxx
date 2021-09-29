@@ -5,8 +5,8 @@ import re
 import subprocess
 import sys
 
-# This python script was ported from the Crafting Interpreters' test runner written dart.
-# The original test runner code can be found at:
+# This python script was ported from the Crafting Interpreters' test runner written in Dart.
+# The original Dart implementation can be found at:
 # https://github.com/munificent/craftinginterpreters/blob/9f7cb4dbce88b1904d8067586abe04045383468c/tool/bin/test.dart
 
 _executable = 'build/cloxx'
@@ -15,7 +15,7 @@ _expectedOutputPattern = re.compile(r"// expect: ?(.*)")
 _expectedErrorPattern = re.compile(r"// (Error.*)")
 _errorLinePattern = re.compile(r"// \[((java|c) )?line (\d+)\] (Error.*)")
 _expectedRuntimeErrorPattern = re.compile(r"// expect runtime error: (.+)")
-_syntaxErrorPattern = re.compile(r"\[.*line (\d+)\] (Error.+)")
+_syntaxErrorPattern = re.compile(r".*:(\d+): (Error.+)")
 _nonTestPattern = re.compile(r"// nontest")
 
 _passed = 0
@@ -173,7 +173,7 @@ class Test:
 
             match = _expectedErrorPattern.search(line)
             if match is not None:
-                this._expectedErrors.add("[line {}] {}".format(lineNum, match[1]))
+                this._expectedErrors.add("{}:{}: {}".format(os.path.realpath(this._path), lineNum, match[1]))
 
                 # If we expect a compile error, it should exit with EX_DATAERR.
                 this._expectedExitCode = 65
@@ -188,7 +188,7 @@ class Test:
                     # if the error is intended for clox then let's skip it
                     continue
 
-                this._expectedErrors.add("[line {}] {}".format(match[3], match[4]))
+                this._expectedErrors.add("{}:{}: {}".format(os.path.realpath(this._path), match[3], match[4]))
 
                 # If we expect a compile error, it should exit with EX_DATAERR.
                 this._expectedExitCode = 65
@@ -197,7 +197,7 @@ class Test:
 
             match = _expectedRuntimeErrorPattern.search(line)
             if match is not None:
-                this._expectedRuntimeError = "[line {}] {}".format(lineNum, match[1])
+                this._expectedRuntimeError = "{}:{}: {}".format(os.path.realpath(this._path), lineNum, match[1])
                 # If we expect a runtime error, it should exit with EX_SOFTWARE.
                 this._expectedExitCode = 70
                 _expectations += 1
@@ -247,18 +247,16 @@ class Test:
         for line in errorLines:
             match = _syntaxErrorPattern.search(line)
             if match is not None:
-                error = "[line {}] {}".format(match[1], match[2])
+                error = "{}:{}: {}".format(os.path.realpath(this._path), match[1], match[2])
                 if error in this._expectedErrors:
                     foundErrors.add(error)
                 else:
                     if unexpectedCount < 10:
-                        this._fail("Unexpected error:")
-                        this._fail(line)
+                        this._fail("Unexpected error: " + line)
                     unexpectedCount += 1
             elif line != "":
                 if unexpectedCount < 10:
-                    this._fail("Unexpected output on stderr:")
-                    this._fail(line)
+                    this._fail("Unexpected output on stderr: " + line)
                 unexpectedCount += 1
         if unexpectedCount > 10:
             this._fail("(truncated {} more...)".format(unexpectedCount - 10))
@@ -331,8 +329,40 @@ def _defineTestSuites():
         noJavaLimits
     )
 
+    cloxxTests = _merge_dicts(
+        jloxTests,
+        { "test/print": "skip" },
+
+        # now true & false are instance of Bool
+        { "test/field/set_on_bool.lox": "skip" },
+        { "test/field/get_on_bool.lox": "skip" },
+
+        # now nil instance of Nil
+        { "test/field/set_on_nil.lox": "skip" },
+        { "test/field/get_on_nil.lox": "skip" },
+
+        # now strings are instance of String
+        { "test/field/set_on_string.lox": "skip" },
+        { "test/field/get_on_string.lox": "skip" },
+
+        # now numbers are instance of Number
+        { "test/field/set_on_num.lox": "skip" },
+        { "test/field/get_on_num.lox": "skip" },
+
+        # now classes are instance of Class
+        { "test/field/set_on_class.lox": "skip" },
+        { "test/field/get_on_class.lox": "skip" },
+
+        # now functions are instance of Function
+        { "test/field/set_on_function.lox": "skip" },
+        { "test/field/get_on_function.lox": "skip" },
+
+        # cannot show method dynamically
+        { "test/field/get_and_set_method.lox": "skip" },
+    )
+
     # cloxx behaves like jlox
-    _allSuites["cloxx"] = Suite("cloxx", jloxTests)
+    _allSuites["cloxx"] = Suite("cloxx", cloxxTests)
 
     # more suites can go here...
 

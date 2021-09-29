@@ -1,12 +1,14 @@
 class Foo {
+  var field1;
+  var field2;
   foo(a, b) {
     this.field1 = a;
     this.field2 = b;
   }
 
   fooPrint() {
-    print this.field1;
-    print this.field2;
+    print(this.field1);
+    print(this.field2);
   }
 }
 
@@ -17,8 +19,8 @@ class Bar < Foo {
   }
 
   barPrint() {
-    print this.field1;
-    print this.field2;
+    print(this.field1);
+    print(this.field2);
   }
 }
 

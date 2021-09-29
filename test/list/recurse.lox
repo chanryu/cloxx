@@ -1,0 +1,11 @@
+var list = List();
+
+list.append("a");
+list.append("b");
+list.append("c");
+print(list.length()); // expect: 3
+print(list); // expect: [a, b, c]
+
+list.set(1, list);
+print(list.length()); // expect: 3
+print(list); // expect: [a, [...], c]

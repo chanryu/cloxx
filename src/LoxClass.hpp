@@ -1,22 +1,27 @@
 #pragma once
 
-#include <map>
+#include <functional>
+#include <memory>
+#include <string>
 
-#include "GC.hpp"
-#include "LoxCallable.hpp"
+#include "LoxObject.hpp"
 
 namespace cloxx {
 
 class LoxFunction;
+class Runtime;
 
-class LoxClass : public LoxCallable, public Traceable, public std::enable_shared_from_this<LoxClass> {
+using LoxObjectFactory = std::function<std::shared_ptr<LoxObject>(std::shared_ptr<LoxClass> const&)>;
+
+class LoxClass : public LoxObject, public Callable {
 public:
-    LoxClass(PrivateCreationTag tag, GarbageCollector* gc, std::string name,
-             std::shared_ptr<LoxClass> const& superclass, std::map<std::string, std::shared_ptr<LoxFunction>> methods);
+    LoxClass(PrivateCreationTag tag, Runtime* runtime, std::string name, std::shared_ptr<LoxClass> const& superclass,
+             std::map<std::string, std::shared_ptr<LoxObject>> fields,
+             std::map<std::string, std::shared_ptr<LoxFunction>> methods, LoxObjectFactory objectFactory);
 
     std::shared_ptr<LoxFunction> findMethod(std::string const& name) const;
 
-    std::string toString() const override;
+    std::string toString() override;
 
     size_t arity() const override;
     std::shared_ptr<LoxObject> call(std::vector<std::shared_ptr<LoxObject>> const& args) override;
@@ -26,10 +31,15 @@ public:
     void reclaim() override;
 
 private:
-    GarbageCollector* const _gc;
+    std::shared_ptr<LoxObject> createInstance(std::shared_ptr<LoxClass> const& klass);
+    void populateInstanceFields(std::map<std::string, std::shared_ptr<LoxObject>>& fields);
+
+    Runtime* const _runtime;
     std::string _name;
     std::shared_ptr<LoxClass> _superclass;
+    std::map<std::string, std::shared_ptr<LoxObject>> _fields;
     std::map<std::string, std::shared_ptr<LoxFunction>> _methods;
+    LoxObjectFactory _objectFactory;
 };
 
 } // namespace cloxx

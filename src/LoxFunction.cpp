@@ -1,69 +1,32 @@
 #include "LoxFunction.hpp"
 
-#include "Lox.hpp"
-
-#include "Assert.hpp"
-#include "Environment.hpp"
-#include "LoxInstance.hpp"
-
-#include "ast/Stmt.hpp"
+#include "LoxClass.hpp"
+#include "Runtime.hpp"
 
 namespace cloxx {
 
-LoxFunction::LoxFunction(PrivateCreationTag tag, GarbageCollector* gc, std::shared_ptr<Environment> const& closure,
-                         bool isInitializer, Token const& name, std::vector<Token> const& params,
-                         std::vector<Stmt> const& body, Executor const& executor)
-    : Traceable{tag}, _gc{gc}, _closure{closure},
-      _isInitializer{isInitializer}, _name{name}, _params{params}, _body{body}, _executor{executor}
+auto createFunctionFields(Runtime* /*runtime*/)
 {
-    LOX_ASSERT(_closure);
+    std::map<std::string, std::shared_ptr<LoxObject>> fields;
+    // no fields yet
+    return fields;
 }
 
-std::shared_ptr<LoxFunction> LoxFunction::bind(std::shared_ptr<LoxInstance> const& instance) const
+auto createFunctionMethods(Runtime* /*runtime*/)
 {
-    LOX_ASSERT(instance);
-
-    auto closure = _gc->create<Environment>(_closure);
-    closure->define("this", instance);
-    return _gc->create<LoxFunction>(_gc, closure, _isInitializer, _name, _params, _body, _executor);
+    std::map<std::string, std::shared_ptr<LoxFunction>> methods;
+    // no methods yet
+    return methods;
 }
 
-std::string LoxFunction::toString() const
+LoxFunction::LoxFunction(PrivateCreationTag tag, Runtime* runtime) : LoxObject{tag, runtime, runtime->functionClass()}
+{}
+
+std::shared_ptr<LoxClass> createFunctionClass(Runtime* runtime)
 {
-    return "<fn " + _name.lexeme + ">";
-}
-
-size_t LoxFunction::arity() const
-{
-    return _params.size();
-}
-
-std::shared_ptr<LoxObject> LoxFunction::call(std::vector<std::shared_ptr<LoxObject>> const& args)
-{
-    LOX_ASSERT(args.size() == _params.size());
-
-    auto env = _gc->create<Environment>(_closure);
-    for (size_t i = 0; i < _params.size(); i++) {
-        env->define(_params[i].lexeme, args[i]);
-    }
-
-    if (_isInitializer) {
-        _executor(env, _body);
-        return _closure->getAt(0, "this");
-    }
-
-    return _executor(env, _body);
-}
-
-void LoxFunction::enumerateTraceables(Traceable::Enumerator const& enumerator)
-{
-    LOX_ASSERT(_closure);
-    enumerator.enumerate(*_closure);
-}
-
-void LoxFunction::reclaim()
-{
-    _closure.reset();
+    std::map<std::string, std::shared_ptr<LoxFunction>> funcClassMethods;
+    return runtime->create<LoxClass>("Function", runtime->objectClass(), createFunctionFields(runtime),
+                                     createFunctionMethods(runtime), /*objectFactory*/ nullptr);
 }
 
 } // namespace cloxx

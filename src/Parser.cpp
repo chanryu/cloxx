@@ -1,27 +1,25 @@
 #include "Parser.hpp"
 
 #include "Assert.hpp"
-#include "Lox.hpp"
+#include "ErrorReporter.hpp"
 
 #define LOX_ASSERT_PREVIOUS(__t) LOX_ASSERT(previous().type == Token::__t)
 
 namespace cloxx {
 
-Parser::Parser(Lox* lox, std::vector<Token> tokens) : _lox{lox}, _tokens{std::move(tokens)}
-{}
-
-std::vector<Stmt> Parser::parse()
+Parser::Parser(ErrorReporter* errorReporter, ScriptReader* sourceReader)
+    : _errorReporter{errorReporter}, _scanner{errorReporter, sourceReader}
 {
-    std::vector<Stmt> stmts;
-    while (!isAtEnd()) {
-        auto stmt = declaration();
-        if (!stmt) {
-            // continue on to report more errors
-            continue;
-        }
-        stmts.push_back(*stmt);
+    _current = _scanner.scanToken();
+}
+
+std::optional<Stmt> Parser::parse()
+{
+    if (isAtEnd()) {
+        return std::nullopt;
     }
-    return stmts;
+
+    return declaration();
 }
 
 std::optional<Stmt> Parser::declaration()
@@ -49,11 +47,11 @@ std::optional<Stmt> Parser::declaration()
     }
 }
 
-Stmt Parser::varDeclaration()
+VarStmt Parser::varDeclaration()
 {
     // varDecl → "var" IDENTIFIER ( "=" expression )? ";" ;
 
-    auto const& name = consume(Token::IDENTIFIER, "Expect variable name.");
+    auto name = consume(Token::IDENTIFIER, "Expect variable name.");
 
     std::optional<Expr> initializer;
     if (match(Token::EQUAL)) {
@@ -69,7 +67,7 @@ FunStmt Parser::function(std::string const& kind)
     // function   → IDENTIFIER "(" parameters? ")" block ;
     // parameters → IDENTIFIER ( "," IDENTIFIER )* ;
 
-    auto const& name = consume(Token::IDENTIFIER, "Expect " + kind + " name.");
+    auto name = consume(Token::IDENTIFIER, "Expect " + kind + " name.");
     consume(Token::LEFT_PAREN, "Expect '(' after " + kind + " name.");
 
     std::vector<Token> params;
@@ -94,9 +92,9 @@ Stmt Parser::classDeclaration()
     LOX_ASSERT_PREVIOUS(CLASS);
 
     // classDecl → "class" IDENTIFIER ( "<" IDENTIFIER )?
-    //             "{" function* "}" ;
+    //             "{" ( varDecl | function )* "}" ;
 
-    auto const& name = consume(Token::IDENTIFIER, "Expect class name.");
+    auto name = consume(Token::IDENTIFIER, "Expect class name.");
 
     std::optional<VariableExpr> superclass;
     if (match(Token::LESS)) {
@@ -106,14 +104,20 @@ Stmt Parser::classDeclaration()
 
     consume(Token::LEFT_BRACE, "Expect '{' before class body.");
 
+    std::vector<VarStmt> fields;
     std::vector<FunStmt> methods;
     while (!check(Token::RIGHT_BRACE) && !isAtEnd()) {
-        methods.push_back(function("method"));
+        if (match(Token::VAR)) {
+            fields.push_back(varDeclaration());
+        }
+        else {
+            methods.push_back(function("method"));
+        }
     }
 
     consume(Token::RIGHT_BRACE, "Expect '}' after class body.");
 
-    return makeClassStmt(name, superclass, methods);
+    return makeClassStmt(name, superclass, fields, methods);
 }
 
 Stmt Parser::statement()
@@ -124,6 +128,7 @@ Stmt Parser::statement()
     //           | returnStmt
     //           | printStmt
     //           | exprStmt
+    //           | importStmt
     //           | block ;
 
     if (match(Token::IF)) {
@@ -135,11 +140,17 @@ Stmt Parser::statement()
     if (match(Token::FOR)) {
         return forStatement();
     }
+    if (match(Token::BREAK)) {
+        return breakStatement();
+    }
+    if (match(Token::CONTINUE)) {
+        return continueStatement();
+    }
     if (match(Token::RETURN)) {
         return returnStatement();
     }
-    if (match(Token::PRINT)) {
-        return printStatement();
+    if (match(Token::IMPORT)) {
+        return importStatement();
     }
     if (match(Token::LEFT_BRACE)) {
         return makeBlockStmt(block());
@@ -173,12 +184,12 @@ Stmt Parser::whileStatement()
     // whileStmt → "while" "(" expression ")" statement ;
 
     consume(Token::LEFT_PAREN, "Expect '(' after 'while'.");
-    auto const cond = expression();
+    auto const condition = expression();
     consume(Token::RIGHT_PAREN, "Expect ')' after condition.");
 
     auto const body = statement();
 
-    return makeWhileStmt(cond, body);
+    return makeForStmt(/*initializer*/ std::nullopt, condition, /*increment*/ std::nullopt, body);
 }
 
 Stmt Parser::forStatement()
@@ -211,32 +222,34 @@ Stmt Parser::forStatement()
 
     auto body = statement();
 
-    // For loop desugaring.
+    return makeForStmt(initializer, condition, increment, body);
+}
 
-    // 1. Append increament to body if needed
-    if (increment) {
-        body = makeBlockStmt(std::vector<Stmt>{body, *increment});
-    }
+Stmt Parser::breakStatement()
+{
+    LOX_ASSERT_PREVIOUS(BREAK);
 
-    // 2. Make condition if missing and buid while statement
-    if (!condition) {
-        condition = makeLiteralExpr(toLoxBoolean(true));
-    }
-    body = makeWhileStmt(*condition, body);
+    auto keyword = previous();
+    consume(Token::SEMICOLON, "Expect ';' after break.");
 
-    // 3. Prepand initializer if needed
-    if (initializer) {
-        body = makeBlockStmt(std::vector<Stmt>{*initializer, body});
-    }
+    return makeBreakStmt(keyword);
+}
 
-    return body;
+Stmt Parser::continueStatement()
+{
+    LOX_ASSERT_PREVIOUS(CONTINUE);
+
+    auto keyword = previous();
+    consume(Token::SEMICOLON, "Expect ';' after continue.");
+
+    return makeContinueStmt(keyword);
 }
 
 Stmt Parser::returnStatement()
 {
     LOX_ASSERT_PREVIOUS(RETURN);
 
-    auto const& keyword = previous();
+    auto keyword = previous();
 
     std::optional<Expr> expr;
     if (!match(Token::SEMICOLON)) {
@@ -247,11 +260,41 @@ Stmt Parser::returnStatement()
     return makeReturnStmt(keyword, expr);
 }
 
-Stmt Parser::printStatement()
+Stmt Parser::importStatement()
 {
-    auto const value = expression();
-    consume(Token::SEMICOLON, "Expect ';' after value.");
-    return makePrintStmt(value);
+    // importStmt → "import" "{" ( identifier ( "as" identifier )? )+  "}" "from" string ";" ;
+
+    LOX_ASSERT_PREVIOUS(IMPORT);
+
+    auto keyword = previous();
+
+    consume(Token::LEFT_BRACE, "Expect '{' after import.");
+
+    std::map<Token, std::optional<Token>> symbols;
+    while (true) {
+        consume(Token::IDENTIFIER, "Expect symbol list.");
+
+        auto symbol = previous();
+        std::optional<Token> alias;
+        if (match(Token::AS)) {
+            alias = consume(Token::IDENTIFIER, "Expect identifier after 'as'.");
+        }
+
+        // TODO: report error/warning if duplicated name found
+        symbols.emplace(symbol, alias);
+
+        if (!match(Token::COMMA)) {
+            break;
+        }
+    }
+
+    consume(Token::RIGHT_BRACE, "Expect '}' after import list.");
+    consume(Token::FROM, "Expect 'from' after import list.");
+
+    auto filePath = consume(Token::STRING, "Expect module path after 'from'.");
+    consume(Token::SEMICOLON, "Expect ';' after import.");
+
+    return makeImportStmt(keyword, symbols, filePath);
 }
 
 Stmt Parser::expressionStatement()
@@ -293,8 +336,8 @@ Expr Parser::assignment()
     auto const expr = logicalOr();
 
     if (match(Token::EQUAL)) {
-        auto const& equals = previous();
-        auto const& value = assignment();
+        auto equals = previous();
+        auto value = assignment();
 
         if (auto const var = expr.toVariableExpr()) {
             return makeAssignExpr(var->name, value);
@@ -304,7 +347,7 @@ Expr Parser::assignment()
             return makeSetExpr(get->object, get->name, value);
         }
 
-        _lox->error(equals, "Invalid assignment target.");
+        _errorReporter->syntaxError(equals, "Invalid assignment target.");
     }
 
     return expr;
@@ -317,8 +360,8 @@ Expr Parser::logicalOr()
     auto expr = logicalAnd();
 
     while (match(Token::OR)) {
-        auto const& op = previous();
-        auto const& right = logicalAnd();
+        auto op = previous();
+        auto right = logicalAnd();
         expr = makeLogicalExpr(op, expr, right);
     }
 
@@ -332,8 +375,8 @@ Expr Parser::logicalAnd()
     auto expr = equality();
 
     while (match(Token::AND)) {
-        auto const& op = previous();
-        auto const& right = equality();
+        auto op = previous();
+        auto right = equality();
         expr = makeLogicalExpr(op, expr, right);
     }
 
@@ -347,8 +390,8 @@ Expr Parser::equality()
     auto expr = comparison();
 
     while (match(Token::BANG_EQUAL, Token::EQUAL_EQUAL)) {
-        auto const& op = previous();
-        auto const& right = comparison();
+        auto op = previous();
+        auto right = comparison();
         expr = makeBinaryExpr(op, expr, right);
     }
 
@@ -362,8 +405,8 @@ Expr Parser::comparison()
     auto expr = term();
 
     while (match(Token::GREATER, Token::GREATER_EQUAL, Token::LESS, Token::LESS_EQUAL)) {
-        auto const& op = previous();
-        auto const& right = term();
+        auto op = previous();
+        auto right = term();
         expr = makeBinaryExpr(op, expr, right);
     }
 
@@ -377,8 +420,8 @@ Expr Parser::term()
     auto expr = factor();
 
     while (match(Token::MINUS, Token::PLUS)) {
-        auto const& op = previous();
-        auto const& right = factor();
+        auto op = previous();
+        auto right = factor();
         expr = makeBinaryExpr(op, expr, right);
     }
 
@@ -389,8 +432,8 @@ Expr Parser::factor()
 {
     auto expr = unary();
     while (match(Token::SLASH, Token::STAR)) {
-        auto const& op = previous();
-        auto const& right = unary();
+        auto op = previous();
+        auto right = unary();
         expr = makeBinaryExpr(op, expr, right);
     }
     return expr;
@@ -401,8 +444,8 @@ Expr Parser::unary()
     // unary → ( "!" | "-" ) unary | call ;
 
     if (match(Token::BANG, Token::MINUS)) {
-        auto const& op = previous();
-        auto const& right = unary();
+        auto op = previous();
+        auto right = unary();
         return makeUnaryExpr(op, right);
     }
     return call();
@@ -420,7 +463,7 @@ Expr Parser::call()
             expr = finishCall(expr);
         }
         else if (match(Token::DOT)) {
-            auto const& name = consume(Token::IDENTIFIER, "Expect property name after '.'.");
+            auto name = consume(Token::IDENTIFIER, "Expect property name after '.'.");
             expr = makeGetExpr(expr, name);
         }
         else {
@@ -437,13 +480,13 @@ Expr Parser::finishCall(Expr const& callee)
     if (!check(Token::RIGHT_PAREN)) {
         do {
             if (args.size() >= 255) {
-                _lox->error(peek(), "Can't have more than 255 arguments.");
+                _errorReporter->syntaxError(peek(), "Can't have more than 255 arguments.");
             }
             args.push_back(expression());
         } while (match(Token::COMMA));
     }
 
-    auto const& paren = consume(Token::RIGHT_PAREN, "Expect ')' after arguments.");
+    auto paren = consume(Token::RIGHT_PAREN, "Expect ')' after arguments.");
     return makeCallExpr(callee, paren, args);
 }
 
@@ -455,24 +498,12 @@ Expr Parser::primary()
     //         | "this"
     //         | "super" "." IDENTIFIER ;
 
-    if (match(Token::FALSE)) {
-        return makeLiteralExpr(toLoxBoolean(false));
-    }
-
-    if (match(Token::TRUE)) {
-        return makeLiteralExpr(toLoxBoolean(true));
-    }
-
-    if (match(Token::NIL)) {
-        return makeLiteralExpr(makeLoxNil());
-    }
-
-    if (match(Token::NUMBER, Token::STRING)) {
-        return makeLiteralExpr(previous().literal);
+    if (match(Token::FALSE, Token::TRUE, Token::NIL, Token::NUMBER, Token::STRING)) {
+        return makeLiteralExpr(previous());
     }
 
     if (match(Token::LEFT_PAREN)) {
-        auto const& expr = expression();
+        auto expr = expression();
         consume(Token::RIGHT_PAREN, "Expect ')' after expression.");
         return makeGroupingExpr(expr);
     }
@@ -486,9 +517,9 @@ Expr Parser::primary()
     }
 
     if (match(Token::SUPER)) {
-        auto const& keyword = previous();
+        auto keyword = previous();
         consume(Token::DOT, "Expect '.' after 'super'.");
-        auto const& method = consume(Token::IDENTIFIER, "Expect superclass method name.");
+        auto method = consume(Token::IDENTIFIER, "Expect superclass method name.");
         return makeSuperExpr(keyword, method);
     }
 
@@ -504,7 +535,7 @@ bool Parser::match(Token::Type type)
     return false;
 }
 
-bool Parser::check(Token::Type type) const
+bool Parser::check(Token::Type type)
 {
     if (isAtEnd()) {
         return false;
@@ -512,7 +543,7 @@ bool Parser::check(Token::Type type) const
     return peek().type == type;
 }
 
-bool Parser::isAtEnd() const
+bool Parser::isAtEnd()
 {
     return peek().type == Token::END_OF_FILE;
 }
@@ -520,19 +551,25 @@ bool Parser::isAtEnd() const
 Token const& Parser::advance()
 {
     if (!isAtEnd()) {
-        _current++;
+        _previous.swap(_current);
+        _current.reset();
     }
     return previous();
 }
 
-Token const& Parser::peek() const
+Token const& Parser::peek()
 {
-    return _tokens[_current];
+    if (!_current.has_value()) {
+        _current = _scanner.scanToken();
+        LOX_ASSERT(_current.has_value());
+    }
+    return *_current;
 }
 
 Token const& Parser::previous() const
 {
-    return _tokens[_current - 1];
+    LOX_ASSERT(_previous.has_value());
+    return *_previous;
 }
 
 Token const& Parser::consume(Token::Type type, std::string_view message)
@@ -546,7 +583,7 @@ Token const& Parser::consume(Token::Type type, std::string_view message)
 
 Parser::ParseError Parser::error(Token const& token, std::string_view message)
 {
-    _lox->error(token, message);
+    _errorReporter->syntaxError(token, message);
     return ParseError{};
 }
 
@@ -565,7 +602,6 @@ void Parser::synchronize()
         case Token::FOR:
         case Token::IF:
         case Token::WHILE:
-        case Token::PRINT:
         case Token::RETURN:
             return;
         default:

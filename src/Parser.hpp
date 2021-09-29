@@ -1,33 +1,39 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string_view>
 #include <vector>
 
 #include "ast/Expr.hpp"
 #include "ast/Stmt.hpp"
 
+#include "Scanner.hpp"
+
 namespace cloxx {
 
-class Lox;
+class ErrorReporter;
+class ScriptReader;
 
 class Parser {
 public:
-    explicit Parser(Lox* lox, std::vector<Token> tokens);
+    explicit Parser(ErrorReporter* errorReporter, ScriptReader* sourceReader);
 
-    std::vector<Stmt> parse();
+    std::optional<Stmt> parse();
 
 private:
     std::optional<Stmt> declaration();
-    Stmt varDeclaration();
+    VarStmt varDeclaration();
     FunStmt function(std::string const& kind);
     Stmt classDeclaration();
     Stmt statement();
     Stmt ifStatement();
     Stmt whileStatement();
     Stmt forStatement();
+    Stmt breakStatement();
+    Stmt continueStatement();
     Stmt returnStatement();
-    Stmt printStatement();
+    Stmt importStatement();
     Stmt expressionStatement();
     std::vector<Stmt> block();
     Expr expression();
@@ -53,10 +59,10 @@ private:
         return match(types...);
     }
 
-    bool check(Token::Type type) const;
-    bool isAtEnd() const;
+    bool check(Token::Type type);
+    bool isAtEnd();
     Token const& advance();
-    Token const& peek() const;
+    Token const& peek();
     Token const& previous() const;
     Token const& consume(Token::Type type, std::string_view message);
 
@@ -66,9 +72,10 @@ private:
     ParseError error(Token const& token, std::string_view message);
     void synchronize();
 
-    Lox* const _lox;
-    std::vector<Token> const _tokens;
-    size_t _current = 0;
+    ErrorReporter* const _errorReporter;
+    Scanner _scanner;
+    std::optional<Token> _previous;
+    std::optional<Token> _current;
 };
 
 } // namespace cloxx

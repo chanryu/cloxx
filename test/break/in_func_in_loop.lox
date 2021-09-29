@@ -1,0 +1,7 @@
+for (var i = 0; i < 10; i = i + 1) {
+    fun hello() {
+        print("hello");
+        break; // Error at 'break': No loop to break.
+    }
+    hello();
+}
