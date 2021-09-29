@@ -5,8 +5,8 @@ import re
 import subprocess
 import sys
 
-# This python script was ported from the Crafting Interpreters' test runner written dart.
-# The original test runner code can be found at:
+# This python script was ported from the Crafting Interpreters' test runner written in Dart.
+# The original Dart implementation can be found at:
 # https://github.com/munificent/craftinginterpreters/blob/9f7cb4dbce88b1904d8067586abe04045383468c/tool/bin/test.dart
 
 _executable = 'build/cloxx'
