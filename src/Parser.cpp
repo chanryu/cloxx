@@ -272,7 +272,7 @@ Stmt Parser::importStatement()
 
     std::map<Token, std::optional<Token>> symbols;
     while (true) {
-        consume(Token::IDENTIFIER, "Expect identifier.");
+        consume(Token::IDENTIFIER, "Expect symbol list.");
 
         auto symbol = previous();
         std::optional<Token> alias;
@@ -291,7 +291,7 @@ Stmt Parser::importStatement()
     consume(Token::RIGHT_BRACE, "Expect } after import list.");
     consume(Token::FROM, "Expect from after import list.");
 
-    auto filePath = consume(Token::STRING, "Expect module path after import.");
+    auto filePath = consume(Token::STRING, "Expect module path after `from'.");
     consume(Token::SEMICOLON, "Expect ';' after import.");
 
     return makeImportStmt(keyword, symbols, filePath);

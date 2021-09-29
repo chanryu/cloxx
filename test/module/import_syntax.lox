@@ -1,5 +1,14 @@
+// [line 2] Error at ';': Expect { after import.
 import;
+
+// [line 5] Error at '}': Expect symbol list.
 import {};
+
+// [line 8] Error at '}': Expect symbol list.
+import {} from "foo.lox";
+
+// [line 11] Error at ';': Expect from after import list.
 import { a };
-import {} from "a_module.lox";
-import { a } from "a_module.lox";
+
+// [line 14] Error at ';': Expect module path after `from'.
+import { a } from;

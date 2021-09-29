@@ -1,5 +1,5 @@
 .PHONY: configure configure-debug ast cloxx test clean
-.DEFAULT_GOAL := build/cloxx
+.DEFAULT_GOAL := cloxx
 
 configure:
 	@scripts/configure.sh
@@ -10,10 +10,10 @@ configure-debug:
 ast:
 	@scripts/gen-ast.sh
 
-build/cloxx:
+cloxx:
 	@scripts/build.sh
 
-test: build/cloxx
+test: cloxx
 	@tool/run-test.py
 
 clean:
