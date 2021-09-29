@@ -1,0 +1,7 @@
+// nontest
+
+class Greeter {
+  greet(name) {
+    print("Hello " + name + "!");
+  }
+}

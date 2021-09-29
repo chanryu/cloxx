@@ -1,0 +1,5 @@
+import;
+import {};
+import { a };
+import {} from "a_module.lox";
+import { a } from "a_module.lox";
