@@ -268,7 +268,7 @@ Stmt Parser::importStatement()
 
     auto keyword = previous();
 
-    consume(Token::LEFT_BRACE, "Expect { after import.");
+    consume(Token::LEFT_BRACE, "Expect '{' after import.");
 
     std::map<Token, std::optional<Token>> symbols;
     while (true) {
@@ -277,7 +277,7 @@ Stmt Parser::importStatement()
         auto symbol = previous();
         std::optional<Token> alias;
         if (match(Token::AS)) {
-            alias = consume(Token::IDENTIFIER, "Expect identifier after as.");
+            alias = consume(Token::IDENTIFIER, "Expect identifier after 'as'.");
         }
 
         // TODO: report error/warning if duplicated name found
@@ -288,10 +288,10 @@ Stmt Parser::importStatement()
         }
     }
 
-    consume(Token::RIGHT_BRACE, "Expect } after import list.");
-    consume(Token::FROM, "Expect from after import list.");
+    consume(Token::RIGHT_BRACE, "Expect '}' after import list.");
+    consume(Token::FROM, "Expect 'from' after import list.");
 
-    auto filePath = consume(Token::STRING, "Expect module path after `from'.");
+    auto filePath = consume(Token::STRING, "Expect module path after 'from'.");
     consume(Token::SEMICOLON, "Expect ';' after import.");
 
     return makeImportStmt(keyword, symbols, filePath);
