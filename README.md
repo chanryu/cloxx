@@ -2,7 +2,7 @@
 
 __cloxx__ is a C++ implementation of [Lox](http://www.craftinginterpreters.com/the-lox-language.html), the language featured in the book [Crafting Interpreters](http://www.craftinginterpreters.com/).
 
-__cloxx__ is a purely educational project for myself and thus it won't be vrery useful for building real-world applications. However, if you're another reader of the book and implementing Lox in C++, you may find __cloxx__ an interesting reference. While it's fully _C++ish_, I tried to make it as close as possible to the book's __jlox__ implementation in terms of identifiers in the code such as class, variable and function names. It should be easy to follow along with the book.
+__cloxx__ is a purely educational project for myself and thus it won't be very useful for building real-world applications. However, if you're another reader of the book and implementing Lox in C++, you may find __cloxx__ an interesting reference. While it's fully _C++ish_, I tried to make it as close as possible to the book's __jlox__ implementation in terms of identifiers in the code such as class, variable and function names. It should be easy to follow along with the book.
 
 Aside form the techniques explained the book such as Recursive Descent Parsing and Tree-Walk Interpretation, __cloxx__ implements Mark-and-Sweep Garbage Collection.
 
